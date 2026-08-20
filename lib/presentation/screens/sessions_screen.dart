@@ -282,9 +282,9 @@ class _PanelHeader extends StatelessWidget {
                       const TextStyle(fontSize: 12, color: AppColors.danger)),
             ),
           const SizedBox(width: AppDimens.gapS),
-          _EffortPicker(effort: state.effort, enabled: !running),
+          Flexible(child: _EffortPicker(effort: state.effort, enabled: !running)),
           const SizedBox(width: AppDimens.gapS),
-          _ModelPicker(model: state.model, enabled: !running),
+          Flexible(child: _ModelPicker(model: state.model, enabled: !running)),
         ],
       ),
     );
@@ -358,9 +358,13 @@ class _PickerChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.textSecondary)),
+            // Окно бывает узким (бриф §9) — подпись ужимается, а не ломает ряд.
+            Flexible(
+              child: Text(label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 11.5, color: AppColors.textSecondary)),
+            ),
             const Icon(Icons.expand_more, size: 14, color: AppColors.textMuted),
           ],
         ),
@@ -604,10 +608,15 @@ class _PromptInputState extends State<_PromptInput> {
     }
 
     // Имя набрано — подсказываем значения аргументов.
+    // Пробела ещё нет («/opsx-apply») — аргументов нет, префикс пустой.
     final parts = input.split(' ');
-    final typedArguments =
-        parts.sublist(1, parts.length - 1).where((p) => p.isNotEmpty).toList();
-    final currentPrefix = parts.last;
+    final typedArguments = parts.length < 2
+        ? const <String>[]
+        : parts
+            .sublist(1, parts.length - 1)
+            .where((argument) => argument.isNotEmpty)
+            .toList();
+    final currentPrefix = parts.length < 2 ? '' : parts.last;
     final suggester = SuggestCommandArguments(
       changeIds: widget.state.changeIds,
       sprintIds: widget.state.sprintIds,
@@ -629,8 +638,13 @@ class _PromptInputState extends State<_PromptInput> {
       _setText('${value.split(' ').first} ');
     } else {
       final parts = _promptController.text.split(' ');
-      parts[parts.length - 1] = value;
-      _setText('${parts.join(' ')} ');
+      // Без пробела аргумент ещё не начат — дописываем его первым.
+      if (parts.length < 2) {
+        _setText('${parts.first} $value ');
+      } else {
+        parts[parts.length - 1] = value;
+        _setText('${parts.join(' ')} ');
+      }
     }
     _focusNode.requestFocus();
   }
@@ -698,15 +712,17 @@ class _PromptInputState extends State<_PromptInput> {
                 borderRadius: BorderRadius.circular(AppDimens.controlRadius),
                 border: Border.all(color: AppColors.border),
               ),
-              child: SuggestionList(
-                items: suggestions,
-                activeIndex: _activeIndex,
-                onSelected: _acceptSuggestion,
-                header: command == null
-                    ? texts.sessionCommandsTitle
-                    : texts.sessionArgumentsFor(command.invocation),
-                footer: texts.sessionKeyboardHint,
-                valueWidth: command == null ? 260 : 220,
+              child: SingleChildScrollView(
+                child: SuggestionList(
+                  items: suggestions,
+                  activeIndex: _activeIndex,
+                  onSelected: _acceptSuggestion,
+                  header: command == null
+                      ? texts.sessionCommandsTitle
+                      : texts.sessionArgumentsFor(command.invocation),
+                  footer: texts.sessionKeyboardHint,
+                  valueWidth: command == null ? 260 : 220,
+                ),
               ),
             ),
           _inputRow(texts, running),

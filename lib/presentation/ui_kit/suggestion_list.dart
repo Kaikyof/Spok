@@ -13,6 +13,8 @@ class SuggestionItem {
 }
 
 /// Список подсказок с выделением активной строки (навигация стрелками).
+/// Растёт по содержимому: ограничение высоты и прокрутку задаёт вызывающий,
+/// поэтому список одинаково работает и на странице, и во всплывающей панели.
 class SuggestionList extends StatelessWidget {
   final List<SuggestionItem> items;
   final int activeIndex;
@@ -42,22 +44,16 @@ class SuggestionList extends StatelessWidget {
               child: Text(header!,
                   style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
             ),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              itemCount: items.length,
-              itemBuilder: (context, index) => _SuggestionRow(
-                item: items[index],
-                active: index == activeIndex,
-                valueWidth: valueWidth,
-                onTap: () => onSelected(index),
-              ),
+          for (final (index, item) in items.indexed)
+            _SuggestionRow(
+              item: item,
+              active: index == activeIndex,
+              valueWidth: valueWidth,
+              onTap: () => onSelected(index),
             ),
-          ),
           if (footer != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
               child: Text(footer!, style: AppTextStyles.hint),
             ),
         ],
