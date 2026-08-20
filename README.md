@@ -1,0 +1,62 @@
+# Platform Console
+
+Десктопное приложение (Flutter, macOS) — оболочка над платформой разработки
+avtoto. Делает состояние спринта видимым, а следующий шаг — очевидным.
+
+Бриф: `avtoto-platform/docs/platform-console-idea.md`.
+Макеты: Penpot, страница «Platform Console».
+
+## Что уже работает
+
+- **Спринт** — таблица change'ей iOS/Android: живые статусы Redmine, отметки
+  задач из `tasks_*.md`, блок расхождений (статус против факта), плашка
+  следующего шага.
+- **Change'и** — список и карточка: чеклисты по стекам с выделением
+  незакрытых задач, артефакты с открытием документации.
+- **Документация** — рендер markdown (`proposal.md`, `design.md`,
+  `tasks_*.md`) прямо в приложении.
+- **Окружение** — наличие ключей `.env` (без значений), состояние
+  репозиториев workspace (ветка, отставание), доступность
+  Redmine/GitLab/Mattermost.
+- Переключатель спринтов (`openspec/doc/*`), индикатор свежести, обновление.
+
+Не реализовано (следующие этапы): экран передачи спринта, агентные сессии
+(Claude Code headless), панель запуска команд, светлая тема.
+
+## Как устроено
+
+Приложение ничего не хранит и не вычисляет само: читает файлы
+`avtoto-platform` (`workspace.yaml`, `.env`, `openspec/**`), опрашивает
+Redmine по API и спрашивает git. Каждое обновление — полный пересбор слепка.
+
+Путь к платформе ищется по `$AVTOTO_PLATFORM_DIR`, затем по типовым путям
+(`~/webAnt-poject/avtoto-platform` и др.) — см. `PlatformFilesSource.locate`.
+
+## Архитектура
+
+Clean Architecture, слои:
+
+```
+lib/
+  core/            тема (палитра из Penpot-макета)
+  domain/          сущности и контракты репозиториев
+  data/            sources (файлы платформы, Redmine API на dio) + repositories
+  presentation/    ConsoleBloc (flutter_bloc) + shell + screens + widgets
+```
+
+Стек: flutter_bloc, dio, get_it, intl, path, yaml, flutter_markdown_plus
+(маинтейнящийся форк flutter_markdown с тем же API), window_manager.
+auto_route и json_serializable подключим, когда появятся глубокие маршруты
+(карточка change по id) и DTO-модели GitLab/Mattermost.
+
+## Запуск
+
+```bash
+flutter run -d macos
+```
+
+Смоук данных без UI (печатает слепок по реальным файлам платформы):
+
+```bash
+dart run tool/smoke.dart
+```
