@@ -6,6 +6,7 @@ import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/agent_session.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/sessions_bloc.dart';
 import '../ui_kit/section_card.dart';
@@ -154,11 +155,11 @@ class _SessionPanel extends StatelessWidget {
           const Divider(height: 1),
           Expanded(
             child: session == null
-                ? const _EmptyTranscript()
+                ? _CommandPalette(commands: state.commands)
                 : _Transcript(session: session),
           ),
           const Divider(height: 1),
-          const _PromptInput(),
+          _PromptInput(commands: state.commands),
         ],
       ),
     );
@@ -241,21 +242,79 @@ class _ModelPicker extends StatelessWidget {
       );
 }
 
-class _EmptyTranscript extends StatelessWidget {
-  const _EmptyTranscript();
+/// Пустая сессия — палитра команд платформы: тот же список и описания,
+/// что у автокомплита в терминале (.claude/commands).
+class _CommandPalette extends StatelessWidget {
+  final List<SlashCommand> commands;
+
+  const _CommandPalette({required this.commands});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: Text(texts.sessionEmptyHint,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.captionMuted.copyWith(height: 1.6)),
-      ),
+    if (commands.isEmpty) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Text(texts.sessionEmptyHint,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.captionMuted.copyWith(height: 1.6)),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(texts.sessionCommandsTitle,
+            style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+        const SizedBox(height: 4),
+        Text(texts.sessionCommandsHint, style: AppTextStyles.hint),
+        const SizedBox(height: AppDimens.gapM),
+        for (final command in commands)
+          _CommandRow(command: command, onTap: _insert(context, command)),
+        const SizedBox(height: AppDimens.gapM),
+        Text(texts.sessionEmptyHint,
+            style: AppTextStyles.hint.copyWith(height: 1.6)),
+      ],
     );
   }
+
+  VoidCallback _insert(BuildContext context, SlashCommand command) =>
+      () => promptInputKey.currentState?.insertCommand(command);
+}
+
+class _CommandRow extends StatelessWidget {
+  final SlashCommand command;
+  final VoidCallback onTap;
+
+  const _CommandRow({required this.command, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 180,
+                child: Text(
+                  '${command.invocation}${command.argumentHint.isEmpty ? '' : ' ${command.argumentHint}'}',
+                  style: AppTextStyles.monospace(12,
+                      color: AppColors.accent),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(command.description,
+                    style: AppTextStyles.caption.copyWith(height: 1.4)),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class _Transcript extends StatelessWidget {
@@ -372,8 +431,13 @@ class _TranscriptEntry extends StatelessWidget {
       };
 }
 
+/// Ключ, чтобы палитра команд могла вставить команду в поле ввода.
+final promptInputKey = GlobalKey<_PromptInputState>();
+
 class _PromptInput extends StatefulWidget {
-  const _PromptInput();
+  final List<SlashCommand> commands;
+
+  _PromptInput({required this.commands}) : super(key: promptInputKey);
 
   @override
   State<_PromptInput> createState() => _PromptInputState();
@@ -383,9 +447,36 @@ class _PromptInputState extends State<_PromptInput> {
   final _promptController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _promptController.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _promptController.dispose();
     super.dispose();
+  }
+
+  void insertCommand(SlashCommand command) {
+    _promptController.text = '${command.invocation} ';
+    _promptController.selection = TextSelection.collapsed(
+        offset: _promptController.text.length);
+  }
+
+  /// Команды, подходящие под набранный префикс «/…» — как в терминале.
+  List<SlashCommand> get _suggestions {
+    final input = _promptController.text;
+    if (!input.startsWith('/') || input.contains(' ')) return const [];
+    final prefix = input.substring(1).toLowerCase();
+    final matches = widget.commands
+        .where((command) => command.id.toLowerCase().contains(prefix))
+        .toList();
+    // Уже набрана целиком — подсказки не нужны.
+    if (matches.length == 1 && matches.first.invocation == input) {
+      return const [];
+    }
+    return matches;
   }
 
   void _submit() {
@@ -398,9 +489,40 @@ class _PromptInputState extends State<_PromptInput> {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final suggestions = _suggestions;
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (suggestions.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              constraints: const BoxConstraints(maxHeight: 220),
+              decoration: BoxDecoration(
+                color: AppColors.cardHighlight,
+                borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(6),
+                children: [
+                  for (final command in suggestions)
+                    _CommandRow(
+                        command: command,
+                        onTap: () => insertCommand(command)),
+                ],
+              ),
+            ),
+          _inputRow(texts),
+        ],
+      ),
+    );
+  }
+
+  Widget _inputRow(AppLocalizations texts) => Row(
         children: [
           Expanded(
             child: TextField(
@@ -436,7 +558,5 @@ class _PromptInputState extends State<_PromptInput> {
                 size: 18, color: AppColors.accent),
           ),
         ],
-      ),
-    );
-  }
+      );
 }

@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/sprint.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
@@ -243,6 +244,45 @@ class PlatformFilesSource {
     final serviceRoles =
         (service['roles']?.toString() ?? '').split(',').map((r) => r.trim());
     return serviceRoles.contains(machineRole);
+  }
+
+  // ─── Команды платформы ─────────────────────────────────────────────────────
+
+  /// Команды из `.claude/commands/*.md` — тот же источник, что у автокомплита
+  /// в терминале: id, description и argument-hint из frontmatter.
+  List<SlashCommand> loadSlashCommands() {
+    final commandsDir = Directory(p.join(root.path, '.claude', 'commands'));
+    if (!commandsDir.existsSync()) return [];
+    final commands = [
+      for (final entry in commandsDir.listSync().whereType<File>())
+        if (entry.path.endsWith('.md')) _loadSlashCommand(entry),
+    ].nonNulls.toList();
+    commands.sort((a, b) => a.id.compareTo(b.id));
+    return commands;
+  }
+
+  SlashCommand? _loadSlashCommand(File file) {
+    final frontmatter = <String, String>{};
+    var insideFrontmatter = false;
+    final fieldPattern = RegExp(r'^([a-z-]+):\s*(.*)$');
+    for (final line in file.readAsLinesSync()) {
+      if (line.trim() == '---') {
+        if (insideFrontmatter) break;
+        insideFrontmatter = true;
+        continue;
+      }
+      if (!insideFrontmatter) continue;
+      final match = fieldPattern.firstMatch(line);
+      if (match != null) frontmatter[match.group(1)!] = match.group(2)!.trim();
+    }
+    final id = frontmatter['id'] ?? p.basenameWithoutExtension(file.path);
+    final description = frontmatter['description'] ?? '';
+    if (description.isEmpty) return null;
+    return SlashCommand(
+      id: id,
+      description: description,
+      argumentHint: frontmatter['argument-hint'] ?? '',
+    );
   }
 
   // ─── Git ───────────────────────────────────────────────────────────────────

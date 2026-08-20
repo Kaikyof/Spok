@@ -8,6 +8,7 @@ class SessionsState {
   final String selectedSessionId;
   final String model;
   final bool cliAvailable;
+  final List<SlashCommand> commands;
   final int revision; // растёт с каждым событием — триггер перерисовки
 
   const SessionsState({
@@ -15,6 +16,7 @@ class SessionsState {
     this.selectedSessionId = '',
     this.model = 'sonnet',
     this.cliAvailable = true,
+    this.commands = const [],
     this.revision = 0,
   });
 
@@ -27,6 +29,7 @@ class SessionsState {
     String? selectedSessionId,
     String? model,
     bool? cliAvailable,
+    List<SlashCommand>? commands,
     int? revision,
   }) =>
       SessionsState(
@@ -34,6 +37,7 @@ class SessionsState {
         selectedSessionId: selectedSessionId ?? this.selectedSessionId,
         model: model ?? this.model,
         cliAvailable: cliAvailable ?? this.cliAvailable,
+        commands: commands ?? this.commands,
         revision: revision ?? this.revision,
       );
 }

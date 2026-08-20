@@ -541,4 +541,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String sessionWorkingDir(String dir) {
     return 'рабочая папка: $dir';
   }
+
+  @override
+  String get sessionCommandsTitle => 'Команды платформы';
+
+  @override
+  String get sessionCommandsHint =>
+      'наберите / для подсказок — список и описания те же, что в терминале';
 }

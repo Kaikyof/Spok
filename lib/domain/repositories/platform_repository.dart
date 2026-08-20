@@ -1,6 +1,10 @@
 import '../entities/console_snapshot.dart';
+import '../entities/slash_command.dart';
 
 abstract class PlatformRepository {
+  /// Команды платформы (.claude/commands) для автокомплита в сессиях.
+  List<SlashCommand> slashCommands();
+
   /// Путь к репозиторию платформы; null — не найден.
   String? get rootPath;
 

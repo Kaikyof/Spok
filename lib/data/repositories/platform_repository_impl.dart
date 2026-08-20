@@ -7,6 +7,7 @@ import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_report.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/app_config_source.dart';
@@ -51,6 +52,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   @override
   String get role => files?.role ?? '';
+
+  @override
+  List<SlashCommand> slashCommands() => files?.loadSlashCommands() ?? const [];
 
   @override
   Future<String> configFilePath() => config.configPath();

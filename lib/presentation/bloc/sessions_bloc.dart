@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/sources/agent_cli_source.dart';
 import '../../domain/entities/agent_session.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../domain/repositories/platform_repository.dart';
 
 part 'sessions_event.dart';
@@ -14,7 +15,9 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
 
   SessionsBloc(this.repository)
       : super(SessionsState(
-            cliAvailable: AgentCliSource.locateBinary() != null)) {
+          cliAvailable: AgentCliSource.locateBinary() != null,
+          commands: repository.slashCommands(),
+        )) {
     on<SessionStarted>(_onStarted);
     on<SessionSelected>(
         (event, emit) => emit(state.copyWith(selectedSessionId: event.sessionId)));

@@ -968,6 +968,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'рабочая папка: {dir}'**
   String sessionWorkingDir(String dir);
+
+  /// No description provided for @sessionCommandsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команды платформы'**
+  String get sessionCommandsTitle;
+
+  /// No description provided for @sessionCommandsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'наберите / для подсказок — список и описания те же, что в терминале'**
+  String get sessionCommandsHint;
 }
 
 class _AppLocalizationsDelegate

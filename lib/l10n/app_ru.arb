@@ -448,5 +448,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "sessionCommandsTitle": "Команды платформы",
+  "sessionCommandsHint": "наберите / для подсказок — список и описания те же, что в терминале"
 }
