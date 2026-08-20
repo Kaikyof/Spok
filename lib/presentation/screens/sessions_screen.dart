@@ -26,8 +26,7 @@ class SessionsScreen extends StatelessWidget {
       builder: (context, state) {
         if (!state.cliAvailable) {
           return Center(
-            child: Text(texts.sessionCliMissing,
-                textAlign: TextAlign.center, style: AppTextStyles.body),
+            child: Text(texts.sessionCliMissing, textAlign: TextAlign.center, style: AppTextStyles.body),
           );
         }
         return Padding(
@@ -63,13 +62,9 @@ class _SessionList extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(8, 4, 4, 8),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(texts.sessionsListTitle,
-                      style: AppTextStyles.sectionTitle),
-                ),
+                Expanded(child: Text(texts.sessionsListTitle, style: AppTextStyles.sectionTitle)),
                 IconButton(
-                  onPressed: () =>
-                      context.read<SessionsBloc>().add(SessionCreated()),
+                  onPressed: () => context.read<SessionsBloc>().add(SessionCreated()),
                   tooltip: texts.sessionNewTooltip,
                   iconSize: 18,
                   padding: EdgeInsets.zero,
@@ -82,10 +77,7 @@ class _SessionList extends StatelessWidget {
           Expanded(
             child: ListView(
               children: [
-                for (final session in state.sessions)
-                  _SessionListItem(
-                      session: session,
-                      active: session.id == state.selectedSessionId),
+                for (final session in state.sessions) _SessionListItem(session: session, active: session.id == state.selectedSessionId),
               ],
             ),
           ),
@@ -93,8 +85,7 @@ class _SessionList extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
               child: Text(
-                texts.sessionWorkingDir(
-                    state.workingDirectory.split('/').last),
+                texts.sessionWorkingDir(state.workingDirectory.split('/').last),
                 style: AppTextStyles.monospace(9.5, color: AppColors.textMuted),
               ),
             ),
@@ -117,14 +108,13 @@ class _SessionListItem extends StatefulWidget {
 class _SessionListItemState extends State<_SessionListItem> {
   bool _hovered = false;
 
-  (Color, String) _statusOf(AppLocalizations texts) =>
-      switch (widget.session.status) {
-        AgentSessionStatus.idle => (AppColors.textMuted, texts.sessionIdle),
-        AgentSessionStatus.running => (AppColors.warning, texts.sessionRunning),
-        AgentSessionStatus.done => (AppColors.success, texts.sessionDone),
-        AgentSessionStatus.failed => (AppColors.danger, texts.sessionFailed),
-        AgentSessionStatus.stopped => (AppColors.textMuted, texts.sessionDone),
-      };
+  (Color, String) _statusOf(AppLocalizations texts) => switch (widget.session.status) {
+    AgentSessionStatus.idle => (AppColors.textMuted, texts.sessionIdle),
+    AgentSessionStatus.running => (AppColors.warning, texts.sessionRunning),
+    AgentSessionStatus.done => (AppColors.success, texts.sessionDone),
+    AgentSessionStatus.failed => (AppColors.danger, texts.sessionFailed),
+    AgentSessionStatus.stopped => (AppColors.textMuted, texts.sessionDone),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +125,7 @@ class _SessionListItemState extends State<_SessionListItem> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: InkWell(
-        onTap: () =>
-            context.read<SessionsBloc>().add(SessionSelected(session.id)),
+        onTap: () => context.read<SessionsBloc>().add(SessionSelected(session.id)),
         borderRadius: BorderRadius.circular(AppDimens.controlRadius),
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
@@ -153,38 +142,32 @@ class _SessionListItemState extends State<_SessionListItem> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      session.title.isEmpty
-                          ? texts.sessionUntitled
-                          : session.title,
+                      session.title.isEmpty ? texts.sessionUntitled : session.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: widget.active
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: session.title.isEmpty
-                              ? AppColors.textMuted
-                              : (widget.active
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary)),
+                        fontSize: 12.5,
+                        fontWeight: widget.active ? FontWeight.w600 : FontWeight.w400,
+                        color: session.title.isEmpty
+                            ? AppColors.textMuted
+                            : (widget.active ? AppColors.textPrimary : AppColors.textSecondary),
+                      ),
                     ),
                     const SizedBox(height: 5),
                     Row(
                       children: [
                         Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                                color: statusColor, shape: BoxShape.circle)),
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             '$statusLabel · ${DateFormat.Hm().format(session.startedAt)}'
                             '${session.messageCount > 1 ? ' · ${session.messageCount}' : ''}',
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 10.5, color: AppColors.textMuted),
+                            style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
                           ),
                         ),
                       ],
@@ -196,16 +179,12 @@ class _SessionListItemState extends State<_SessionListItem> {
                 width: 24,
                 child: _hovered
                     ? IconButton(
-                        onPressed: () => context
-                            .read<SessionsBloc>()
-                            .add(SessionDeleted(session.id)),
+                        onPressed: () => context.read<SessionsBloc>().add(SessionDeleted(session.id)),
                         tooltip: texts.sessionDeleteTooltip,
                         iconSize: 14,
                         padding: EdgeInsets.zero,
-                        constraints:
-                            const BoxConstraints(minWidth: 24, minHeight: 24),
-                        icon: const Icon(Icons.close,
-                            color: AppColors.textMuted),
+                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                        icon: const Icon(Icons.close, color: AppColors.textMuted),
                       )
                     : null,
               ),
@@ -232,9 +211,7 @@ class _SessionPanel extends StatelessWidget {
           _PanelHeader(state: state, session: session),
           const Divider(height: 1),
           Expanded(
-            child: session == null || session.isEmpty
-                ? _CommandPalette(commands: state.commands)
-                : _Transcript(session: session),
+            child: session == null || session.isEmpty ? _CommandPalette(commands: state.commands) : _Transcript(session: session),
           ),
           const Divider(height: 1),
           _PromptInput(state: state),
@@ -263,28 +240,27 @@ class _PanelHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    session == null || session!.title.isEmpty
-                        ? texts.sessionNew
-                        : session!.title,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.sectionTitle),
-                if ((session?.messageCount ?? 0) > 1)
-                  Text(texts.sessionContinues, style: AppTextStyles.hint),
+                  session == null || session!.title.isEmpty ? texts.sessionNew : session!.title,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.sectionTitle,
+                ),
+                if ((session?.messageCount ?? 0) > 1) Text(texts.sessionContinues, style: AppTextStyles.hint),
               ],
             ),
           ),
           if (running)
             TextButton(
-              onPressed: () =>
-                  context.read<SessionsBloc>().add(SessionStopRequested()),
-              child: Text(texts.sessionStop,
-                  style:
-                      const TextStyle(fontSize: 12, color: AppColors.danger)),
+              onPressed: () => context.read<SessionsBloc>().add(SessionStopRequested()),
+              child: Text(texts.sessionStop, style: const TextStyle(fontSize: 12, color: AppColors.danger)),
             ),
           const SizedBox(width: AppDimens.gapS),
-          Flexible(child: _EffortPicker(effort: state.effort, enabled: !running)),
+          Flexible(
+            child: _EffortPicker(effort: state.effort, enabled: !running),
+          ),
           const SizedBox(width: AppDimens.gapS),
-          Flexible(child: _ModelPicker(model: state.model, enabled: !running)),
+          Flexible(
+            child: _ModelPicker(model: state.model, enabled: !running),
+          ),
         ],
       ),
     );
@@ -299,20 +275,18 @@ class _ModelPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
-        enabled: enabled,
-        color: AppColors.cardHighlight,
-        onSelected: (selectedModel) => context
-            .read<SessionsBloc>()
-            .add(SessionModelChanged(selectedModel)),
-        itemBuilder: (_) => [
-          for (final candidate in agentModels)
-            PopupMenuItem(
-              value: candidate,
-              child: Text(candidate, style: const TextStyle(fontSize: 12.5)),
-            ),
-        ],
-        child: _PickerChip(label: 'Claude · $model'),
-      );
+    enabled: enabled,
+    color: AppColors.cardHighlight,
+    onSelected: (selectedModel) => context.read<SessionsBloc>().add(SessionModelChanged(selectedModel)),
+    itemBuilder: (_) => [
+      for (final candidate in agentModels)
+        PopupMenuItem(
+          value: candidate,
+          child: Text(candidate, style: const TextStyle(fontSize: 12.5)),
+        ),
+    ],
+    child: _PickerChip(label: 'Claude · $model'),
+  );
 }
 
 class _EffortPicker extends StatelessWidget {
@@ -327,15 +301,12 @@ class _EffortPicker extends StatelessWidget {
     return PopupMenuButton<AgentEffort>(
       enabled: enabled,
       color: AppColors.cardHighlight,
-      onSelected: (selectedEffort) => context
-          .read<SessionsBloc>()
-          .add(SessionEffortChanged(selectedEffort)),
+      onSelected: (selectedEffort) => context.read<SessionsBloc>().add(SessionEffortChanged(selectedEffort)),
       itemBuilder: (_) => [
         for (final candidate in AgentEffort.values)
           PopupMenuItem(
             value: candidate,
-            child:
-                Text(candidate.name, style: const TextStyle(fontSize: 12.5)),
+            child: Text(candidate.name, style: const TextStyle(fontSize: 12.5)),
           ),
       ],
       child: _PickerChip(label: '${texts.sessionEffortLabel} · ${effort.name}'),
@@ -350,25 +321,23 @@ class _PickerChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: AppColors.cardHighlight,
-          borderRadius: BorderRadius.circular(13),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+    decoration: BoxDecoration(color: AppColors.cardHighlight, borderRadius: BorderRadius.circular(13)),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Окно бывает узким (бриф §9) — подпись ужимается, а не ломает ряд.
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+          ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Окно бывает узким (бриф §9) — подпись ужимается, а не ломает ряд.
-            Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 11.5, color: AppColors.textSecondary)),
-            ),
-            const Icon(Icons.expand_more, size: 14, color: AppColors.textMuted),
-          ],
-        ),
-      );
+        const Icon(Icons.expand_more, size: 14, color: AppColors.textMuted),
+      ],
+    ),
+  );
 }
 
 /// Пустая сессия — палитра команд платформы: тот же список и описания,
@@ -385,35 +354,28 @@ class _CommandPalette extends StatelessWidget {
       return Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 460),
-          child: Text(texts.sessionEmptyHint,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.captionMuted.copyWith(height: 1.6)),
+          child: Text(texts.sessionEmptyHint, textAlign: TextAlign.center, style: AppTextStyles.captionMuted.copyWith(height: 1.6)),
         ),
       );
     }
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(texts.sessionCommandsTitle,
-            style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+        Text(texts.sessionCommandsTitle, style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
         const SizedBox(height: 4),
         Text(texts.sessionCommandsHint, style: AppTextStyles.hint),
         const SizedBox(height: AppDimens.gapM),
         SuggestionList(
           items: [
             for (final command in commands)
-              SuggestionItem(
-                  '${command.invocation}${command.argumentHint.isEmpty ? '' : ' ${command.argumentHint}'}',
-                  command.description),
+              SuggestionItem('${command.invocation}${command.argumentHint.isEmpty ? '' : ' ${command.argumentHint}'}', command.description),
           ],
           activeIndex: -1,
-          onSelected: (index) =>
-              promptInputKey.currentState?.insertCommand(commands[index]),
+          onSelected: (index) => promptInputKey.currentState?.insertCommand(commands[index]),
           valueWidth: 260,
         ),
         const SizedBox(height: AppDimens.gapM),
-        Text(texts.sessionEmptyHint,
-            style: AppTextStyles.hint.copyWith(height: 1.6)),
+        Text(texts.sessionEmptyHint, style: AppTextStyles.hint.copyWith(height: 1.6)),
       ],
     );
   }
@@ -435,13 +397,12 @@ class _Transcript extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(top: 10),
             child: SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                    strokeWidth: 1.5, color: AppColors.warning)),
+              width: 20,
+              height: 20,
+              child: FittedBox(child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.warning)),
+            ),
           ),
-        for (final event in session.events.reversed)
-          _TranscriptEntry(event: event, session: session, texts: texts),
+        for (final event in session.events.reversed) _TranscriptEntry(event: event, session: session, texts: texts),
       ],
     );
   }
@@ -452,81 +413,68 @@ class _TranscriptEntry extends StatelessWidget {
   final AgentSession session;
   final AppLocalizations texts;
 
-  const _TranscriptEntry(
-      {required this.event, required this.session, required this.texts});
+  const _TranscriptEntry({required this.event, required this.session, required this.texts});
 
   @override
   Widget build(BuildContext context) => switch (event.kind) {
-        AgentEventKind.userMessage => Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 10, left: 60, top: 6),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.accentDim,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: SelectableText(event.text,
-                  style: const TextStyle(
-                      fontSize: 12.5, color: AppColors.textPrimary)),
+    AgentEventKind.userMessage => Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10, left: 60, top: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: AppColors.accentDim, borderRadius: BorderRadius.circular(10)),
+        child: SelectableText(event.text, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+      ),
+    ),
+    AgentEventKind.assistantText => Container(
+      margin: const EdgeInsets.only(bottom: 10, right: 60),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: AppColors.cardHighlight, borderRadius: BorderRadius.circular(10)),
+      child: SelectableText(event.text, style: AppTextStyles.caption.copyWith(height: 1.5)),
+    ),
+    AgentEventKind.toolAction => Padding(
+      padding: const EdgeInsets.only(bottom: 6, left: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('✓', style: TextStyle(fontSize: 11, color: AppColors.success)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              event.text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.monospace(11, color: AppColors.monospaceText),
             ),
           ),
-        AgentEventKind.assistantText => Container(
-            margin: const EdgeInsets.only(bottom: 10, right: 60),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.cardHighlight,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: SelectableText(event.text,
-                style: AppTextStyles.caption.copyWith(height: 1.5)),
+        ],
+      ),
+    ),
+    AgentEventKind.result => Container(
+      margin: const EdgeInsets.only(bottom: 10, top: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.logBackground,
+        borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+        border: Border.all(color: AppColors.borderSoft),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            texts.sessionResultLabel(((session.duration?.inMilliseconds ?? 0) / 1000).toStringAsFixed(1)),
+            style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5),
           ),
-        AgentEventKind.toolAction => Padding(
-            padding: const EdgeInsets.only(bottom: 6, left: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('✓',
-                    style: TextStyle(fontSize: 11, color: AppColors.success)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(event.text,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.monospace(11,
-                          color: AppColors.monospaceText)),
-                ),
-              ],
-            ),
-          ),
-        AgentEventKind.result => Container(
-            margin: const EdgeInsets.only(bottom: 10, top: 4),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.logBackground,
-              borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-              border: Border.all(color: AppColors.borderSoft),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                    texts.sessionResultLabel(
-                        ((session.duration?.inMilliseconds ?? 0) / 1000)
-                            .toStringAsFixed(1)),
-                    style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
-                const SizedBox(height: 6),
-                SelectableText(event.text,
-                    style: AppTextStyles.caption.copyWith(height: 1.5)),
-              ],
-            ),
-          ),
-        AgentEventKind.error => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(event.text,
-                style: AppTextStyles.monospace(11, color: AppColors.danger)),
-          ),
-      };
+          const SizedBox(height: 6),
+          SelectableText(event.text, style: AppTextStyles.caption.copyWith(height: 1.5)),
+        ],
+      ),
+    ),
+    AgentEventKind.error => Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(event.text, style: AppTextStyles.monospace(11, color: AppColors.danger)),
+    ),
+  };
 }
 
 /// Ключ, чтобы палитра команд могла вставить команду в поле ввода.
@@ -561,9 +509,9 @@ class _PromptInputState extends State<_PromptInput> {
   }
 
   void _onTextChanged() => setState(() {
-        _activeIndex = 0;
-        _suppressed = false;
-      });
+    _activeIndex = 0;
+    _suppressed = false;
+  });
 
   void insertCommand(SlashCommand command) {
     _setText('${command.invocation} ');
@@ -572,8 +520,7 @@ class _PromptInputState extends State<_PromptInput> {
 
   void _setText(String text) {
     _promptController.text = text;
-    _promptController.selection =
-        TextSelection.collapsed(offset: text.length);
+    _promptController.selection = TextSelection.collapsed(offset: text.length);
   }
 
   // ─── Подсказки ─────────────────────────────────────────────────────────────
@@ -583,9 +530,7 @@ class _PromptInputState extends State<_PromptInput> {
     final input = _promptController.text;
     if (!input.startsWith('/')) return null;
     final head = input.split(' ').first.substring(1);
-    return widget.state.commands
-        .where((command) => command.id == head)
-        .firstOrNull;
+    return widget.state.commands.where((command) => command.id == head).firstOrNull;
   }
 
   List<SuggestionItem> get _suggestions {
@@ -602,8 +547,9 @@ class _PromptInputState extends State<_PromptInput> {
         for (final candidate in widget.state.commands)
           if (candidate.id.toLowerCase().contains(prefix))
             SuggestionItem(
-                '${candidate.invocation}${candidate.argumentHint.isEmpty ? '' : ' ${candidate.argumentHint}'}',
-                candidate.description),
+              '${candidate.invocation}${candidate.argumentHint.isEmpty ? '' : ' ${candidate.argumentHint}'}',
+              candidate.description,
+            ),
       ];
     }
 
@@ -612,20 +558,10 @@ class _PromptInputState extends State<_PromptInput> {
     final parts = input.split(' ');
     final typedArguments = parts.length < 2
         ? const <String>[]
-        : parts
-            .sublist(1, parts.length - 1)
-            .where((argument) => argument.isNotEmpty)
-            .toList();
+        : parts.sublist(1, parts.length - 1).where((argument) => argument.isNotEmpty).toList();
     final currentPrefix = parts.length < 2 ? '' : parts.last;
-    final suggester = SuggestCommandArguments(
-      changeIds: widget.state.changeIds,
-      sprintIds: widget.state.sprintIds,
-    );
-    return [
-      for (final suggestion
-          in suggester(command, typedArguments, currentPrefix))
-        SuggestionItem(suggestion.value, suggestion.hint),
-    ];
+    final suggester = SuggestCommandArguments(changeIds: widget.state.changeIds, sprintIds: widget.state.sprintIds);
+    return [for (final suggestion in suggester(command, typedArguments, currentPrefix)) SuggestionItem(suggestion.value, suggestion.hint)];
   }
 
   void _acceptSuggestion(int index) {
@@ -660,12 +596,10 @@ class _PromptInputState extends State<_PromptInput> {
 
     switch (event.logicalKey) {
       case LogicalKeyboardKey.arrowDown when hasSuggestions:
-        setState(() =>
-            _activeIndex = (_activeIndex + 1) % suggestions.length);
+        setState(() => _activeIndex = (_activeIndex + 1) % suggestions.length);
         return KeyEventResult.handled;
       case LogicalKeyboardKey.arrowUp when hasSuggestions:
-        setState(() => _activeIndex =
-            (_activeIndex - 1 + suggestions.length) % suggestions.length);
+        setState(() => _activeIndex = (_activeIndex - 1 + suggestions.length) % suggestions.length);
         return KeyEventResult.handled;
       case LogicalKeyboardKey.tab when hasSuggestions:
         _acceptSuggestion(_activeIndex);
@@ -717,9 +651,7 @@ class _PromptInputState extends State<_PromptInput> {
                   items: suggestions,
                   activeIndex: _activeIndex,
                   onSelected: _acceptSuggestion,
-                  header: command == null
-                      ? texts.sessionCommandsTitle
-                      : texts.sessionArgumentsFor(command.invocation),
+                  header: command == null ? texts.sessionCommandsTitle : texts.sessionArgumentsFor(command.invocation),
                   footer: texts.sessionKeyboardHint,
                   valueWidth: command == null ? 260 : 220,
                 ),
@@ -732,42 +664,39 @@ class _PromptInputState extends State<_PromptInput> {
   }
 
   Widget _inputRow(AppLocalizations texts, bool running) => Row(
-        children: [
-          Expanded(
-            child: Focus(
-              onKeyEvent: _onKey,
-              child: TextField(
-                controller: _promptController,
-                focusNode: _focusNode,
-                enabled: !running,
-                style: const TextStyle(
-                    fontSize: 12.5, color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: texts.sessionInputHint,
-                  hintStyle: AppTextStyles.captionMuted,
-                  filled: true,
-                  fillColor: AppColors.background,
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                ),
+    children: [
+      Expanded(
+        child: Focus(
+          onKeyEvent: _onKey,
+          child: TextField(
+            controller: _promptController,
+            focusNode: _focusNode,
+            enabled: !running,
+            style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: texts.sessionInputHint,
+              hintStyle: AppTextStyles.captionMuted,
+              filled: true,
+              fillColor: AppColors.background,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
             ),
           ),
-          const SizedBox(width: AppDimens.gapS),
-          IconButton(
-            onPressed: running ? null : _submit,
-            icon: const Icon(Icons.arrow_upward,
-                size: 18, color: AppColors.accent),
-          ),
-        ],
-      );
+        ),
+      ),
+      const SizedBox(width: AppDimens.gapS),
+      IconButton(
+        onPressed: running ? null : _submit,
+        icon: const Icon(Icons.arrow_upward, size: 18, color: AppColors.accent),
+      ),
+    ],
+  );
 }
