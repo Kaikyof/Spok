@@ -421,5 +421,32 @@
         "type": "String"
       }
     }
+  },
+  "sessionsListTitle": "Сессии",
+  "sessionNew": "Новая сессия",
+  "sessionEmptyHint": "Опишите задачу — агент выполнит её в репозитории платформы.\nНапример: «разбери дефект из #63577» или «/opsx:sprint pin-biometric-auth status».",
+  "sessionInputHint": "Задача для агента…",
+  "sessionRunning": "идёт",
+  "sessionWaiting": "ждёт ввода",
+  "sessionDone": "завершена",
+  "sessionFailed": "ошибка",
+  "sessionStop": "Остановить",
+  "sessionActionsLabel": "ВЫПОЛНЕНО ПО ХОДУ",
+  "sessionResultLabel": "Итог · {duration} с",
+  "@sessionResultLabel": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionCliMissing": "Claude Code CLI не найден. Установите его и перезапустите приложение.",
+  "sessionWorkingDir": "рабочая папка: {dir}",
+  "@sessionWorkingDir": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
   }
 }

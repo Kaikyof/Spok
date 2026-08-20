@@ -11,7 +11,7 @@ import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
 import 'screens/env_screen.dart';
 import 'screens/handoff_screen.dart';
-import 'screens/placeholder_screen.dart';
+import 'screens/sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/sprint_screen.dart';
 import 'ui_kit/app_loader.dart';
@@ -56,7 +56,6 @@ class _ScreenSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final texts = AppLocalizations.of(context);
     return BlocBuilder<ConsoleBloc, ConsoleState>(
       buildWhen: (previous, current) => previous.screen != current.screen,
       builder: (context, state) => switch (state.screen) {
@@ -64,8 +63,7 @@ class _ScreenSwitcher extends StatelessWidget {
         ConsoleScreen.changes => const ChangeScreen(),
         ConsoleScreen.env => const EnvScreen(),
         ConsoleScreen.handoff => const HandoffScreen(),
-        ConsoleScreen.sessions => PlaceholderScreen(
-            title: texts.sessionsTitle, note: texts.sessionsNote),
+        ConsoleScreen.sessions => const SessionsScreen(),
       },
     );
   }

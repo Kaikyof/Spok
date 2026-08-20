@@ -890,6 +890,84 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **' (после {issues})'**
   String handoverMsgOrderAfter(String issues);
+
+  /// No description provided for @sessionsListTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сессии'**
+  String get sessionsListTitle;
+
+  /// No description provided for @sessionNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая сессия'**
+  String get sessionNew;
+
+  /// No description provided for @sessionEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Опишите задачу — агент выполнит её в репозитории платформы.\nНапример: «разбери дефект из #63577» или «/opsx:sprint pin-biometric-auth status».'**
+  String get sessionEmptyHint;
+
+  /// No description provided for @sessionInputHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задача для агента…'**
+  String get sessionInputHint;
+
+  /// No description provided for @sessionRunning.
+  ///
+  /// In ru, this message translates to:
+  /// **'идёт'**
+  String get sessionRunning;
+
+  /// No description provided for @sessionWaiting.
+  ///
+  /// In ru, this message translates to:
+  /// **'ждёт ввода'**
+  String get sessionWaiting;
+
+  /// No description provided for @sessionDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'завершена'**
+  String get sessionDone;
+
+  /// No description provided for @sessionFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'ошибка'**
+  String get sessionFailed;
+
+  /// No description provided for @sessionStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить'**
+  String get sessionStop;
+
+  /// No description provided for @sessionActionsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ВЫПОЛНЕНО ПО ХОДУ'**
+  String get sessionActionsLabel;
+
+  /// No description provided for @sessionResultLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Итог · {duration} с'**
+  String sessionResultLabel(String duration);
+
+  /// No description provided for @sessionCliMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Claude Code CLI не найден. Установите его и перезапустите приложение.'**
+  String get sessionCliMissing;
+
+  /// No description provided for @sessionWorkingDir.
+  ///
+  /// In ru, this message translates to:
+  /// **'рабочая папка: {dir}'**
+  String sessionWorkingDir(String dir);
 }
 
 class _AppLocalizationsDelegate

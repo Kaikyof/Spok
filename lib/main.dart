@@ -9,6 +9,7 @@ import 'data/repositories/platform_repository_impl.dart';
 import 'domain/repositories/platform_repository.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'presentation/bloc/console_bloc.dart';
+import 'presentation/bloc/sessions_bloc.dart';
 import 'presentation/shell.dart';
 
 final getIt = GetIt.instance;
@@ -46,8 +47,13 @@ class ConsoleApp extends StatelessWidget {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('ru'),
-        home: BlocProvider(
-          create: (_) => ConsoleBloc(getIt<PlatformRepository>()),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider(
+                create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
+            BlocProvider(
+                create: (_) => SessionsBloc(getIt<PlatformRepository>())),
+          ],
           child: const Shell(),
         ),
       );

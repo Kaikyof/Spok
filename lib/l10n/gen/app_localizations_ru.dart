@@ -496,4 +496,49 @@ class AppLocalizationsRu extends AppLocalizations {
   String handoverMsgOrderAfter(String issues) {
     return ' (после $issues)';
   }
+
+  @override
+  String get sessionsListTitle => 'Сессии';
+
+  @override
+  String get sessionNew => 'Новая сессия';
+
+  @override
+  String get sessionEmptyHint =>
+      'Опишите задачу — агент выполнит её в репозитории платформы.\nНапример: «разбери дефект из #63577» или «/opsx:sprint pin-biometric-auth status».';
+
+  @override
+  String get sessionInputHint => 'Задача для агента…';
+
+  @override
+  String get sessionRunning => 'идёт';
+
+  @override
+  String get sessionWaiting => 'ждёт ввода';
+
+  @override
+  String get sessionDone => 'завершена';
+
+  @override
+  String get sessionFailed => 'ошибка';
+
+  @override
+  String get sessionStop => 'Остановить';
+
+  @override
+  String get sessionActionsLabel => 'ВЫПОЛНЕНО ПО ХОДУ';
+
+  @override
+  String sessionResultLabel(String duration) {
+    return 'Итог · $duration с';
+  }
+
+  @override
+  String get sessionCliMissing =>
+      'Claude Code CLI не найден. Установите его и перезапустите приложение.';
+
+  @override
+  String sessionWorkingDir(String dir) {
+    return 'рабочая папка: $dir';
+  }
 }
