@@ -17,7 +17,6 @@ class EnvScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // test
     final texts = AppLocalizations.of(context);
     return BlocBuilder<ConsoleBloc, ConsoleState>(
       builder: (context, state) {
