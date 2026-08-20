@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/issue_comment.dart';
+import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/sprint.dart';
 import '../../domain/repositories/platform_repository.dart';
 
@@ -22,6 +25,8 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     on<ChangeOpened>(_onChangeOpened);
     on<_CommentsLoaded>((event, emit) =>
         emit(state.copyWith(comments: () => event.comments)));
+    on<_MergeRequestsLoaded>((event, emit) =>
+        emit(state.copyWith(mergeRequests: () => event.mergeRequests)));
     on<DocOpened>(_onDocOpened);
     on<PlatformPathSubmitted>(_onPathSubmitted);
     on<StackFilterChanged>(
@@ -63,15 +68,22 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
       selectedDoc: () => null,
       docContent: () => null,
       comments: () => null,
+      mergeRequests: () => null,
     ));
     final change = event.change;
     if (change == null) return;
-    // Лента комментариев — там общаются разработчик и тестировщик (бриф §5.2).
+    // Лента комментариев — там общаются разработчик и тестировщик (бриф §5.2),
+    // MR — ярлык GitLab рядом с фактом влития (бриф §3.2).
     final issueIds =
         change.stacks.map((stack) => stack.issueId).nonNulls.toList();
-    final comments = await repository.issueComments(issueIds);
-    if (isClosed || state.selectedChange?.id != change.id) return;
-    add(_CommentsLoaded(comments));
+    unawaited(repository.issueComments(issueIds).then((comments) {
+      if (isClosed || state.selectedChange?.id != change.id) return;
+      add(_CommentsLoaded(comments));
+    }));
+    unawaited(repository.mergeRequests(change.id).then((mergeRequests) {
+      if (isClosed || state.selectedChange?.id != change.id) return;
+      add(_MergeRequestsLoaded(mergeRequests));
+    }));
   }
 
   Future<void> _onDocOpened(

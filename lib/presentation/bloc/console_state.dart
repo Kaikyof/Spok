@@ -24,6 +24,7 @@ class ConsoleState {
   final bool pathRejected;
   final StackFilter stackFilter;
   final List<IssueComment>? comments; // null — ещё грузятся
+  final List<MergeRequestInfo>? mergeRequests;
 
   const ConsoleState({
     this.status = LoadStatus.initial,
@@ -36,6 +37,7 @@ class ConsoleState {
     this.pathRejected = false,
     this.stackFilter = StackFilter.all,
     this.comments,
+    this.mergeRequests,
   });
 
   /// Платформа не найдена — нужен экран первичной настройки.
@@ -64,6 +66,7 @@ class ConsoleState {
     bool? pathRejected,
     StackFilter? stackFilter,
     List<IssueComment>? Function()? comments,
+    List<MergeRequestInfo>? Function()? mergeRequests,
   }) =>
       ConsoleState(
         status: status ?? this.status,
@@ -77,5 +80,7 @@ class ConsoleState {
         pathRejected: pathRejected ?? this.pathRejected,
         stackFilter: stackFilter ?? this.stackFilter,
         comments: comments != null ? comments() : this.comments,
+        mergeRequests:
+            mergeRequests != null ? mergeRequests() : this.mergeRequests,
       );
 }

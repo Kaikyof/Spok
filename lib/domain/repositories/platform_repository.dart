@@ -1,5 +1,6 @@
 import '../entities/console_snapshot.dart';
 import '../entities/issue_comment.dart';
+import '../entities/merge_request_info.dart';
 import '../entities/slash_command.dart';
 
 abstract class PlatformRepository {
@@ -16,6 +17,9 @@ abstract class PlatformRepository {
   String get role;
 
   Future<ConsoleSnapshot> load();
+
+  /// Состояние MR change'а по стекам: ярлык GitLab и факт влития.
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId);
 
   /// Читает markdown-файл документации (внутри репозитория платформы).
   Future<String> readDoc(String absolutePath);

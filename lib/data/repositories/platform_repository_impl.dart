@@ -8,11 +8,13 @@ import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_report.dart';
 import '../../domain/entities/issue_comment.dart';
+import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/app_config_source.dart';
+import '../sources/gitlab_api.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
 
@@ -115,6 +117,41 @@ class PlatformRepositoryImpl implements PlatformRepository {
     } catch (_) {
       return const [];
     }
+  }
+
+  @override
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId) async {
+    final source = files;
+    if (source == null) return const [];
+    final env = source.loadEnv();
+    final baseUrl = env['GITLAB_URL'] ?? '';
+    final token = env['GITLAB_TOKEN'] ?? '';
+    if (baseUrl.isEmpty || token.isEmpty) return const [];
+
+    final sprint = source.loadSprints().firstOrNull;
+    if (sprint == null) return const [];
+    final api = GitLabApi(baseUrl, token);
+    // Ветка change'а в сервисном репозитории — features/<change>,
+    // цель — ветка спринта (conventions платформы, skill submit).
+    final requests = source.allServices().where((service) =>
+        service.stack.isNotEmpty && service.repo.isNotEmpty);
+    final results = await Future.wait(requests.map((service) async {
+      final projectPath = GitLabApi.projectPathFromRepo(service.repo);
+      final targetBranch =
+          service.stack == 'ios' ? sprint.branchIos : sprint.branchAndroid;
+      if (projectPath == null || targetBranch == null) return null;
+      try {
+        return await api.mergeRequestFor(
+          projectPath: projectPath,
+          stack: service.stack,
+          sourceBranch: 'features/$changeId',
+          targetBranch: targetBranch,
+        );
+      } on DioException {
+        return null;
+      }
+    }));
+    return results.nonNulls.toList();
   }
 
   @override

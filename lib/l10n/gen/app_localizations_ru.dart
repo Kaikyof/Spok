@@ -646,4 +646,68 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get commentsUnavailable => 'комментарии недоступны без ключа Redmine';
+
+  @override
+  String codeMrOpened(int iid) {
+    return 'MR !$iid — открыт';
+  }
+
+  @override
+  String codeMrMerged(int iid) {
+    return 'MR !$iid — смержен';
+  }
+
+  @override
+  String codeMrClosed(int iid) {
+    return 'MR !$iid — закрыт';
+  }
+
+  @override
+  String get codeMrNone => 'MR не найден';
+
+  @override
+  String codeFactMerged(String branch) {
+    return 'факт: коммит есть в $branch';
+  }
+
+  @override
+  String codeFactMissing(String branch) {
+    return 'факт: коммита нет в $branch — расхождение';
+  }
+
+  @override
+  String get codeFactUnknown => 'факт влития не проверен';
+
+  @override
+  String get codeGitlabUnavailable => 'GitLab недоступен — нет ключа или связи';
+
+  @override
+  String get codeChangeBranch => 'ветка change\'а';
+
+  @override
+  String get codeOpenMr => 'открыть MR';
+
+  @override
+  String commentsShowAll(int count) {
+    return 'показать все ($count)';
+  }
+
+  @override
+  String get handoffSendConfirm =>
+      'Передача запустит команду платформы в агентной сессии — там будет виден каждый шаг. Отправить?';
+
+  @override
+  String get handoffSendCancel => 'Отмена';
+
+  @override
+  String get handoffSendRun => 'Запустить передачу';
+
+  @override
+  String handoffStackNotice(String stack) {
+    return 'передаётся один стек за раз — выбран $stack';
+  }
+
+  @override
+  String get handoffPickStack =>
+      'выберите стек в фильтре: передача идёт по одному стеку';
 }

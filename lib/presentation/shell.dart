@@ -42,7 +42,11 @@ class Shell extends StatelessWidget {
                 child: Column(
                   children: [
                     const _Header(),
-                    const Expanded(child: _ScreenSwitcher()),
+                    // Любой текст на экране можно выделить и скопировать
+                    // (⌘C): ветки, идентификаторы и комментарии уходят
+                    // в переписку.
+                    const Expanded(
+                        child: SelectionArea(child: _ScreenSwitcher())),
                     // Панель запуска — постоянный элемент вне зависимости
                     // от экрана (бриф §4).
                     LaunchPanel(commandLog: getIt<CommandLog>()),

@@ -12,6 +12,7 @@ import '../../domain/entities/sprint.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
+import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/stack_filter_control.dart';
@@ -386,6 +387,51 @@ class _PreviewStep extends StatelessWidget {
   String get _messageStack =>
       stackFilter == StackFilter.android ? 'android' : 'ios';
 
+  /// Точная команда платформы — она же уйдёт в агентную сессию.
+  String get _handoffCommand =>
+      '/opsx-sprint ${sprint.id} handover --stack $_messageStack';
+
+  /// Ничего не уходит наружу без предпросмотра (бриф §3.4): подтверждаем,
+  /// затем запускаем команду платформы в сессии, где виден каждый шаг.
+  Future<void> _confirmAndRun(
+      BuildContext context, AppLocalizations texts) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: Text(texts.handoffSendButton,
+            style: AppTextStyles.sectionTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(texts.handoffSendConfirm, style: AppTextStyles.body),
+            const SizedBox(height: AppDimens.gapM),
+            SelectableText(_handoffCommand,
+                style: AppTextStyles.monospace(12)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(texts.handoffSendCancel,
+                style: const TextStyle(color: AppColors.textSecondary)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.background),
+            child: Text(texts.handoffSendRun),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    context.read<SessionsBloc>().add(SessionMessageSent(_handoffCommand));
+    context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));
+  }
+
   String _buildMessage(AppLocalizations texts) {
     final stack = _messageStack;
     final build =
@@ -471,7 +517,9 @@ class _PreviewStep extends StatelessWidget {
                 _EffectRow(text: texts.handoffEffectMessage),
                 const SizedBox(height: AppDimens.gapM),
                 FilledButton(
-                  onPressed: null,
+                  onPressed: readiness.ready
+                      ? () => _confirmAndRun(context, texts)
+                      : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     disabledBackgroundColor:
@@ -489,7 +537,7 @@ class _PreviewStep extends StatelessWidget {
         const SizedBox(height: AppDimens.gapS),
         Text(
           readiness.ready
-              ? texts.handoffSendNotImplemented
+              ? texts.handoffStackNotice(texts.stackLabel(_messageStack))
               : texts.handoffSendBlocked(
                   readiness.readyCount, readiness.totalCount),
           style: TextStyle(
@@ -497,6 +545,9 @@ class _PreviewStep extends StatelessWidget {
               color:
                   readiness.ready ? AppColors.textMuted : AppColors.warning),
         ),
+        const SizedBox(height: 4),
+        SelectableText(_handoffCommand,
+            style: AppTextStyles.monospace(11.5, color: AppColors.textMuted)),
       ],
     );
   }

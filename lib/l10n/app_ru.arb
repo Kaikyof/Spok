@@ -521,5 +521,70 @@
   "codeNoBranch": "ветка спринта не задана в sprint.yaml",
   "commentsTitle": "Комментарии Redmine",
   "commentsEmpty": "комментариев нет",
-  "commentsUnavailable": "комментарии недоступны без ключа Redmine"
+  "commentsUnavailable": "комментарии недоступны без ключа Redmine",
+  "codeMrOpened": "MR !{iid} — открыт",
+  "@codeMrOpened": {
+    "placeholders": {
+      "iid": {
+        "type": "int"
+      }
+    }
+  },
+  "codeMrMerged": "MR !{iid} — смержен",
+  "@codeMrMerged": {
+    "placeholders": {
+      "iid": {
+        "type": "int"
+      }
+    }
+  },
+  "codeMrClosed": "MR !{iid} — закрыт",
+  "@codeMrClosed": {
+    "placeholders": {
+      "iid": {
+        "type": "int"
+      }
+    }
+  },
+  "codeMrNone": "MR не найден",
+  "codeFactMerged": "факт: коммит есть в {branch}",
+  "@codeFactMerged": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "codeFactMissing": "факт: коммита нет в {branch} — расхождение",
+  "@codeFactMissing": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "codeFactUnknown": "факт влития не проверен",
+  "codeGitlabUnavailable": "GitLab недоступен — нет ключа или связи",
+  "codeChangeBranch": "ветка change'а",
+  "codeOpenMr": "открыть MR",
+  "commentsShowAll": "показать все ({count})",
+  "@commentsShowAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "handoffSendConfirm": "Передача запустит команду платформы в агентной сессии — там будет виден каждый шаг. Отправить?",
+  "handoffSendCancel": "Отмена",
+  "handoffSendRun": "Запустить передачу",
+  "handoffStackNotice": "передаётся один стек за раз — выбран {stack}",
+  "@handoffStackNotice": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffPickStack": "выберите стек в фильтре: передача идёт по одному стеку"
 }

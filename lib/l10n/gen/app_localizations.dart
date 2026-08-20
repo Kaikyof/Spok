@@ -1136,6 +1136,102 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'комментарии недоступны без ключа Redmine'**
   String get commentsUnavailable;
+
+  /// No description provided for @codeMrOpened.
+  ///
+  /// In ru, this message translates to:
+  /// **'MR !{iid} — открыт'**
+  String codeMrOpened(int iid);
+
+  /// No description provided for @codeMrMerged.
+  ///
+  /// In ru, this message translates to:
+  /// **'MR !{iid} — смержен'**
+  String codeMrMerged(int iid);
+
+  /// No description provided for @codeMrClosed.
+  ///
+  /// In ru, this message translates to:
+  /// **'MR !{iid} — закрыт'**
+  String codeMrClosed(int iid);
+
+  /// No description provided for @codeMrNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'MR не найден'**
+  String get codeMrNone;
+
+  /// No description provided for @codeFactMerged.
+  ///
+  /// In ru, this message translates to:
+  /// **'факт: коммит есть в {branch}'**
+  String codeFactMerged(String branch);
+
+  /// No description provided for @codeFactMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'факт: коммита нет в {branch} — расхождение'**
+  String codeFactMissing(String branch);
+
+  /// No description provided for @codeFactUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'факт влития не проверен'**
+  String get codeFactUnknown;
+
+  /// No description provided for @codeGitlabUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'GitLab недоступен — нет ключа или связи'**
+  String get codeGitlabUnavailable;
+
+  /// No description provided for @codeChangeBranch.
+  ///
+  /// In ru, this message translates to:
+  /// **'ветка change\'а'**
+  String get codeChangeBranch;
+
+  /// No description provided for @codeOpenMr.
+  ///
+  /// In ru, this message translates to:
+  /// **'открыть MR'**
+  String get codeOpenMr;
+
+  /// No description provided for @commentsShowAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'показать все ({count})'**
+  String commentsShowAll(int count);
+
+  /// No description provided for @handoffSendConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передача запустит команду платформы в агентной сессии — там будет виден каждый шаг. Отправить?'**
+  String get handoffSendConfirm;
+
+  /// No description provided for @handoffSendCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get handoffSendCancel;
+
+  /// No description provided for @handoffSendRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запустить передачу'**
+  String get handoffSendRun;
+
+  /// No description provided for @handoffStackNotice.
+  ///
+  /// In ru, this message translates to:
+  /// **'передаётся один стек за раз — выбран {stack}'**
+  String handoffStackNotice(String stack);
+
+  /// No description provided for @handoffPickStack.
+  ///
+  /// In ru, this message translates to:
+  /// **'выберите стек в фильтре: передача идёт по одному стеку'**
+  String get handoffPickStack;
 }
 
 class _AppLocalizationsDelegate

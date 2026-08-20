@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
@@ -12,6 +13,7 @@ import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/issue_comment.dart';
+import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -46,6 +48,7 @@ class ChangeScreen extends StatelessWidget {
               sprintBranchIos: state.sprint?.branchIos,
               sprintBranchAndroid: state.sprint?.branchAndroid,
               comments: state.comments,
+              mergeRequests: state.mergeRequests,
             );
           }
           return _ChangeList(
@@ -185,6 +188,7 @@ class _ChangeCard extends StatelessWidget {
   final String? sprintBranchIos;
   final String? sprintBranchAndroid;
   final List<IssueComment>? comments;
+  final List<MergeRequestInfo>? mergeRequests;
 
   const _ChangeCard({
     required this.change,
@@ -194,6 +198,7 @@ class _ChangeCard extends StatelessWidget {
     required this.sprintBranchIos,
     required this.sprintBranchAndroid,
     required this.comments,
+    required this.mergeRequests,
   });
 
   List<DocArtifact> _artifacts(AppLocalizations texts) {
@@ -242,11 +247,11 @@ class _ChangeCard extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Text(change.title, style: AppTextStyles.screenTitle),
+        SelectableText(change.title, style: AppTextStyles.screenTitle),
         const SizedBox(height: 6),
         Row(
           children: [
-            Text(change.id,
+            SelectableText(change.id,
                 style:
                     AppTextStyles.monospace(11.5, color: AppColors.textMuted)),
             const SizedBox(width: AppDimens.gapM),
@@ -275,26 +280,19 @@ class _ChangeCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 62,
+              flex: 55,
               child: Column(
                 children: [
                   for (final stackState in visibleStacks) ...[
                     _TaskChecklist(stack: stackState),
                     const SizedBox(height: AppDimens.gapM),
                   ],
-                  _CodeCard(
-                    stacks: visibleStacks,
-                    branchIos: sprintBranchIos,
-                    branchAndroid: sprintBranchAndroid,
-                  ),
-                  const SizedBox(height: AppDimens.gapM),
-                  _CommentsCard(comments: comments),
                 ],
               ),
             ),
             const SizedBox(width: AppDimens.gapL),
             Expanded(
-              flex: 38,
+              flex: 45,
               child: Column(
                 children: [
                   SectionCard(
@@ -311,6 +309,16 @@ class _ChangeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppDimens.gapM),
                   _DependenciesCard(change: change, allChanges: allChanges),
+                  const SizedBox(height: AppDimens.gapM),
+                  _CodeCard(
+                    stacks: visibleStacks,
+                    branchIos: sprintBranchIos,
+                    branchAndroid: sprintBranchAndroid,
+                    mergeRequests: mergeRequests,
+                    changeId: change.id,
+                  ),
+                  const SizedBox(height: AppDimens.gapM),
+                  _CommentsCard(comments: comments),
                 ],
               ),
             ),
@@ -327,15 +335,22 @@ class _CodeCard extends StatelessWidget {
   final List<StackState> stacks;
   final String? branchIos;
   final String? branchAndroid;
+  final List<MergeRequestInfo>? mergeRequests;
+  final String changeId;
 
   const _CodeCard({
     required this.stacks,
     required this.branchIos,
     required this.branchAndroid,
+    required this.mergeRequests,
+    required this.changeId,
   });
 
   String? _branchFor(String stack) =>
       stack == 'ios' ? branchIos : branchAndroid;
+
+  MergeRequestInfo? _mrFor(String stack) =>
+      mergeRequests?.where((mr) => mr.stack == stack).firstOrNull;
 
   @override
   Widget build(BuildContext context) {
@@ -345,25 +360,28 @@ class _CodeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (index, stackState) in stacks.indexed) ...[
-            if (index > 0) const SizedBox(height: AppDimens.gapM),
+            if (index > 0) ...[
+              const SizedBox(height: AppDimens.gapM),
+              const Divider(height: 1),
+              const SizedBox(height: AppDimens.gapM),
+            ],
             Text(texts.codeSectionTitle(texts.stackLabel(stackState.stack)),
                 style: AppTextStyles.sectionTitle),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(texts.codeSprintBranch,
-                    style: AppTextStyles.hint),
-                const SizedBox(width: AppDimens.gapS),
-                Expanded(
-                  child: Text(
-                    _branchFor(stackState.stack) ?? texts.codeNoBranch,
-                    style: AppTextStyles.monospace(12,
-                        color: _branchFor(stackState.stack) == null
-                            ? AppColors.textMuted
-                            : AppColors.monospaceText),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            _CodeRow(
+              label: texts.codeChangeBranch,
+              value: 'features/$changeId',
+            ),
+            _CodeRow(
+              label: texts.codeSprintBranch,
+              value: _branchFor(stackState.stack) ?? texts.codeNoBranch,
+              muted: _branchFor(stackState.stack) == null,
+            ),
+            const SizedBox(height: 8),
+            _MergeRequestRow(
+              mergeRequest: _mrFor(stackState.stack),
+              loading: mergeRequests == null,
+              targetBranch: _branchFor(stackState.stack) ?? '',
             ),
           ],
         ],
@@ -372,17 +390,152 @@ class _CodeCard extends StatelessWidget {
   }
 }
 
+/// Строка «подпись — значение» с копируемым моноширинным значением.
+class _CodeRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool muted;
+
+  const _CodeRow(
+      {required this.label, required this.value, this.muted = false});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: AppTextStyles.hint),
+            SelectableText(
+              value,
+              style: AppTextStyles.monospace(12,
+                  color: muted ? AppColors.textMuted : AppColors.monospaceText),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Ярлык MR и факт влития рядом: где они расходятся — это видно.
+class _MergeRequestRow extends StatelessWidget {
+  final MergeRequestInfo? mergeRequest;
+  final bool loading;
+  final String targetBranch;
+
+  const _MergeRequestRow({
+    required this.mergeRequest,
+    required this.loading,
+    required this.targetBranch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    if (loading) {
+      return const SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 1.5));
+    }
+    final mr = mergeRequest;
+    if (mr == null) {
+      return Text(texts.codeGitlabUnavailable,
+          style: AppTextStyles.captionMuted);
+    }
+    final (stateText, stateColor) = switch (mr.state) {
+      MergeRequestState.opened => (
+          texts.codeMrOpened(mr.iid ?? 0),
+          AppColors.statusInReview
+        ),
+      MergeRequestState.merged => (
+          texts.codeMrMerged(mr.iid ?? 0),
+          AppColors.success
+        ),
+      MergeRequestState.closed => (
+          texts.codeMrClosed(mr.iid ?? 0),
+          AppColors.textMuted
+        ),
+      MergeRequestState.none => (texts.codeMrNone, AppColors.textMuted),
+    };
+    final (factText, factColor) = switch (mr.mergedIntoTarget) {
+      true => (texts.codeFactMerged(targetBranch), AppColors.success),
+      false => (texts.codeFactMissing(targetBranch), AppColors.warning),
+      null => (texts.codeFactUnknown, AppColors.textMuted),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(color: stateColor, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(stateText,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary)),
+            ),
+            if (mr.webUrl.isNotEmpty)
+              InkWell(
+                onTap: () => launchUrl(Uri.parse(mr.webUrl)),
+                child: Text(texts.codeOpenMr,
+                    style: const TextStyle(
+                        fontSize: 11.5, color: AppColors.accent)),
+              ),
+          ],
+        ),
+        if (mr.state != MergeRequestState.none) ...[
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(top: 4),
+                decoration:
+                    BoxDecoration(color: factColor, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(factText,
+                    style: TextStyle(fontSize: 12, color: factColor)),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Лента комментариев Redmine — то, чем обмениваются разработчик
 /// и тестировщик по задаче.
-class _CommentsCard extends StatelessWidget {
+class _CommentsCard extends StatefulWidget {
   final List<IssueComment>? comments;
 
   const _CommentsCard({required this.comments});
 
   @override
+  State<_CommentsCard> createState() => _CommentsCardState();
+}
+
+class _CommentsCardState extends State<_CommentsCard> {
+  static const _collapsedCount = 3;
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    final loaded = comments;
+    final loaded = widget.comments;
+    final visible = loaded == null
+        ? const <IssueComment>[]
+        : (_expanded ? loaded : loaded.take(_collapsedCount).toList());
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,9 +549,19 @@ class _CommentsCard extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 1.5))
           else if (loaded.isEmpty)
             Text(texts.commentsEmpty, style: AppTextStyles.captionMuted)
-          else
-            for (final comment in loaded.take(6))
-              _CommentRow(comment: comment),
+          else ...[
+            for (final comment in visible) _CommentRow(comment: comment),
+            if (!_expanded && loaded.length > _collapsedCount)
+              InkWell(
+                onTap: () => setState(() => _expanded = true),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(texts.commentsShowAll(loaded.length),
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.accent)),
+                ),
+              ),
+          ],
         ],
       ),
     );
@@ -422,9 +585,9 @@ class _CommentRow extends StatelessWidget {
               style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
             const SizedBox(height: 3),
-            Text(comment.text,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
+            // Текст не обрезаем: в комментариях лежат ссылки на MR и
+            // номера задач — они нужны целиком и копируемыми.
+            SelectableText(comment.text,
                 style: AppTextStyles.caption.copyWith(height: 1.45)),
           ],
         ),
@@ -619,7 +782,7 @@ class _TaskRow extends StatelessWidget {
                   color: task.done ? AppColors.textMuted : AppColors.warning)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
+            child: SelectableText(
               task.title,
               style: TextStyle(
                   fontSize: 12.5,

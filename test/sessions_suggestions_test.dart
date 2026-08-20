@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:platform_console/domain/entities/console_snapshot.dart';
 import 'package:platform_console/domain/entities/env_report.dart';
 import 'package:platform_console/domain/entities/issue_comment.dart';
+import 'package:platform_console/domain/entities/merge_request_info.dart';
 import 'package:platform_console/domain/entities/slash_command.dart';
 import 'package:platform_console/domain/repositories/platform_repository.dart';
 import 'package:platform_console/domain/usecases/suggest_command_arguments.dart';
@@ -52,6 +53,9 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
+
+  @override
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId) async => const [];
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';

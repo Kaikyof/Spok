@@ -34,6 +34,11 @@ class _CommentsLoaded extends ConsoleEvent {
   _CommentsLoaded(this.comments);
 }
 
+class _MergeRequestsLoaded extends ConsoleEvent {
+  final List<MergeRequestInfo> mergeRequests;
+  _MergeRequestsLoaded(this.mergeRequests);
+}
+
 class StackFilterChanged extends ConsoleEvent {
   final StackFilter filter;
   StackFilterChanged(this.filter);

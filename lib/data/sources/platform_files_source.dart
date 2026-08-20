@@ -233,7 +233,14 @@ class PlatformFilesSource {
   String get role => loadEnv()['AVTOTO_ROLE'] ?? '';
 
   /// Сервисы workspace.yaml, отфильтрованные по роли машины.
-  List<({String name, String ref})> workspaceServices() {
+  List<({String name, String ref})> workspaceServices() => [
+        for (final service in allServices())
+          (name: service.name, ref: service.ref),
+      ];
+
+  /// Сервисы без фильтра по роли: для GitLab нужен репозиторий стека,
+  /// даже если на этой машине он не склонирован.
+  List<({String name, String ref, String repo, String stack})> allServices() {
     final file = File(p.join(root.path, 'workspace.yaml'));
     if (!file.existsSync()) return [];
     final services = loadYaml(file.readAsStringSync())['services'];
@@ -242,8 +249,24 @@ class PlatformFilesSource {
     return [
       for (final service in services)
         if (_serviceMatchesRole(service, machineRole))
-          (name: service['name'].toString(), ref: service['ref'].toString()),
+          (
+            name: service['name'].toString(),
+            ref: service['ref'].toString(),
+            repo: service['repo']?.toString() ?? '',
+            stack: _stackOfService(service),
+          ),
     ];
+  }
+
+  /// Стек сервиса из его ролей: «dev, ios» → ios.
+  String _stackOfService(dynamic service) {
+    final roles = (service['roles']?.toString() ?? '')
+        .split(',')
+        .map((role) => role.trim());
+    for (final stack in ['ios', 'android']) {
+      if (roles.contains(stack)) return stack;
+    }
+    return '';
   }
 
   bool _serviceMatchesRole(dynamic service, String machineRole) {
