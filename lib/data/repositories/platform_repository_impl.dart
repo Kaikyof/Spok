@@ -99,6 +99,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       env: await _buildEnvReport(source),
       redmineProblem: redmineProblem,
       redmineProblemDetail: redmineDetail,
+      redmineBaseUrl: source.loadEnv()['REDMINE_URL'] ?? '',
       refreshedAt: DateTime.now(),
     );
   }

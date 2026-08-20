@@ -341,4 +341,159 @@ class AppLocalizationsRu extends AppLocalizations {
   String setupConfigHint(String path) {
     return 'Хранится в $path (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.';
   }
+
+  @override
+  String get stackFilterAll => 'Все стеки';
+
+  @override
+  String get openInRedmineTooltip => 'Открыть задачу в Redmine';
+
+  @override
+  String get dependenciesTitle => 'Зависимости';
+
+  @override
+  String get dependsOnLabel => 'ЗАВИСИТ ОТ';
+
+  @override
+  String get dependentsLabel => 'ОТ НЕГО ЗАВИСЯТ';
+
+  @override
+  String get dependenciesNone => 'нет зависимостей';
+
+  @override
+  String get sprintBranchLabel => 'Ветка спринта';
+
+  @override
+  String get handoffStepReadiness => 'Готовность';
+
+  @override
+  String get handoffStepBuild => 'Сборка';
+
+  @override
+  String get handoffStepRecipients => 'Получатели';
+
+  @override
+  String get handoffStepPreview => 'Предпросмотр и отправка';
+
+  @override
+  String handoffReadyCount(int ready, int total) {
+    return '$ready из $total change\'ей готовы к передаче';
+  }
+
+  @override
+  String get handoffBlockersLabel => 'БЛОКЕРЫ';
+
+  @override
+  String get handoffNoBlockers => 'блокеров нет — спринт можно передавать';
+
+  @override
+  String handoffBlockerStatus(String change, String stack, String status) {
+    return '$change — $stack в статусе «$status», ожидается «Ожидает тестирования»';
+  }
+
+  @override
+  String handoffBlockerTasks(String change, String stack, String nums) {
+    return '$change — $stack: не закрыты задачи $nums';
+  }
+
+  @override
+  String handoffBlockerBuild(String stack) {
+    return 'сборка $stack не записана в builds.yaml';
+  }
+
+  @override
+  String handoffBuildRecordedAt(String date) {
+    return 'записана $date';
+  }
+
+  @override
+  String get handoffBuildMissingShort => 'не записана';
+
+  @override
+  String get handoffRecipientsNote =>
+      'Тестировщик и менеджер определяются из ролей Redmine и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).';
+
+  @override
+  String get handoffRecipientTester => 'Тестировщик';
+
+  @override
+  String get handoffRecipientManager => 'Менеджер';
+
+  @override
+  String get handoffRecipientPending => 'будет выбран при отправке';
+
+  @override
+  String get handoffPreviewLabel => 'СООБЩЕНИЕ В КАНАЛ КОМАНДЫ';
+
+  @override
+  String get handoffEffectsLabel => 'ЧТО ПРОИЗОЙДЁТ';
+
+  @override
+  String handoffEffectAssignee(int count) {
+    return 'в $count задачах сменится исполнитель';
+  }
+
+  @override
+  String handoffEffectComment(int count) {
+    return 'в $count задач уйдёт комментарий со сборкой';
+  }
+
+  @override
+  String get handoffEffectMessage => 'в канал команды уйдёт 1 сообщение';
+
+  @override
+  String get handoffSendButton => 'Отправить спринт тестировщику';
+
+  @override
+  String handoffSendBlocked(int ready, int total) {
+    return 'недоступно: готовность $ready из $total — устраните блокеры шага 1';
+  }
+
+  @override
+  String get handoffSendNotImplemented =>
+      'отправка появится в следующем этапе — через скрипты платформы';
+
+  @override
+  String get handoverMsgTitle => 'Спринт передан на тестирование';
+
+  @override
+  String handoverMsgSprint(String title) {
+    return 'Спринт: $title';
+  }
+
+  @override
+  String handoverMsgStack(String stack) {
+    return 'Стек: $stack';
+  }
+
+  @override
+  String handoverMsgRecipients(String tester, String manager) {
+    return 'Тестировщик: $tester · Менеджер: $manager';
+  }
+
+  @override
+  String handoverMsgBuild(String build) {
+    return 'Сборка: $build';
+  }
+
+  @override
+  String get handoverMsgComposition => 'Состав спринта';
+
+  @override
+  String get handoverMsgOrder => 'Порядок проверки';
+
+  @override
+  String handoverMsgTaskLine(
+    String issue,
+    String title,
+    String status,
+    String marks,
+  ) {
+    return '  $issue — $title — $status; задачи $marks';
+  }
+
+  @override
+  String handoverMsgOrderAfter(String issues) {
+    return ' (после $issues)';
+  }
 }

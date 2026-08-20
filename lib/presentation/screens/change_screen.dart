@@ -16,7 +16,9 @@ import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/marks_indicator.dart';
+import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
+import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
@@ -34,39 +36,84 @@ class ChangeScreen extends StatelessWidget {
                 backLabel: state.selectedChange?.title);
           }
           if (state.selectedChange != null) {
-            return _ChangeCard(change: state.selectedChange!);
+            return _ChangeCard(
+              change: state.selectedChange!,
+              allChanges: state.snapshot?.changes ?? const [],
+              filter: state.stackFilter,
+              redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
+            );
           }
-          return _ChangeList(changes: state.snapshot?.changes ?? const []);
+          return _ChangeList(
+            changes: state.snapshot?.changes ?? const [],
+            filter: state.stackFilter,
+            redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
+          );
         },
       );
 }
 
 class _ChangeList extends StatelessWidget {
   final List<ChangeUnit> changes;
+  final StackFilter filter;
+  final String redmineBaseUrl;
 
-  const _ChangeList({required this.changes});
-
-  @override
-  Widget build(BuildContext context) => ListView(
-        padding: AppDimens.screenPadding,
-        children: [
-          for (final change in changes)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ChangeListRow(change: change),
-            ),
-        ],
-      );
-}
-
-class _ChangeListRow extends StatelessWidget {
-  final ChangeUnit change;
-
-  const _ChangeListRow({required this.change});
+  const _ChangeList(
+      {required this.changes,
+      required this.filter,
+      required this.redmineBaseUrl});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    return ListView(
+      padding: AppDimens.screenPadding,
+      children: [
+        Row(
+          children: [
+            const Spacer(),
+            StackFilterControl<StackFilter>(
+              options: [
+                (StackFilter.all, texts.stackFilterAll),
+                (StackFilter.ios, texts.stackIos),
+                (StackFilter.android, texts.stackAndroid),
+              ],
+              selected: filter,
+              onChanged: (newFilter) => context
+                  .read<ConsoleBloc>()
+                  .add(StackFilterChanged(newFilter)),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimens.gapM),
+        for (final change in changes)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _ChangeListRow(
+                change: change,
+                filter: filter,
+                redmineBaseUrl: redmineBaseUrl),
+          ),
+      ],
+    );
+  }
+}
+
+class _ChangeListRow extends StatelessWidget {
+  final ChangeUnit change;
+  final StackFilter filter;
+  final String redmineBaseUrl;
+
+  const _ChangeListRow(
+      {required this.change,
+      required this.filter,
+      required this.redmineBaseUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final visibleStacks = change.stacks
+        .where((stack) => filter.allows(stack.stack))
+        .toList();
     return InkWell(
       onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(change)),
       borderRadius: BorderRadius.circular(AppDimens.cardRadius),
@@ -86,18 +133,32 @@ class _ChangeListRow extends StatelessWidget {
                 ],
               ),
             ),
-            for (final stackState in change.stacks) ...[
+            for (final stackState in visibleStacks) ...[
               SizedBox(
-                width: 210,
-                child: StatusBadge(
-                  text:
-                      '${texts.stackLabel(stackState.stack)} · ${stackState.redmineStatus ?? texts.statusUnavailable}',
-                  dotColor: stackState.redmineStatus == null
-                      ? AppColors.textMuted
-                      : AppColors.forRedmineStatus(stackState.redmineStatus!),
-                  muted: stackState.redmineStatus == null,
+                width: 230,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: StatusBadge(
+                        text:
+                            '${texts.stackLabel(stackState.stack)} · ${stackState.redmineStatus ?? texts.statusUnavailable}',
+                        dotColor: stackState.redmineStatus == null
+                            ? AppColors.textMuted
+                            : AppColors.forRedmineStatus(
+                                stackState.redmineStatus!),
+                        muted: stackState.redmineStatus == null,
+                      ),
+                    ),
+                    RedmineIssueLink(
+                      issueId: stackState.issueId,
+                      baseUrl: redmineBaseUrl,
+                      tooltip: texts.openInRedmineTooltip,
+                      fontSize: 11.5,
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: AppDimens.gapM),
               MarksIndicator(
                 doneCount: stackState.doneCount,
                 totalCount: stackState.tasks.length,
@@ -113,8 +174,16 @@ class _ChangeListRow extends StatelessWidget {
 
 class _ChangeCard extends StatelessWidget {
   final ChangeUnit change;
+  final List<ChangeUnit> allChanges;
+  final StackFilter filter;
+  final String redmineBaseUrl;
 
-  const _ChangeCard({required this.change});
+  const _ChangeCard({
+    required this.change,
+    required this.allChanges,
+    required this.filter,
+    required this.redmineBaseUrl,
+  });
 
   List<DocArtifact> _artifacts(AppLocalizations texts) {
     final labelsToFiles = [
@@ -133,12 +202,33 @@ class _ChangeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final visibleStacks = change.stacks
+        .where((stack) => filter.allows(stack.stack))
+        .toList();
     return ListView(
       padding: AppDimens.screenPadding,
       children: [
-        InkWell(
-          onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(null)),
-          child: Text(texts.backToChanges, style: AppTextStyles.captionMuted),
+        Row(
+          children: [
+            InkWell(
+              onTap: () =>
+                  context.read<ConsoleBloc>().add(ChangeOpened(null)),
+              child:
+                  Text(texts.backToChanges, style: AppTextStyles.captionMuted),
+            ),
+            const Spacer(),
+            StackFilterControl<StackFilter>(
+              options: [
+                (StackFilter.all, texts.stackFilterAll),
+                (StackFilter.ios, texts.stackIos),
+                (StackFilter.android, texts.stackAndroid),
+              ],
+              selected: filter,
+              onChanged: (newFilter) => context
+                  .read<ConsoleBloc>()
+                  .add(StackFilterChanged(newFilter)),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Text(change.title, style: AppTextStyles.screenTitle),
@@ -158,6 +248,13 @@ class _ChangeCard extends StatelessWidget {
                     : AppColors.forRedmineStatus(stackState.redmineStatus!),
                 muted: stackState.redmineStatus == null,
               ),
+              const SizedBox(width: 6),
+              RedmineIssueLink(
+                issueId: stackState.issueId,
+                baseUrl: redmineBaseUrl,
+                tooltip: texts.openInRedmineTooltip,
+                fontSize: 12,
+              ),
               const SizedBox(width: AppDimens.gapL),
             ],
           ],
@@ -170,7 +267,7 @@ class _ChangeCard extends StatelessWidget {
               flex: 62,
               child: Column(
                 children: [
-                  for (final stackState in change.stacks) ...[
+                  for (final stackState in visibleStacks) ...[
                     _TaskChecklist(stack: stackState),
                     const SizedBox(height: AppDimens.gapM),
                   ],
@@ -180,17 +277,23 @@ class _ChangeCard extends StatelessWidget {
             const SizedBox(width: AppDimens.gapL),
             Expanded(
               flex: 38,
-              child: SectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(texts.artifactsTitle,
-                        style: AppTextStyles.sectionTitle),
-                    const SizedBox(height: AppDimens.gapS),
-                    for (final artifact in _artifacts(texts))
-                      _ArtifactRow(artifact: artifact),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  SectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(texts.artifactsTitle,
+                            style: AppTextStyles.sectionTitle),
+                        const SizedBox(height: AppDimens.gapS),
+                        for (final artifact in _artifacts(texts))
+                          _ArtifactRow(artifact: artifact),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.gapM),
+                  _DependenciesCard(change: change, allChanges: allChanges),
+                ],
               ),
             ),
           ],
@@ -198,6 +301,84 @@ class _ChangeCard extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DependenciesCard extends StatelessWidget {
+  final ChangeUnit change;
+  final List<ChangeUnit> allChanges;
+
+  const _DependenciesCard({required this.change, required this.allChanges});
+
+  String _titleOf(String changeId) => allChanges
+      .where((candidate) => candidate.id == changeId)
+      .map((candidate) => candidate.title)
+      .firstOrNull ??
+      changeId;
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final dependents = allChanges
+        .where((candidate) => candidate.dependsOn.contains(change.id))
+        .toList();
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(texts.dependenciesTitle, style: AppTextStyles.sectionTitle),
+          const SizedBox(height: AppDimens.gapS),
+          if (change.dependsOn.isEmpty && dependents.isEmpty)
+            Text(texts.dependenciesNone, style: AppTextStyles.captionMuted),
+          if (change.dependsOn.isNotEmpty) ...[
+            Text(texts.dependsOnLabel,
+                style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+            const SizedBox(height: 6),
+            for (final dependencyId in change.dependsOn)
+              _DependencyRow(
+                  title: _titleOf(dependencyId),
+                  dotColor: AppColors.success),
+            const SizedBox(height: AppDimens.gapS),
+          ],
+          if (dependents.isNotEmpty) ...[
+            Text(texts.dependentsLabel,
+                style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+            const SizedBox(height: 6),
+            for (final dependent in dependents)
+              _DependencyRow(
+                  title: dependent.title, dotColor: AppColors.statusTesting),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DependencyRow extends StatelessWidget {
+  final String title;
+  final Color dotColor;
+
+  const _DependencyRow({required this.title, required this.dotColor});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            Container(
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(color: dotColor, shape: BoxShape.circle)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption),
+            ),
+          ],
+        ),
+      );
 }
 
 class _ArtifactRow extends StatelessWidget {
@@ -317,8 +498,7 @@ class _TaskRow extends StatelessWidget {
                   color: task.done
                       ? AppColors.textSecondary
                       : AppColors.textPrimary,
-                  fontWeight:
-                      task.done ? FontWeight.w400 : FontWeight.w500),
+                  fontWeight: task.done ? FontWeight.w400 : FontWeight.w500),
             ),
           ),
           if (!task.done)
@@ -352,8 +532,7 @@ class _DocViewer extends StatelessWidget {
           child: Row(
             children: [
               InkWell(
-                onTap: () =>
-                    context.read<ConsoleBloc>().add(DocOpened(null)),
+                onTap: () => context.read<ConsoleBloc>().add(DocOpened(null)),
                 child: Text(
                     backLabel != null ? '← $backLabel' : texts.backFallback,
                     style: AppTextStyles.captionMuted),

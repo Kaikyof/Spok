@@ -15,6 +15,7 @@ class ConsoleSnapshot {
   final EnvReport env;
   final RedmineProblem redmineProblem;
   final String redmineProblemDetail;
+  final String redmineBaseUrl; // для кликабельных ссылок на задачи
   final DateTime refreshedAt;
 
   const ConsoleSnapshot({
@@ -24,6 +25,7 @@ class ConsoleSnapshot {
     required this.env,
     required this.redmineProblem,
     this.redmineProblemDetail = '',
+    this.redmineBaseUrl = '',
     required this.refreshedAt,
   });
 }

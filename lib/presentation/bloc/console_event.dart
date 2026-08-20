@@ -28,3 +28,8 @@ class PlatformPathSubmitted extends ConsoleEvent {
   final String path;
   PlatformPathSubmitted(this.path);
 }
+
+class StackFilterChanged extends ConsoleEvent {
+  final StackFilter filter;
+  StackFilterChanged(this.filter);
+}

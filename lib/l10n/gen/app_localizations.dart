@@ -645,6 +645,251 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.'**
   String setupConfigHint(String path);
+
+  /// No description provided for @stackFilterAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все стеки'**
+  String get stackFilterAll;
+
+  /// No description provided for @openInRedmineTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть задачу в Redmine'**
+  String get openInRedmineTooltip;
+
+  /// No description provided for @dependenciesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зависимости'**
+  String get dependenciesTitle;
+
+  /// No description provided for @dependsOnLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ЗАВИСИТ ОТ'**
+  String get dependsOnLabel;
+
+  /// No description provided for @dependentsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ОТ НЕГО ЗАВИСЯТ'**
+  String get dependentsLabel;
+
+  /// No description provided for @dependenciesNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'нет зависимостей'**
+  String get dependenciesNone;
+
+  /// No description provided for @sprintBranchLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ветка спринта'**
+  String get sprintBranchLabel;
+
+  /// No description provided for @handoffStepReadiness.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готовность'**
+  String get handoffStepReadiness;
+
+  /// No description provided for @handoffStepBuild.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сборка'**
+  String get handoffStepBuild;
+
+  /// No description provided for @handoffStepRecipients.
+  ///
+  /// In ru, this message translates to:
+  /// **'Получатели'**
+  String get handoffStepRecipients;
+
+  /// No description provided for @handoffStepPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпросмотр и отправка'**
+  String get handoffStepPreview;
+
+  /// No description provided for @handoffReadyCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{ready} из {total} change\'ей готовы к передаче'**
+  String handoffReadyCount(int ready, int total);
+
+  /// No description provided for @handoffBlockersLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'БЛОКЕРЫ'**
+  String get handoffBlockersLabel;
+
+  /// No description provided for @handoffNoBlockers.
+  ///
+  /// In ru, this message translates to:
+  /// **'блокеров нет — спринт можно передавать'**
+  String get handoffNoBlockers;
+
+  /// No description provided for @handoffBlockerStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'{change} — {stack} в статусе «{status}», ожидается «Ожидает тестирования»'**
+  String handoffBlockerStatus(String change, String stack, String status);
+
+  /// No description provided for @handoffBlockerTasks.
+  ///
+  /// In ru, this message translates to:
+  /// **'{change} — {stack}: не закрыты задачи {nums}'**
+  String handoffBlockerTasks(String change, String stack, String nums);
+
+  /// No description provided for @handoffBlockerBuild.
+  ///
+  /// In ru, this message translates to:
+  /// **'сборка {stack} не записана в builds.yaml'**
+  String handoffBlockerBuild(String stack);
+
+  /// No description provided for @handoffBuildRecordedAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'записана {date}'**
+  String handoffBuildRecordedAt(String date);
+
+  /// No description provided for @handoffBuildMissingShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'не записана'**
+  String get handoffBuildMissingShort;
+
+  /// No description provided for @handoffRecipientsNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тестировщик и менеджер определяются из ролей Redmine и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).'**
+  String get handoffRecipientsNote;
+
+  /// No description provided for @handoffRecipientTester.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тестировщик'**
+  String get handoffRecipientTester;
+
+  /// No description provided for @handoffRecipientManager.
+  ///
+  /// In ru, this message translates to:
+  /// **'Менеджер'**
+  String get handoffRecipientManager;
+
+  /// No description provided for @handoffRecipientPending.
+  ///
+  /// In ru, this message translates to:
+  /// **'будет выбран при отправке'**
+  String get handoffRecipientPending;
+
+  /// No description provided for @handoffPreviewLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'СООБЩЕНИЕ В КАНАЛ КОМАНДЫ'**
+  String get handoffPreviewLabel;
+
+  /// No description provided for @handoffEffectsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ЧТО ПРОИЗОЙДЁТ'**
+  String get handoffEffectsLabel;
+
+  /// No description provided for @handoffEffectAssignee.
+  ///
+  /// In ru, this message translates to:
+  /// **'в {count} задачах сменится исполнитель'**
+  String handoffEffectAssignee(int count);
+
+  /// No description provided for @handoffEffectComment.
+  ///
+  /// In ru, this message translates to:
+  /// **'в {count} задач уйдёт комментарий со сборкой'**
+  String handoffEffectComment(int count);
+
+  /// No description provided for @handoffEffectMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'в канал команды уйдёт 1 сообщение'**
+  String get handoffEffectMessage;
+
+  /// No description provided for @handoffSendButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить спринт тестировщику'**
+  String get handoffSendButton;
+
+  /// No description provided for @handoffSendBlocked.
+  ///
+  /// In ru, this message translates to:
+  /// **'недоступно: готовность {ready} из {total} — устраните блокеры шага 1'**
+  String handoffSendBlocked(int ready, int total);
+
+  /// No description provided for @handoffSendNotImplemented.
+  ///
+  /// In ru, this message translates to:
+  /// **'отправка появится в следующем этапе — через скрипты платформы'**
+  String get handoffSendNotImplemented;
+
+  /// No description provided for @handoverMsgTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спринт передан на тестирование'**
+  String get handoverMsgTitle;
+
+  /// No description provided for @handoverMsgSprint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спринт: {title}'**
+  String handoverMsgSprint(String title);
+
+  /// No description provided for @handoverMsgStack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стек: {stack}'**
+  String handoverMsgStack(String stack);
+
+  /// No description provided for @handoverMsgRecipients.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тестировщик: {tester} · Менеджер: {manager}'**
+  String handoverMsgRecipients(String tester, String manager);
+
+  /// No description provided for @handoverMsgBuild.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сборка: {build}'**
+  String handoverMsgBuild(String build);
+
+  /// No description provided for @handoverMsgComposition.
+  ///
+  /// In ru, this message translates to:
+  /// **'Состав спринта'**
+  String get handoverMsgComposition;
+
+  /// No description provided for @handoverMsgOrder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Порядок проверки'**
+  String get handoverMsgOrder;
+
+  /// No description provided for @handoverMsgTaskLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'  {issue} — {title} — {status}; задачи {marks}'**
+  String handoverMsgTaskLine(
+    String issue,
+    String title,
+    String status,
+    String marks,
+  );
+
+  /// No description provided for @handoverMsgOrderAfter.
+  ///
+  /// In ru, this message translates to:
+  /// **' (после {issues})'**
+  String handoverMsgOrderAfter(String issues);
 }
 
 class _AppLocalizationsDelegate

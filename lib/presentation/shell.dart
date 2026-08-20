@@ -10,6 +10,7 @@ import 'bloc/console_bloc.dart';
 import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
 import 'screens/env_screen.dart';
+import 'screens/handoff_screen.dart';
 import 'screens/placeholder_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/sprint_screen.dart';
@@ -62,8 +63,7 @@ class _ScreenSwitcher extends StatelessWidget {
         ConsoleScreen.sprint => const SprintScreen(),
         ConsoleScreen.changes => const ChangeScreen(),
         ConsoleScreen.env => const EnvScreen(),
-        ConsoleScreen.handoff => PlaceholderScreen(
-            title: texts.handoffTitle, note: texts.handoffNote),
+        ConsoleScreen.handoff => const HandoffScreen(),
         ConsoleScreen.sessions => PlaceholderScreen(
             title: texts.sessionsTitle, note: texts.sessionsNote),
       },

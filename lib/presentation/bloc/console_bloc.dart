@@ -26,6 +26,8 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
         )));
     on<DocOpened>(_onDocOpened);
     on<PlatformPathSubmitted>(_onPathSubmitted);
+    on<StackFilterChanged>(
+        (event, emit) => emit(state.copyWith(stackFilter: event.filter)));
     add(ConsoleRefreshed());
   }
 
