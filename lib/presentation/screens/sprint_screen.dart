@@ -14,7 +14,9 @@ import '../bloc/console_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/next_step_banner.dart';
+import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
+import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
 
 /// Главный экран: за пять секунд показать, где спринт и что мешает.
@@ -36,24 +38,62 @@ class SprintScreen extends StatelessWidget {
                 textAlign: TextAlign.center, style: AppTextStyles.body),
           );
         }
+        final filter = state.stackFilter;
+        final visibleDivergences = snapshot.divergences
+            .where((divergence) => filter.allows(divergence.stack))
+            .toList();
         return ListView(
           padding: AppDimens.screenPadding,
           children: [
+            const _FilterRow(),
+            const SizedBox(height: AppDimens.gapM),
             if (snapshot.redmineProblem != RedmineProblem.none) ...[
               _RedmineUnavailableBar(snapshot: snapshot),
               const SizedBox(height: AppDimens.gapM),
             ],
-            if (snapshot.divergences.isNotEmpty) ...[
-              _DivergenceBlock(divergences: snapshot.divergences),
+            if (visibleDivergences.isNotEmpty) ...[
+              _DivergenceBlock(divergences: visibleDivergences),
               const SizedBox(height: AppDimens.gapL),
             ],
             _ChangesTable(
-                changes: snapshot.changes, divergences: snapshot.divergences),
+              changes: snapshot.changes,
+              divergences: snapshot.divergences,
+              filter: filter,
+              redmineBaseUrl: snapshot.redmineBaseUrl,
+            ),
             const SizedBox(height: AppDimens.gapL),
-            _NextStepSection(changes: snapshot.changes),
+            _NextStepSection(changes: snapshot.changes, filter: filter),
           ],
         );
       },
+    );
+  }
+}
+
+class _FilterRow extends StatelessWidget {
+  const _FilterRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return BlocBuilder<ConsoleBloc, ConsoleState>(
+      buildWhen: (previous, current) =>
+          previous.stackFilter != current.stackFilter,
+      builder: (context, state) => Row(
+        children: [
+          const Spacer(),
+          StackFilterControl<StackFilter>(
+            options: [
+              (StackFilter.all, texts.stackFilterAll),
+              (StackFilter.ios, texts.stackIos),
+              (StackFilter.android, texts.stackAndroid),
+            ],
+            selected: state.stackFilter,
+            onChanged: (filter) =>
+                context.read<ConsoleBloc>().add(StackFilterChanged(filter)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -134,8 +174,15 @@ class _DivergenceBlock extends StatelessWidget {
 class _ChangesTable extends StatelessWidget {
   final List<ChangeUnit> changes;
   final List<Divergence> divergences;
+  final StackFilter filter;
+  final String redmineBaseUrl;
 
-  const _ChangesTable({required this.changes, required this.divergences});
+  const _ChangesTable({
+    required this.changes,
+    required this.divergences,
+    required this.filter,
+    required this.redmineBaseUrl,
+  });
 
   bool _hasDivergence(ChangeUnit change, String stack) => divergences.any(
       (divergence) =>
@@ -146,10 +193,12 @@ class _ChangesTable extends StatelessWidget {
         padding: EdgeInsets.zero,
         child: Column(
           children: [
-            const _TableHeader(),
+            _TableHeader(filter: filter),
             for (final (index, change) in changes.indexed)
               _ChangeRow(
                 change: change,
+                filter: filter,
+                redmineBaseUrl: redmineBaseUrl,
                 showTopDivider: index > 0,
                 iosDiverged: _hasDivergence(change, 'ios'),
                 androidDiverged: _hasDivergence(change, 'android'),
@@ -160,7 +209,9 @@ class _ChangesTable extends StatelessWidget {
 }
 
 class _TableHeader extends StatelessWidget {
-  const _TableHeader();
+  final StackFilter filter;
+
+  const _TableHeader({required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -174,20 +225,22 @@ class _TableHeader extends StatelessWidget {
         children: [
           Expanded(
               flex: 42,
-              child:
-                  Text(texts.tableHeaderChange, style: AppTextStyles.sectionLabel)),
-          Expanded(
-              flex: 29,
-              child: Text(texts.tableHeaderIos,
-                  style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary))),
-          Expanded(
-              flex: 29,
-              child: Text(texts.tableHeaderAndroid,
-                  style: AppTextStyles.sectionLabel
-                      .copyWith(color: AppColors.textSecondary))),
+              child: Text(texts.tableHeaderChange,
+                  style: AppTextStyles.sectionLabel)),
+          if (filter.allows('ios'))
+            Expanded(
+                flex: filter == StackFilter.all ? 29 : 58,
+                child: Text(texts.tableHeaderIos,
+                    style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary))),
+          if (filter.allows('android'))
+            Expanded(
+                flex: filter == StackFilter.all ? 29 : 58,
+                child: Text(texts.tableHeaderAndroid,
+                    style: AppTextStyles.sectionLabel
+                        .copyWith(color: AppColors.textSecondary))),
         ],
       ),
     );
@@ -196,12 +249,16 @@ class _TableHeader extends StatelessWidget {
 
 class _ChangeRow extends StatelessWidget {
   final ChangeUnit change;
+  final StackFilter filter;
+  final String redmineBaseUrl;
   final bool showTopDivider;
   final bool iosDiverged;
   final bool androidDiverged;
 
   const _ChangeRow({
     required this.change,
+    required this.filter,
+    required this.redmineBaseUrl,
     required this.showTopDivider,
     required this.iosDiverged,
     required this.androidDiverged,
@@ -235,16 +292,22 @@ class _ChangeRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                flex: 29,
-                child:
-                    _StackCell(stack: change.ios, diverged: iosDiverged),
-              ),
-              Expanded(
-                flex: 29,
-                child: _StackCell(
-                    stack: change.android, diverged: androidDiverged),
-              ),
+              if (filter.allows('ios'))
+                Expanded(
+                  flex: filter == StackFilter.all ? 29 : 58,
+                  child: _StackCell(
+                      stack: change.ios,
+                      diverged: iosDiverged,
+                      redmineBaseUrl: redmineBaseUrl),
+                ),
+              if (filter.allows('android'))
+                Expanded(
+                  flex: filter == StackFilter.all ? 29 : 58,
+                  child: _StackCell(
+                      stack: change.android,
+                      diverged: androidDiverged,
+                      redmineBaseUrl: redmineBaseUrl),
+                ),
             ],
           ),
         ),
@@ -254,8 +317,12 @@ class _ChangeRow extends StatelessWidget {
 class _StackCell extends StatelessWidget {
   final StackState? stack;
   final bool diverged;
+  final String redmineBaseUrl;
 
-  const _StackCell({required this.stack, required this.diverged});
+  const _StackCell(
+      {required this.stack,
+      required this.diverged,
+      required this.redmineBaseUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -281,9 +348,11 @@ class _StackCell extends StatelessWidget {
                 muted: status == null,
               ),
               const SizedBox(height: 3),
-              Text('#${stackState.issueId ?? '—'}',
-                  style: AppTextStyles.monospace(10.5,
-                      color: AppColors.textMuted)),
+              RedmineIssueLink(
+                issueId: stackState.issueId,
+                baseUrl: redmineBaseUrl,
+                tooltip: texts.openInRedmineTooltip,
+              ),
             ],
           ),
         ),
@@ -303,20 +372,21 @@ class _StackCell extends StatelessWidget {
     );
   }
 
-  String _openTasksSummary(List<TaskItem> openTasks) => openTasks
-      .map((task) => '${task.number} ${task.title}')
-      .join('\n');
+  String _openTasksSummary(List<TaskItem> openTasks) =>
+      openTasks.map((task) => '${task.number} ${task.title}').join('\n');
 }
 
 class _NextStepSection extends StatelessWidget {
   final List<ChangeUnit> changes;
+  final StackFilter filter;
 
-  const _NextStepSection({required this.changes});
+  const _NextStepSection({required this.changes, required this.filter});
 
-  /// Самая частая незакрытая задача по всем стекам спринта.
+  /// Самая частая незакрытая задача по видимым стекам спринта.
   (TaskItem, int)? _mostFrequentOpenTask() {
     final openTasks = changes
         .expand((change) => change.stacks)
+        .where((stack) => filter.allows(stack.stack))
         .expand((stack) => stack.openTasks);
     final countsByNumber = <String, (TaskItem, int)>{};
     for (final task in openTasks) {
@@ -324,8 +394,7 @@ class _NextStepSection extends StatelessWidget {
       countsByNumber[task.number] = (task, (counted?.$2 ?? 0) + 1);
     }
     if (countsByNumber.isEmpty) return null;
-    return countsByNumber.values
-        .reduce((a, b) => a.$2 >= b.$2 ? a : b);
+    return countsByNumber.values.reduce((a, b) => a.$2 >= b.$2 ? a : b);
   }
 
   @override

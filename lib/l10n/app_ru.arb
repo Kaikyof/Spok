@@ -253,5 +253,173 @@
         "type": "String"
       }
     }
+  },
+  "stackFilterAll": "Все стеки",
+  "openInRedmineTooltip": "Открыть задачу в Redmine",
+  "dependenciesTitle": "Зависимости",
+  "dependsOnLabel": "ЗАВИСИТ ОТ",
+  "dependentsLabel": "ОТ НЕГО ЗАВИСЯТ",
+  "dependenciesNone": "нет зависимостей",
+  "sprintBranchLabel": "Ветка спринта",
+  "handoffStepReadiness": "Готовность",
+  "handoffStepBuild": "Сборка",
+  "handoffStepRecipients": "Получатели",
+  "handoffStepPreview": "Предпросмотр и отправка",
+  "handoffReadyCount": "{ready} из {total} change'ей готовы к передаче",
+  "@handoffReadyCount": {
+    "placeholders": {
+      "ready": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "handoffBlockersLabel": "БЛОКЕРЫ",
+  "handoffNoBlockers": "блокеров нет — спринт можно передавать",
+  "handoffBlockerStatus": "{change} — {stack} в статусе «{status}», ожидается «Ожидает тестирования»",
+  "@handoffBlockerStatus": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "stack": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffBlockerTasks": "{change} — {stack}: не закрыты задачи {nums}",
+  "@handoffBlockerTasks": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "stack": {
+        "type": "String"
+      },
+      "nums": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffBlockerBuild": "сборка {stack} не записана в builds.yaml",
+  "@handoffBlockerBuild": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffBuildRecordedAt": "записана {date}",
+  "@handoffBuildRecordedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffBuildMissingShort": "не записана",
+  "handoffRecipientsNote": "Тестировщик и менеджер определяются из ролей Redmine и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).",
+  "handoffRecipientTester": "Тестировщик",
+  "handoffRecipientManager": "Менеджер",
+  "handoffRecipientPending": "будет выбран при отправке",
+  "handoffPreviewLabel": "СООБЩЕНИЕ В КАНАЛ КОМАНДЫ",
+  "handoffEffectsLabel": "ЧТО ПРОИЗОЙДЁТ",
+  "handoffEffectAssignee": "в {count} задачах сменится исполнитель",
+  "@handoffEffectAssignee": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "handoffEffectComment": "в {count} задач уйдёт комментарий со сборкой",
+  "@handoffEffectComment": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "handoffEffectMessage": "в канал команды уйдёт 1 сообщение",
+  "handoffSendButton": "Отправить спринт тестировщику",
+  "handoffSendBlocked": "недоступно: готовность {ready} из {total} — устраните блокеры шага 1",
+  "@handoffSendBlocked": {
+    "placeholders": {
+      "ready": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "handoffSendNotImplemented": "отправка появится в следующем этапе — через скрипты платформы",
+  "handoverMsgTitle": "Спринт передан на тестирование",
+  "handoverMsgSprint": "Спринт: {title}",
+  "@handoverMsgSprint": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverMsgStack": "Стек: {stack}",
+  "@handoverMsgStack": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverMsgRecipients": "Тестировщик: {tester} · Менеджер: {manager}",
+  "@handoverMsgRecipients": {
+    "placeholders": {
+      "tester": {
+        "type": "String"
+      },
+      "manager": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverMsgBuild": "Сборка: {build}",
+  "@handoverMsgBuild": {
+    "placeholders": {
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverMsgComposition": "Состав спринта",
+  "handoverMsgOrder": "Порядок проверки",
+  "handoverMsgTaskLine": "  {issue} — {title} — {status}; задачи {marks}",
+  "@handoverMsgTaskLine": {
+    "placeholders": {
+      "issue": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      },
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "handoverMsgOrderAfter": " (после {issues})",
+  "@handoverMsgOrderAfter": {
+    "placeholders": {
+      "issues": {
+        "type": "String"
+      }
+    }
   }
 }

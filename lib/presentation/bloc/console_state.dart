@@ -4,6 +4,15 @@ enum ConsoleScreen { sprint, changes, handoff, env, sessions }
 
 enum LoadStatus { initial, loading, ready }
 
+/// Фильтр стеков: искать только iOS- или только Android-задачи.
+enum StackFilter {
+  all,
+  ios,
+  android;
+
+  bool allows(String stack) => this == all || name == stack;
+}
+
 class ConsoleState {
   final LoadStatus status;
   final ConsoleScreen screen;
@@ -13,6 +22,7 @@ class ConsoleState {
   final DocArtifact? selectedDoc;
   final String? docContent;
   final bool pathRejected;
+  final StackFilter stackFilter;
 
   const ConsoleState({
     this.status = LoadStatus.initial,
@@ -23,6 +33,7 @@ class ConsoleState {
     this.selectedDoc,
     this.docContent,
     this.pathRejected = false,
+    this.stackFilter = StackFilter.all,
   });
 
   /// Платформа не найдена — нужен экран первичной настройки.
@@ -49,6 +60,7 @@ class ConsoleState {
     DocArtifact? Function()? selectedDoc,
     String? Function()? docContent,
     bool? pathRejected,
+    StackFilter? stackFilter,
   }) =>
       ConsoleState(
         status: status ?? this.status,
@@ -60,5 +72,6 @@ class ConsoleState {
         selectedDoc: selectedDoc != null ? selectedDoc() : this.selectedDoc,
         docContent: docContent != null ? docContent() : this.docContent,
         pathRejected: pathRejected ?? this.pathRejected,
+        stackFilter: stackFilter ?? this.stackFilter,
       );
 }
