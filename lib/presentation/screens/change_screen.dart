@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/resources/app_colors.dart';
@@ -10,6 +11,7 @@ import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -41,6 +43,9 @@ class ChangeScreen extends StatelessWidget {
               allChanges: state.snapshot?.changes ?? const [],
               filter: state.stackFilter,
               redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
+              sprintBranchIos: state.sprint?.branchIos,
+              sprintBranchAndroid: state.sprint?.branchAndroid,
+              comments: state.comments,
             );
           }
           return _ChangeList(
@@ -177,12 +182,18 @@ class _ChangeCard extends StatelessWidget {
   final List<ChangeUnit> allChanges;
   final StackFilter filter;
   final String redmineBaseUrl;
+  final String? sprintBranchIos;
+  final String? sprintBranchAndroid;
+  final List<IssueComment>? comments;
 
   const _ChangeCard({
     required this.change,
     required this.allChanges,
     required this.filter,
     required this.redmineBaseUrl,
+    required this.sprintBranchIos,
+    required this.sprintBranchAndroid,
+    required this.comments,
   });
 
   List<DocArtifact> _artifacts(AppLocalizations texts) {
@@ -271,6 +282,13 @@ class _ChangeCard extends StatelessWidget {
                     _TaskChecklist(stack: stackState),
                     const SizedBox(height: AppDimens.gapM),
                   ],
+                  _CodeCard(
+                    stacks: visibleStacks,
+                    branchIos: sprintBranchIos,
+                    branchAndroid: sprintBranchAndroid,
+                  ),
+                  const SizedBox(height: AppDimens.gapM),
+                  _CommentsCard(comments: comments),
                 ],
               ),
             ),
@@ -301,6 +319,116 @@ class _ChangeCard extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Код: ветка спринта по стекам. Состояние MR подключится вместе
+/// с GitLab API — пока показываем только то, что знаем наверняка.
+class _CodeCard extends StatelessWidget {
+  final List<StackState> stacks;
+  final String? branchIos;
+  final String? branchAndroid;
+
+  const _CodeCard({
+    required this.stacks,
+    required this.branchIos,
+    required this.branchAndroid,
+  });
+
+  String? _branchFor(String stack) =>
+      stack == 'ios' ? branchIos : branchAndroid;
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (index, stackState) in stacks.indexed) ...[
+            if (index > 0) const SizedBox(height: AppDimens.gapM),
+            Text(texts.codeSectionTitle(texts.stackLabel(stackState.stack)),
+                style: AppTextStyles.sectionTitle),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Text(texts.codeSprintBranch,
+                    style: AppTextStyles.hint),
+                const SizedBox(width: AppDimens.gapS),
+                Expanded(
+                  child: Text(
+                    _branchFor(stackState.stack) ?? texts.codeNoBranch,
+                    style: AppTextStyles.monospace(12,
+                        color: _branchFor(stackState.stack) == null
+                            ? AppColors.textMuted
+                            : AppColors.monospaceText),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Лента комментариев Redmine — то, чем обмениваются разработчик
+/// и тестировщик по задаче.
+class _CommentsCard extends StatelessWidget {
+  final List<IssueComment>? comments;
+
+  const _CommentsCard({required this.comments});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final loaded = comments;
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(texts.commentsTitle, style: AppTextStyles.sectionTitle),
+          const SizedBox(height: AppDimens.gapS),
+          if (loaded == null)
+            const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 1.5))
+          else if (loaded.isEmpty)
+            Text(texts.commentsEmpty, style: AppTextStyles.captionMuted)
+          else
+            for (final comment in loaded.take(6))
+              _CommentRow(comment: comment),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommentRow extends StatelessWidget {
+  final IssueComment comment;
+
+  const _CommentRow({required this.comment});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${comment.author} · #${comment.issueId} · '
+              '${DateFormat('d MMM, HH:mm', 'ru').format(comment.createdAt.toLocal())}',
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 3),
+            Text(comment.text,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(height: 1.45)),
+          ],
+        ),
+      );
 }
 
 class _DependenciesCard extends StatelessWidget {

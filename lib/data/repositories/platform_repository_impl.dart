@@ -7,7 +7,9 @@ import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_report.dart';
+import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/app_config_source.dart';
@@ -30,20 +32,25 @@ const _criticalEnvKeys = [
 class PlatformRepositoryImpl implements PlatformRepository {
   PlatformFilesSource? files;
   final AppConfigSource config;
+  final CommandLog? commandLog;
   final FindDivergences findDivergences;
 
   PlatformRepositoryImpl(this.files,
-      {AppConfigSource? config, FindDivergences? findDivergences})
+      {AppConfigSource? config,
+      this.commandLog,
+      FindDivergences? findDivergences})
       : config = config ?? AppConfigSource(),
         findDivergences = findDivergences ?? FindDivergences();
 
   /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
-  static Future<PlatformRepositoryImpl> create() async {
+  static Future<PlatformRepositoryImpl> create({CommandLog? commandLog}) async {
     final config = AppConfigSource();
     final configuredPath = await config.readPlatformDir();
     return PlatformRepositoryImpl(
-      PlatformFilesSource.locate(configuredPath: configuredPath),
+      PlatformFilesSource.locate(
+          configuredPath: configuredPath, commandLog: commandLog),
       config: config,
+      commandLog: commandLog,
     );
   }
 
@@ -76,8 +83,38 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final trimmedPath = path.trim();
     if (!PlatformFilesSource.isPlatformRoot(trimmedPath)) return false;
     await config.writePlatformDir(trimmedPath);
-    files = PlatformFilesSource(Directory(trimmedPath));
+    files = PlatformFilesSource(Directory(trimmedPath), commandLog: commandLog);
     return true;
+  }
+
+  @override
+  Future<List<IssueComment>> issueComments(List<int> issueIds) async {
+    final source = files;
+    if (source == null || issueIds.isEmpty) return const [];
+    final env = source.loadEnv();
+    final baseUrl = env['REDMINE_URL'] ?? '';
+    final apiKey = env['REDMINE_API_KEY'] ?? '';
+    if (baseUrl.isEmpty || apiKey.isEmpty) return const [];
+    final api = RedmineApi(baseUrl, apiKey);
+    try {
+      final perIssue = await Future.wait(issueIds.map((issueId) async {
+        final comments = await api.issueComments(issueId);
+        return [
+          for (final comment in comments)
+            IssueComment(
+              issueId: issueId,
+              author: comment.author,
+              createdAt: comment.createdAt,
+              text: comment.text,
+            ),
+        ];
+      }));
+      final all = perIssue.expand((comments) => comments).toList();
+      all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return all;
+    } catch (_) {
+      return const [];
+    }
   }
 
   @override

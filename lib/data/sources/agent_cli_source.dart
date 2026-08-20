@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../domain/entities/agent_session.dart';
+import '../../domain/repositories/command_log.dart';
 
 /// Запуск Claude Code как дочернего процесса в headless-режиме
 /// (`claude -p --output-format stream-json`) и разбор его событий.
@@ -14,7 +15,10 @@ class AgentCliSource {
     '/usr/local/bin/claude',
   ];
 
+  final CommandLog? commandLog;
   Process? _process;
+
+  AgentCliSource({this.commandLog});
 
   static String? locateBinary() {
     for (final candidate in _binaryCandidates) {
@@ -41,16 +45,20 @@ class AgentCliSource {
     required void Function(AgentSessionStatus status, Duration duration) onDone,
   }) async {
     final startedAt = DateTime.now();
+    final arguments = [
+      '-p', prompt,
+      '--output-format', 'stream-json',
+      '--verbose',
+      '--model', model,
+      '--effort', effort,
+      if (resumeSessionId != null) ...['--resume', resumeSessionId],
+    ];
+    // Команда всегда видна: её можно скопировать и выполнить руками (бриф §3.5).
+    final run = commandLog?.begin('claude ${arguments.join(' ')}');
+    final transcript = StringBuffer();
     final process = await Process.start(
       binary,
-      [
-        '-p', prompt,
-        '--output-format', 'stream-json',
-        '--verbose',
-        '--model', model,
-        '--effort', effort,
-        if (resumeSessionId != null) ...['--resume', resumeSessionId],
-      ],
+      arguments,
       workingDirectory: workingDirectory,
     );
     _process = process;
@@ -67,6 +75,7 @@ class AgentCliSource {
         .transform(const LineSplitter())
         .listen((line) {
       if (line.trim().isNotEmpty) {
+        transcript.writeln(line);
         onEvent(AgentEvent(AgentEventKind.error, line));
       }
     });
@@ -74,6 +83,10 @@ class AgentCliSource {
     final exitCode = await process.exitCode;
     final wasStopped = _process == null;
     _process = null;
+    if (run != null) {
+      commandLog?.complete(run,
+          output: transcript.toString().trim(), exitCode: exitCode);
+    }
     onDone(
       wasStopped
           ? AgentSessionStatus.stopped

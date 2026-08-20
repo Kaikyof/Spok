@@ -473,5 +473,53 @@
         "type": "String"
       }
     }
-  }
+  },
+  "launchPanelIdle": "команды ещё не выполнялись",
+  "launchPanelRunning": "выполняется…",
+  "launchPanelExit": "код {code} · {seconds} с",
+  "@launchPanelExit": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "launchCopyCommand": "копировать команду",
+  "launchCopyOutput": "копировать вывод",
+  "launchCopied": "скопировано",
+  "launchNoOutput": "вывод пуст",
+  "freshJustNow": "обновлено только что",
+  "freshMinutes": "обновлено {count} мин назад",
+  "@freshMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freshHours": "обновлено {count} ч назад",
+  "@freshHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freshStale": "данные устарели — обновите",
+  "codeSectionTitle": "Код · {stack}",
+  "@codeSectionTitle": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "codeSprintBranch": "ветка спринта",
+  "codeNoBranch": "ветка спринта не задана в sprint.yaml",
+  "commentsTitle": "Комментарии Redmine",
+  "commentsEmpty": "комментариев нет",
+  "commentsUnavailable": "комментарии недоступны без ключа Redmine"
 }

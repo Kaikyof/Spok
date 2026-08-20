@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/sources/agent_cli_source.dart';
 import '../../domain/entities/agent_session.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/repositories/command_log.dart';
 import '../../domain/repositories/platform_repository.dart';
 
 part 'sessions_event.dart';
@@ -12,9 +13,11 @@ part 'sessions_state.dart';
 /// Сообщения продолжают один диалог, а не плодят новые сессии.
 class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
   final PlatformRepository repository;
+  final CommandLog? commandLog;
   final Map<String, AgentCliSource> _runningSources = {};
 
-  SessionsBloc(this.repository) : super(_initialState(repository)) {
+  SessionsBloc(this.repository, {this.commandLog})
+      : super(_initialState(repository)) {
     on<SessionMessageSent>(_onMessageSent);
     on<SessionCreated>(_onCreated);
     on<SessionDeleted>(_onDeleted);
@@ -60,7 +63,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     session.model = state.model;
     session.effort = state.effort;
 
-    final source = AgentCliSource();
+    final source = AgentCliSource(commandLog: commandLog);
     _runningSources[session.id] = source;
     emit(state.copyWith(
       sessions: isNewSession ? [session, ...state.sessions] : state.sessions,

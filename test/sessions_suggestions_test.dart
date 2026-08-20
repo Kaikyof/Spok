@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:platform_console/domain/entities/console_snapshot.dart';
 import 'package:platform_console/domain/entities/env_report.dart';
+import 'package:platform_console/domain/entities/issue_comment.dart';
 import 'package:platform_console/domain/entities/slash_command.dart';
 import 'package:platform_console/domain/repositories/platform_repository.dart';
 import 'package:platform_console/domain/usecases/suggest_command_arguments.dart';
@@ -48,6 +49,9 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   Future<String> readDoc(String absolutePath) async => '';
+
+  @override
+  Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';

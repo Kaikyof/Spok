@@ -26,6 +26,26 @@ class RedmineApi {
     };
   }
 
+  /// Лента комментариев задачи (журналы с текстом), новые сверху.
+  Future<List<({String author, DateTime createdAt, String text})>> issueComments(
+      int issueId) async {
+    final resp = await _dio.get('/issues/$issueId.json',
+        queryParameters: {'include': 'journals'});
+    final journals = resp.data['issue']?['journals'];
+    if (journals is! List) return const [];
+    return [
+      for (final journal in journals.reversed)
+        if ((journal['notes']?.toString() ?? '').trim().isNotEmpty)
+          (
+            author: journal['user']?['name']?.toString() ?? '—',
+            createdAt:
+                DateTime.tryParse(journal['created_on']?.toString() ?? '') ??
+                    DateTime.now(),
+            text: journal['notes'].toString().trim(),
+          ),
+    ];
+  }
+
   /// Проверка доступности; возвращает время ответа в мс.
   Future<int> ping() async {
     final sw = Stopwatch()..start();

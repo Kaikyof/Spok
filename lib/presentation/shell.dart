@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../core/resources/app_colors.dart';
 import '../core/resources/app_dimens.dart';
 import '../core/resources/app_text_styles.dart';
+import '../domain/repositories/command_log.dart';
 import '../l10n/gen/app_localizations.dart';
+import '../main.dart';
+import 'widgets/launch_panel.dart';
 import 'bloc/console_bloc.dart';
 import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
@@ -33,13 +36,16 @@ class Shell extends StatelessWidget {
           }
           if (state.needsSetup) return const SetupScreen();
           return Row(
-            children: const [
-              _Sidebar(),
+            children: [
+              const _Sidebar(),
               Expanded(
                 child: Column(
                   children: [
-                    _Header(),
-                    Expanded(child: _ScreenSwitcher()),
+                    const _Header(),
+                    const Expanded(child: _ScreenSwitcher()),
+                    // Панель запуска — постоянный элемент вне зависимости
+                    // от экрана (бриф §4).
+                    LaunchPanel(commandLog: getIt<CommandLog>()),
                   ],
                 ),
               ),
@@ -190,20 +196,27 @@ class _MachineRoleCard extends StatelessWidget {
               style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
           const SizedBox(height: 6),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 8,
                 height: 8,
+                margin: const EdgeInsets.only(top: 5),
                 decoration: BoxDecoration(
                     color: roleKnown ? AppColors.success : AppColors.danger,
                     shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
-              Text(roleKnown ? texts.roleLabel(role) : texts.roleNotSet,
-                  style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary)),
+              // «Разработчик (оба стека)» длиннее карточки — переносим.
+              Expanded(
+                child: Text(
+                    roleKnown ? texts.roleLabel(role) : texts.roleNotSet,
+                    style: const TextStyle(
+                        fontSize: 12.5,
+                        height: 1.25,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary)),
+              ),
             ],
           ),
           const SizedBox(height: 4),
@@ -359,11 +372,28 @@ class _FreshnessIndicator extends StatelessWidget {
     }
     final refreshedAt = state.snapshot?.refreshedAt;
     if (refreshedAt == null) return const SizedBox.shrink();
+    final age = DateTime.now().difference(refreshedAt);
+    final stale = age.inMinutes >= 15;
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: Text(texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
-          style: AppTextStyles.caption),
+      child: Tooltip(
+        message: texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
+        child: Text(
+          _freshnessLabel(texts, age, stale),
+          style: AppTextStyles.caption
+              .copyWith(color: stale ? AppColors.warning : null),
+        ),
+      ),
     );
+  }
+
+  /// Свежесть данных — часть интерфейса (бриф §3.6): относительное время,
+  /// а устаревшие данные мягко подсвечиваются.
+  String _freshnessLabel(AppLocalizations texts, Duration age, bool stale) {
+    if (stale) return texts.freshStale;
+    if (age.inMinutes < 1) return texts.freshJustNow;
+    if (age.inHours < 1) return texts.freshMinutes(age.inMinutes);
+    return texts.freshHours(age.inHours);
   }
 }
 

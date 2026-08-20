@@ -23,6 +23,7 @@ class ConsoleState {
   final String? docContent;
   final bool pathRejected;
   final StackFilter stackFilter;
+  final List<IssueComment>? comments; // null — ещё грузятся
 
   const ConsoleState({
     this.status = LoadStatus.initial,
@@ -34,6 +35,7 @@ class ConsoleState {
     this.docContent,
     this.pathRejected = false,
     this.stackFilter = StackFilter.all,
+    this.comments,
   });
 
   /// Платформа не найдена — нужен экран первичной настройки.
@@ -61,6 +63,7 @@ class ConsoleState {
     String? Function()? docContent,
     bool? pathRejected,
     StackFilter? stackFilter,
+    List<IssueComment>? Function()? comments,
   }) =>
       ConsoleState(
         status: status ?? this.status,
@@ -73,5 +76,6 @@ class ConsoleState {
         docContent: docContent != null ? docContent() : this.docContent,
         pathRejected: pathRejected ?? this.pathRejected,
         stackFilter: stackFilter ?? this.stackFilter,
+        comments: comments != null ? comments() : this.comments,
       );
 }

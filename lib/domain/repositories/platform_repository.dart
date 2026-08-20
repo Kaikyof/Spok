@@ -1,4 +1,5 @@
 import '../entities/console_snapshot.dart';
+import '../entities/issue_comment.dart';
 import '../entities/slash_command.dart';
 
 abstract class PlatformRepository {
@@ -18,6 +19,9 @@ abstract class PlatformRepository {
 
   /// Читает markdown-файл документации (внутри репозитория платформы).
   Future<String> readDoc(String absolutePath);
+
+  /// Лента комментариев задач change'а; пустая, если Redmine недоступен.
+  Future<List<IssueComment>> issueComments(List<int> issueIds);
 
   /// Путь к конфиг-файлу приложения (для подсказки на экране настройки).
   Future<String> configFilePath();

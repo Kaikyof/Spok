@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'core/resources/app_dimens.dart';
 import 'core/theme/app_theme.dart';
+import 'data/repositories/command_log_impl.dart';
 import 'data/repositories/platform_repository_impl.dart';
+import 'domain/repositories/command_log.dart';
 import 'domain/repositories/platform_repository.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'presentation/bloc/console_bloc.dart';
@@ -15,7 +18,9 @@ import 'presentation/shell.dart';
 final getIt = GetIt.instance;
 
 Future<void> setupDi() async {
-  final repository = await PlatformRepositoryImpl.create();
+  final commandLog = CommandLogImpl();
+  getIt.registerSingleton<CommandLog>(commandLog);
+  final repository = await PlatformRepositoryImpl.create(commandLog: commandLog);
   getIt.registerSingleton<PlatformRepository>(repository);
 }
 
@@ -34,6 +39,8 @@ Future<void> main() async {
     ),
     null,
   );
+  // Русские названия месяцев в датах комментариев.
+  await initializeDateFormatting('ru');
   await setupDi();
   runApp(const ConsoleApp());
   WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -58,7 +65,8 @@ class ConsoleApp extends StatelessWidget {
             BlocProvider(
                 create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
             BlocProvider(
-                create: (_) => SessionsBloc(getIt<PlatformRepository>())),
+                create: (_) => SessionsBloc(getIt<PlatformRepository>(),
+                    commandLog: getIt<CommandLog>())),
           ],
           child: const Shell(),
         ),

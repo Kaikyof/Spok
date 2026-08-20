@@ -29,6 +29,11 @@ class PlatformPathSubmitted extends ConsoleEvent {
   PlatformPathSubmitted(this.path);
 }
 
+class _CommentsLoaded extends ConsoleEvent {
+  final List<IssueComment> comments;
+  _CommentsLoaded(this.comments);
+}
+
 class StackFilterChanged extends ConsoleEvent {
   final StackFilter filter;
   StackFilterChanged(this.filter);

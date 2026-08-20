@@ -587,4 +587,63 @@ class AppLocalizationsRu extends AppLocalizations {
   String sessionArgumentsFor(String command) {
     return 'аргументы $command';
   }
+
+  @override
+  String get launchPanelIdle => 'команды ещё не выполнялись';
+
+  @override
+  String get launchPanelRunning => 'выполняется…';
+
+  @override
+  String launchPanelExit(int code, String seconds) {
+    return 'код $code · $seconds с';
+  }
+
+  @override
+  String get launchCopyCommand => 'копировать команду';
+
+  @override
+  String get launchCopyOutput => 'копировать вывод';
+
+  @override
+  String get launchCopied => 'скопировано';
+
+  @override
+  String get launchNoOutput => 'вывод пуст';
+
+  @override
+  String get freshJustNow => 'обновлено только что';
+
+  @override
+  String freshMinutes(int count) {
+    return 'обновлено $count мин назад';
+  }
+
+  @override
+  String freshHours(int count) {
+    return 'обновлено $count ч назад';
+  }
+
+  @override
+  String get freshStale => 'данные устарели — обновите';
+
+  @override
+  String codeSectionTitle(String stack) {
+    return 'Код · $stack';
+  }
+
+  @override
+  String get codeSprintBranch => 'ветка спринта';
+
+  @override
+  String get codeNoBranch => 'ветка спринта не задана в sprint.yaml';
+
+  @override
+  String get commentsTitle => 'Комментарии Redmine';
+
+  @override
+  String get commentsEmpty => 'комментариев нет';
+
+  @override
+  String get commentsUnavailable => 'комментарии недоступны без ключа Redmine';
 }

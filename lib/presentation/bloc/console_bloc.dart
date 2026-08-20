@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/sprint.dart';
 import '../../domain/repositories/platform_repository.dart';
 
@@ -18,12 +19,9 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
         (event, emit) => emit(state.copyWith(screen: event.screen)));
     on<SprintSelected>(
         (event, emit) => emit(state.copyWith(selectedSprintId: event.sprintId)));
-    on<ChangeOpened>((event, emit) => emit(state.copyWith(
-          screen: ConsoleScreen.changes,
-          selectedChange: () => event.change,
-          selectedDoc: () => null,
-          docContent: () => null,
-        )));
+    on<ChangeOpened>(_onChangeOpened);
+    on<_CommentsLoaded>((event, emit) =>
+        emit(state.copyWith(comments: () => event.comments)));
     on<DocOpened>(_onDocOpened);
     on<PlatformPathSubmitted>(_onPathSubmitted);
     on<StackFilterChanged>(
@@ -55,6 +53,25 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
       snapshot: snapshot,
       selectedChange: () => keptChange,
     ));
+  }
+
+  Future<void> _onChangeOpened(
+      ChangeOpened event, Emitter<ConsoleState> emit) async {
+    emit(state.copyWith(
+      screen: ConsoleScreen.changes,
+      selectedChange: () => event.change,
+      selectedDoc: () => null,
+      docContent: () => null,
+      comments: () => null,
+    ));
+    final change = event.change;
+    if (change == null) return;
+    // Лента комментариев — там общаются разработчик и тестировщик (бриф §5.2).
+    final issueIds =
+        change.stacks.map((stack) => stack.issueId).nonNulls.toList();
+    final comments = await repository.issueComments(issueIds);
+    if (isClosed || state.selectedChange?.id != change.id) return;
+    add(_CommentsLoaded(comments));
   }
 
   Future<void> _onDocOpened(

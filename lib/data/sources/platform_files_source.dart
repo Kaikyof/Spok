@@ -5,6 +5,7 @@ import 'package:yaml/yaml.dart';
 
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/sprint.dart';
 import '../../domain/entities/stack_state.dart';
@@ -13,7 +14,11 @@ import '../../domain/entities/task_item.dart';
 /// Чтение файлов avtoto-platform. Ничего не пишет и не кэширует на диске.
 class PlatformFilesSource {
   final Directory root;
-  PlatformFilesSource(this.root);
+
+  /// Журнал команд для панели запуска; без него источник работает молча.
+  final CommandLog? commandLog;
+
+  PlatformFilesSource(this.root, {this.commandLog});
 
   /// Проверка, что каталог — корень платформы.
   static bool isPlatformRoot(String dir) =>
@@ -21,7 +26,8 @@ class PlatformFilesSource {
 
   /// Ищет репозиторий платформы: переменная окружения AVTOTO_PLATFORM_DIR,
   /// путь из конфига приложения, затем типовые пути.
-  static PlatformFilesSource? locate({String? configuredPath}) {
+  static PlatformFilesSource? locate(
+      {String? configuredPath, CommandLog? commandLog}) {
     final home = Platform.environment['HOME'];
     final candidates = [
       ?Platform.environment['AVTOTO_PLATFORM_DIR'],
@@ -32,7 +38,8 @@ class PlatformFilesSource {
     ];
     for (final candidate in candidates) {
       if (isPlatformRoot(candidate)) {
-        return PlatformFilesSource(Directory(candidate));
+        return PlatformFilesSource(Directory(candidate),
+            commandLog: commandLog);
       }
     }
     return null;
@@ -292,11 +299,21 @@ class PlatformFilesSource {
   /// Только fast-forward; любая ошибка (офлайн, локальные правки) не мешает
   /// работе с тем, что есть на диске.
   Future<void> pullPlatform() async {
+    final run = commandLog?.begin('git -C ${root.path} pull --ff-only');
     try {
-      await Process.run('git', ['-C', root.path, 'pull', '--ff-only', '--quiet'])
-          .timeout(const Duration(seconds: 15));
-    } catch (_) {
+      final result =
+          await Process.run('git', ['-C', root.path, 'pull', '--ff-only'])
+              .timeout(const Duration(seconds: 15));
+      if (run != null) {
+        commandLog?.complete(run,
+            output: '${result.stdout}${result.stderr}'.trim(),
+            exitCode: result.exitCode);
+      }
+    } catch (error) {
       // офлайн или конфликт — читаем локальное состояние
+      if (run != null) {
+        commandLog?.complete(run, output: '$error', exitCode: 1);
+      }
     }
   }
 

@@ -1034,6 +1034,108 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'аргументы {command}'**
   String sessionArgumentsFor(String command);
+
+  /// No description provided for @launchPanelIdle.
+  ///
+  /// In ru, this message translates to:
+  /// **'команды ещё не выполнялись'**
+  String get launchPanelIdle;
+
+  /// No description provided for @launchPanelRunning.
+  ///
+  /// In ru, this message translates to:
+  /// **'выполняется…'**
+  String get launchPanelRunning;
+
+  /// No description provided for @launchPanelExit.
+  ///
+  /// In ru, this message translates to:
+  /// **'код {code} · {seconds} с'**
+  String launchPanelExit(int code, String seconds);
+
+  /// No description provided for @launchCopyCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'копировать команду'**
+  String get launchCopyCommand;
+
+  /// No description provided for @launchCopyOutput.
+  ///
+  /// In ru, this message translates to:
+  /// **'копировать вывод'**
+  String get launchCopyOutput;
+
+  /// No description provided for @launchCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'скопировано'**
+  String get launchCopied;
+
+  /// No description provided for @launchNoOutput.
+  ///
+  /// In ru, this message translates to:
+  /// **'вывод пуст'**
+  String get launchNoOutput;
+
+  /// No description provided for @freshJustNow.
+  ///
+  /// In ru, this message translates to:
+  /// **'обновлено только что'**
+  String get freshJustNow;
+
+  /// No description provided for @freshMinutes.
+  ///
+  /// In ru, this message translates to:
+  /// **'обновлено {count} мин назад'**
+  String freshMinutes(int count);
+
+  /// No description provided for @freshHours.
+  ///
+  /// In ru, this message translates to:
+  /// **'обновлено {count} ч назад'**
+  String freshHours(int count);
+
+  /// No description provided for @freshStale.
+  ///
+  /// In ru, this message translates to:
+  /// **'данные устарели — обновите'**
+  String get freshStale;
+
+  /// No description provided for @codeSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код · {stack}'**
+  String codeSectionTitle(String stack);
+
+  /// No description provided for @codeSprintBranch.
+  ///
+  /// In ru, this message translates to:
+  /// **'ветка спринта'**
+  String get codeSprintBranch;
+
+  /// No description provided for @codeNoBranch.
+  ///
+  /// In ru, this message translates to:
+  /// **'ветка спринта не задана в sprint.yaml'**
+  String get codeNoBranch;
+
+  /// No description provided for @commentsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комментарии Redmine'**
+  String get commentsTitle;
+
+  /// No description provided for @commentsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'комментариев нет'**
+  String get commentsEmpty;
+
+  /// No description provided for @commentsUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'комментарии недоступны без ключа Redmine'**
+  String get commentsUnavailable;
 }
 
 class _AppLocalizationsDelegate
