@@ -12,6 +12,7 @@ class ConsoleState {
   final ChangeUnit? selectedChange;
   final DocArtifact? selectedDoc;
   final String? docContent;
+  final bool pathRejected;
 
   const ConsoleState({
     this.status = LoadStatus.initial,
@@ -21,7 +22,15 @@ class ConsoleState {
     this.selectedChange,
     this.selectedDoc,
     this.docContent,
+    this.pathRejected = false,
   });
+
+  /// Платформа не найдена — нужен экран первичной настройки.
+  bool get needsSetup =>
+      snapshot?.redmineProblem == RedmineProblem.platformNotFound;
+
+  /// Первая загрузка ещё идёт — показываем полноэкранный лоадер.
+  bool get isFirstLoad => snapshot == null;
 
   Sprint? get sprint {
     final current = snapshot;
@@ -39,6 +48,7 @@ class ConsoleState {
     ChangeUnit? Function()? selectedChange,
     DocArtifact? Function()? selectedDoc,
     String? Function()? docContent,
+    bool? pathRejected,
   }) =>
       ConsoleState(
         status: status ?? this.status,
@@ -49,5 +59,6 @@ class ConsoleState {
             selectedChange != null ? selectedChange() : this.selectedChange,
         selectedDoc: selectedDoc != null ? selectedDoc() : this.selectedDoc,
         docContent: docContent != null ? docContent() : this.docContent,
+        pathRejected: pathRejected ?? this.pathRejected,
       );
 }

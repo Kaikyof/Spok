@@ -14,17 +14,23 @@ class PlatformFilesSource {
   final Directory root;
   PlatformFilesSource(this.root);
 
-  /// Ищет репозиторий платформы: $AVTOTO_PLATFORM_DIR, затем типовые пути.
-  static PlatformFilesSource? locate() {
+  /// Проверка, что каталог — корень платформы.
+  static bool isPlatformRoot(String dir) =>
+      File(p.join(dir, 'workspace.yaml')).existsSync();
+
+  /// Ищет репозиторий платформы: переменная окружения AVTOTO_PLATFORM_DIR,
+  /// путь из конфига приложения, затем типовые пути.
+  static PlatformFilesSource? locate({String? configuredPath}) {
     final home = Platform.environment['HOME'];
     final candidates = [
       ?Platform.environment['AVTOTO_PLATFORM_DIR'],
+      ?configuredPath,
       '$home/webAnt-poject/avtoto-platform',
       '$home/webant-project/avtoto-platform',
       '$home/avtoto-platform',
     ];
     for (final candidate in candidates) {
-      if (File(p.join(candidate, 'workspace.yaml')).existsSync()) {
+      if (isPlatformRoot(candidate)) {
         return PlatformFilesSource(Directory(candidate));
       }
     }

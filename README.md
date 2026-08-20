@@ -29,8 +29,10 @@ avtoto. Делает состояние спринта видимым, а сле
 `avtoto-platform` (`workspace.yaml`, `.env`, `openspec/**`), опрашивает
 Redmine по API и спрашивает git. Каждое обновление — полный пересбор слепка.
 
-Путь к платформе ищется по `$AVTOTO_PLATFORM_DIR`, затем по типовым путям
-(`~/webAnt-poject/avtoto-platform` и др.) — см. `PlatformFilesSource.locate`.
+Путь к платформе: переменная окружения `AVTOTO_PLATFORM_DIR`, затем путь из
+конфига приложения (`~/Library/Application Support/PlatformConsole/.env`,
+ключ `AVTOTO_PLATFORM_DIR`), затем типовые пути. Если платформа не найдена,
+приложение показывает экран настройки и сохраняет введённый путь в конфиг.
 
 ## Архитектура
 

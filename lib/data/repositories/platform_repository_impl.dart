@@ -9,6 +9,7 @@ import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_report.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
+import '../sources/app_config_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
 
@@ -26,17 +27,42 @@ const _criticalEnvKeys = [
 ];
 
 class PlatformRepositoryImpl implements PlatformRepository {
-  final PlatformFilesSource? files;
+  PlatformFilesSource? files;
+  final AppConfigSource config;
   final FindDivergences findDivergences;
 
-  PlatformRepositoryImpl(this.files, {FindDivergences? findDivergences})
-      : findDivergences = findDivergences ?? FindDivergences();
+  PlatformRepositoryImpl(this.files,
+      {AppConfigSource? config, FindDivergences? findDivergences})
+      : config = config ?? AppConfigSource(),
+        findDivergences = findDivergences ?? FindDivergences();
+
+  /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
+  static Future<PlatformRepositoryImpl> create() async {
+    final config = AppConfigSource();
+    final configuredPath = await config.readPlatformDir();
+    return PlatformRepositoryImpl(
+      PlatformFilesSource.locate(configuredPath: configuredPath),
+      config: config,
+    );
+  }
 
   @override
   String? get rootPath => files?.path;
 
   @override
   String get role => files?.role ?? '';
+
+  @override
+  Future<String> configFilePath() => config.configPath();
+
+  @override
+  Future<bool> setPlatformDir(String path) async {
+    final trimmedPath = path.trim();
+    if (!PlatformFilesSource.isPlatformRoot(trimmedPath)) return false;
+    await config.writePlatformDir(trimmedPath);
+    files = PlatformFilesSource(Directory(trimmedPath));
+    return true;
+  }
 
   @override
   Future<String> readDoc(String absolutePath) async {
@@ -140,22 +166,21 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   Future<List<EnvCheck>> _checkRepos(PlatformFilesSource source) async {
-    final checks = <EnvCheck>[];
-    final platformInfo = await source.platformGitInfo();
-    if (platformInfo != null) {
-      checks.add(_gitCheck('avtoto-platform', platformInfo));
-    }
-    for (final service in source.workspaceServices()) {
+    final serviceChecks = source.workspaceServices().map((service) async {
       final info = await source.workspaceGitInfo(service.name);
-      checks.add(info == null
+      return info == null
           ? EnvCheck(
               level: CheckLevel.error,
               name: service.name,
               subtitle: service.ref,
               outcome: CheckOutcome.repoNotCloned)
-          : _gitCheck(service.name, info));
-    }
-    return checks;
+          : _gitCheck(service.name, info);
+    });
+    final platformInfo = await source.platformGitInfo();
+    return [
+      if (platformInfo != null) _gitCheck('avtoto-platform', platformInfo),
+      ...await Future.wait(serviceChecks),
+    ];
   }
 
   EnvCheck _gitCheck(String repoName, ({String branch, int behind}) info) =>
@@ -169,16 +194,17 @@ class PlatformRepositoryImpl implements PlatformRepository {
         count: info.behind,
       );
 
-  Future<List<EnvCheck>> _checkSystems(Map<String, String> env) async => [
-        await _pingSystem('Redmine', env['REDMINE_URL'],
+  Future<List<EnvCheck>> _checkSystems(Map<String, String> env) =>
+      Future.wait([
+        _pingSystem('Redmine', env['REDMINE_URL'],
             (url) => RedmineApi(url, env['REDMINE_API_KEY'] ?? '').ping()),
-        await _pingSystem('GitLab', env['GITLAB_URL'],
+        _pingSystem('GitLab', env['GITLAB_URL'],
             (url) => _timedGet('$url/api/v4/projects?per_page=1', headers: {
                   'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? '',
                 })),
-        await _pingSystem('Mattermost', env['MATTERMOST_URL'],
+        _pingSystem('Mattermost', env['MATTERMOST_URL'],
             (url) => _timedGet('$url/api/v4/system/ping')),
-      ];
+      ]);
 
   Future<int> _timedGet(String url, {Map<String, String>? headers}) async {
     final stopwatch = Stopwatch()..start();

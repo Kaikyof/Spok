@@ -23,3 +23,8 @@ class DocOpened extends ConsoleEvent {
   final DocArtifact? doc;
   DocOpened(this.doc);
 }
+
+class PlatformPathSubmitted extends ConsoleEvent {
+  final String path;
+  PlatformPathSubmitted(this.path);
+}

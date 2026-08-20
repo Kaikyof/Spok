@@ -6,7 +6,6 @@ import 'package:window_manager/window_manager.dart';
 import 'core/resources/app_dimens.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/platform_repository_impl.dart';
-import 'data/sources/platform_files_source.dart';
 import 'domain/repositories/platform_repository.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'presentation/bloc/console_bloc.dart';
@@ -14,9 +13,9 @@ import 'presentation/shell.dart';
 
 final getIt = GetIt.instance;
 
-void setupDi() {
-  getIt.registerLazySingleton<PlatformRepository>(
-      () => PlatformRepositoryImpl(PlatformFilesSource.locate()));
+Future<void> setupDi() async {
+  final repository = await PlatformRepositoryImpl.create();
+  getIt.registerSingleton<PlatformRepository>(repository);
 }
 
 Future<void> main() async {
@@ -32,7 +31,7 @@ Future<void> main() async {
     ),
     () async => windowManager.show(),
   );
-  setupDi();
+  await setupDi();
   runApp(const ConsoleApp());
 }
 

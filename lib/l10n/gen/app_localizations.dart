@@ -603,6 +603,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Диалоги Claude Code в headless-режиме появятся после экранов состояния.'**
   String get sessionsNote;
+
+  /// No description provided for @loaderMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Читаю состояние платформы…'**
+  String get loaderMessage;
+
+  /// No description provided for @setupTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где репозиторий платформы?'**
+  String get setupTitle;
+
+  /// No description provided for @setupNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.'**
+  String get setupNote;
+
+  /// No description provided for @setupFieldLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Путь к avtoto-platform'**
+  String get setupFieldLabel;
+
+  /// No description provided for @setupSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить и продолжить'**
+  String get setupSave;
+
+  /// No description provided for @setupError.
+  ///
+  /// In ru, this message translates to:
+  /// **'По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform'**
+  String get setupError;
+
+  /// No description provided for @setupConfigHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.'**
+  String setupConfigHint(String path);
 }
 
 class _AppLocalizationsDelegate

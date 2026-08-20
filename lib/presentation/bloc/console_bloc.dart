@@ -25,6 +25,18 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
           docContent: () => null,
         )));
     on<DocOpened>(_onDocOpened);
+    on<PlatformPathSubmitted>(_onPathSubmitted);
+    add(ConsoleRefreshed());
+  }
+
+  Future<void> _onPathSubmitted(
+      PlatformPathSubmitted event, Emitter<ConsoleState> emit) async {
+    final accepted = await repository.setPlatformDir(event.path);
+    if (!accepted) {
+      emit(state.copyWith(pathRejected: true));
+      return;
+    }
+    emit(state.copyWith(pathRejected: false));
     add(ConsoleRefreshed());
   }
 

@@ -11,27 +11,43 @@ import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
 import 'screens/env_screen.dart';
 import 'screens/placeholder_screen.dart';
+import 'screens/setup_screen.dart';
 import 'screens/sprint_screen.dart';
+import 'ui_kit/app_loader.dart';
 
 class Shell extends StatelessWidget {
   const Shell({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        body: Row(
-          children: const [
-            _Sidebar(),
-            Expanded(
-              child: Column(
-                children: [
-                  _Header(),
-                  Expanded(child: _ScreenSwitcher()),
-                ],
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return Scaffold(
+      body: BlocBuilder<ConsoleBloc, ConsoleState>(
+        buildWhen: (previous, current) =>
+            previous.isFirstLoad != current.isFirstLoad ||
+            previous.needsSetup != current.needsSetup,
+        builder: (context, state) {
+          if (state.isFirstLoad) {
+            return AppLoader(message: texts.loaderMessage);
+          }
+          if (state.needsSetup) return const SetupScreen();
+          return Row(
+            children: const [
+              _Sidebar(),
+              Expanded(
+                child: Column(
+                  children: [
+                    _Header(),
+                    Expanded(child: _ScreenSwitcher()),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _ScreenSwitcher extends StatelessWidget {

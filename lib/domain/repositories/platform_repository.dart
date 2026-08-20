@@ -11,4 +11,10 @@ abstract class PlatformRepository {
 
   /// Читает markdown-файл документации (внутри репозитория платформы).
   Future<String> readDoc(String absolutePath);
+
+  /// Путь к конфиг-файлу приложения (для подсказки на экране настройки).
+  Future<String> configFilePath();
+
+  /// Сохраняет путь к платформе; false — по пути нет workspace.yaml.
+  Future<bool> setPlatformDir(String path);
 }

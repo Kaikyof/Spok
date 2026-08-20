@@ -316,4 +316,29 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sessionsNote =>
       'Диалоги Claude Code в headless-режиме появятся после экранов состояния.';
+
+  @override
+  String get loaderMessage => 'Читаю состояние платформы…';
+
+  @override
+  String get setupTitle => 'Где репозиторий платформы?';
+
+  @override
+  String get setupNote =>
+      'Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.';
+
+  @override
+  String get setupFieldLabel => 'Путь к avtoto-platform';
+
+  @override
+  String get setupSave => 'Сохранить и продолжить';
+
+  @override
+  String get setupError =>
+      'По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform';
+
+  @override
+  String setupConfigHint(String path) {
+    return 'Хранится в $path (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.';
+  }
 }

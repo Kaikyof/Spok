@@ -1,13 +1,11 @@
 {
   "@@locale": "ru",
-
   "appBadge": "AVTOTO · КОНСОЛЬ",
   "navSprint": "Спринт",
   "navChanges": "Change'и",
   "navHandoff": "Передача",
   "navEnv": "Окружение",
   "navSessions": "Сессии",
-
   "machineRoleLabel": "РОЛЬ МАШИНЫ",
   "machineRoleEnvVar": "AVTOTO_ROLE",
   "roleNotSet": "роль не задана",
@@ -15,39 +13,103 @@
   "roleAndroid": "Android-разработчик",
   "roleQa": "Тестировщик",
   "roleDev": "Разработчик (оба стека)",
-
   "refreshTooltip": "Обновить (⌘R)",
   "updatedAt": "обновлено {time}",
-  "@updatedAt": { "placeholders": { "time": { "type": "String" } } },
-
+  "@updatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "sprintNone": "Нет активного спринта",
   "sprintTitlePrefix": "Спринт: {title}",
-  "@sprintTitlePrefix": { "placeholders": { "title": { "type": "String" } } },
+  "@sprintTitlePrefix": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "sprintSwitcherTooltip": "Переключить спринт · openspec/doc",
   "deliveryBatch": "сдача целиком (batch)",
   "deliveryPerChange": "сдача по change'ам",
   "buildIosLabel": "iOS {version}",
-  "@buildIosLabel": { "placeholders": { "version": { "type": "String" } } },
+  "@buildIosLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "buildAndroidLabel": "Android {version}",
-  "@buildAndroidLabel": { "placeholders": { "version": { "type": "String" } } },
-
+  "@buildAndroidLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "sprintEmpty": "Нет активного спринта.\nСоздайте его командой /opsx:doc.",
   "redmineUnavailable": "Статусы Redmine недоступны ({reason}) — показаны данные файлов",
-  "@redmineUnavailable": { "placeholders": { "reason": { "type": "String" } } },
+  "@redmineUnavailable": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "redmineNoKey": "нет ключа REDMINE_API_KEY",
   "redmineDown": "Redmine недоступен: {reason}",
-  "@redmineDown": { "placeholders": { "reason": { "type": "String" } } },
+  "@redmineDown": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "platformRepoNotFound": "репозиторий платформы не найден",
-
   "divergencesTitle": "Расхождения — {count}",
-  "@divergencesTitle": { "placeholders": { "count": { "type": "int" } } },
+  "@divergencesTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "divergenceTasksNotClosed": "статус «{status}», но не закрыты задачи {nums}",
-  "@divergenceTasksNotClosed": { "placeholders": { "status": { "type": "String" }, "nums": { "type": "String" } } },
+  "@divergenceTasksNotClosed": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      },
+      "nums": {
+        "type": "String"
+      }
+    }
+  },
   "divergenceMarksAhead": "галочки {done}/{total}, но задача в статусе «{status}»",
-  "@divergenceMarksAhead": { "placeholders": { "done": { "type": "int" }, "total": { "type": "int" }, "status": { "type": "String" } } },
+  "@divergenceMarksAhead": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "divergenceBuildMissing": "есть задачи в «Ожидает тестирования», но сборка {stack} не записана",
-  "@divergenceBuildMissing": { "placeholders": { "stack": { "type": "String" } } },
-
+  "@divergenceBuildMissing": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
   "tableHeaderChange": "CHANGE",
   "tableHeaderIos": "iOS",
   "tableHeaderAndroid": "ANDROID",
@@ -55,20 +117,48 @@
   "stackAndroid": "Android",
   "statusUnavailable": "нет доступа",
   "marksOpenTask": "открыта {num}",
-  "@marksOpenTask": { "placeholders": { "num": { "type": "String" } } },
+  "@marksOpenTask": {
+    "placeholders": {
+      "num": {
+        "type": "String"
+      }
+    }
+  },
   "marksTooltipNotClosed": "не закрыто: {list}",
-  "@marksTooltipNotClosed": { "placeholders": { "list": { "type": "String" } } },
+  "@marksTooltipNotClosed": {
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
   "marksTooltipDiverged": "есть расхождение",
-
   "nextStepTitle": "Следующий шаг: закрыть задачу {num} «{title}» — открыта в {count} стеках",
-  "@nextStepTitle": { "placeholders": { "num": { "type": "String" }, "title": { "type": "String" }, "count": { "type": "int" } } },
+  "@nextStepTitle": {
+    "placeholders": {
+      "num": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "nextStepReason": "иначе спринт не пройдёт проверку готовности при передаче",
   "nextStepCommand": "открыть tasks_*.md в change'ах",
-
   "backToChanges": "← Ко всем change'ам",
   "backFallback": "← Назад",
   "tasksOfStack": "Задачи стека {stack}",
-  "@tasksOfStack": { "placeholders": { "stack": { "type": "String" } } },
+  "@tasksOfStack": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
   "blocksHandover": "блокирует передачу",
   "artifactsTitle": "Артефакты",
   "artifactSpec": "Спека",
@@ -76,17 +166,27 @@
   "artifactTasksIos": "Задачи iOS",
   "artifactTasksAndroid": "Задачи Android",
   "docReadError": "Не удалось прочитать файл:\n\n{error}",
-  "@docReadError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@docReadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "envTitle": "Проверки окружения",
   "envAllGood": "всё готово к работе",
   "envProblems": "{count, plural, one{{count} проблема} few{{count} проблемы} other{{count} проблем}} — часть действий не сработает",
-  "@envProblems": { "placeholders": { "count": { "type": "int" } } },
+  "@envProblems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "envRecheck": "Перепроверить всё",
   "envKeysSection": "Ключи в .env — показывается только наличие, не значения",
   "envReposSection": "Репозитории",
   "envSystemsSection": "Внешние системы",
-
   "envHintRedmineUrl": "адрес Redmine",
   "envHintRedmineKey": "доступ к задачам",
   "envHintGitlabUrl": "адрес GitLab",
@@ -96,26 +196,62 @@
   "envHintMattermostDevChannel": "канал разработчиков",
   "envHintMattermostTeamChannel": "канал команды — уведомление о передаче",
   "envHintRole": "роль машины",
-
   "checkFilled": "заполнен",
   "checkMissing": "отсутствует — добавьте в .env",
   "checkSynced": "синхронизирован",
   "checkBehind": "отстаёт от origin на {count}",
-  "@checkBehind": { "placeholders": { "count": { "type": "int" } } },
+  "@checkBehind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "checkNotCloned": "не склонирован — make init",
   "checkExpectedRef": "ожидается {ref}",
-  "@checkExpectedRef": { "placeholders": { "ref": { "type": "String" } } },
+  "@checkExpectedRef": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "checkResponds": "отвечает · {ms} мс",
-  "@checkResponds": { "placeholders": { "ms": { "type": "int" } } },
+  "@checkResponds": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
   "checkRespondsCode": "отвечает · код {code}",
-  "@checkRespondsCode": { "placeholders": { "code": { "type": "int" } } },
+  "@checkRespondsCode": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
   "checkTimeout": "таймаут 8 с",
   "checkNoConnection": "нет соединения",
   "checkNotConfigured": "адрес не задан в .env",
   "checkNotChecked": "не проверялся",
-
   "handoffTitle": "Передача спринта",
   "handoffNote": "Мастер из четырёх шагов: готовность, сборка, получатели, предпросмотр. Следующий этап реализации.",
   "sessionsTitle": "Агентные сессии",
-  "sessionsNote": "Диалоги Claude Code в headless-режиме появятся после экранов состояния."
+  "sessionsNote": "Диалоги Claude Code в headless-режиме появятся после экранов состояния.",
+  "loaderMessage": "Читаю состояние платформы…",
+  "setupTitle": "Где репозиторий платформы?",
+  "setupNote": "Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.",
+  "setupFieldLabel": "Путь к avtoto-platform",
+  "setupSave": "Сохранить и продолжить",
+  "setupError": "По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform",
+  "setupConfigHint": "Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.",
+  "@setupConfigHint": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }
