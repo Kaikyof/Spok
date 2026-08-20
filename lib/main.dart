@@ -23,6 +23,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
   // Бриф §9: окно изменяемого размера, минимум ~1100×700.
+  // Окно не показываем до первого кадра Flutter — иначе на медленном
+  // первом запуске пользователь смотрит на чёрный прямоугольник.
   await windowManager.waitUntilReadyToShow(
     const WindowOptions(
       minimumSize: AppDimens.minWindowSize,
@@ -30,10 +32,14 @@ Future<void> main() async {
       title: 'Platform Console',
       titleBarStyle: TitleBarStyle.normal,
     ),
-    () async => windowManager.show(),
+    null,
   );
   await setupDi();
   runApp(const ConsoleApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
 }
 
 class ConsoleApp extends StatelessWidget {

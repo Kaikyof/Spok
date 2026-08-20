@@ -247,6 +247,19 @@ class PlatformFilesSource {
 
   // ─── Git ───────────────────────────────────────────────────────────────────
 
+  /// Подтягивает свежие изменения платформы перед чтением: спеки и чеклисты
+  /// правят коллеги, без pull кнопка «Обновить» показывала бы вчерашнее.
+  /// Только fast-forward; любая ошибка (офлайн, локальные правки) не мешает
+  /// работе с тем, что есть на диске.
+  Future<void> pullPlatform() async {
+    try {
+      await Process.run('git', ['-C', root.path, 'pull', '--ff-only', '--quiet'])
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      // офлайн или конфликт — читаем локальное состояние
+    }
+  }
+
   Future<({String branch, int behind})?> workspaceGitInfo(String repoDirName) =>
       _gitInfo(p.join(root.path, 'workspace', repoDirName));
 

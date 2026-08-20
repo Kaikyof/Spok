@@ -87,6 +87,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       );
     }
 
+    await source.pullPlatform();
     final sprints = source.loadSprints();
     final changes = source.loadChanges();
     final (redmineProblem, redmineDetail) =
