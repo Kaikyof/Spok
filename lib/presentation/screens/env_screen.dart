@@ -17,6 +17,7 @@ class EnvScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // test
     final texts = AppLocalizations.of(context);
     return BlocBuilder<ConsoleBloc, ConsoleState>(
       builder: (context, state) {
@@ -29,17 +30,11 @@ class EnvScreen extends StatelessWidget {
           children: [
             _EnvHeader(problemCount: envReport.problemCount),
             const SizedBox(height: AppDimens.gapL),
-            _CheckSection(
-                title: texts.envKeysSection,
-                checks: envReport.keys,
-                detailFromHint: true),
+            _CheckSection(title: texts.envKeysSection, checks: envReport.keys, detailFromHint: true),
             const SizedBox(height: AppDimens.gapM),
             _CheckSection(title: texts.envReposSection, checks: envReport.repos),
             const SizedBox(height: AppDimens.gapM),
-            _CheckSection(
-                title: texts.envSystemsSection,
-                checks: envReport.systems,
-                monospacedNames: false),
+            _CheckSection(title: texts.envSystemsSection, checks: envReport.systems, monospacedNames: false),
           ],
         );
       },
@@ -61,21 +56,14 @@ class _EnvHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(texts.envTitle,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary)),
+              Text(
+                texts.envTitle,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
               const SizedBox(height: AppDimens.gapXs),
               Text(
-                problemCount == 0
-                    ? texts.envAllGood
-                    : texts.envProblems(problemCount),
-                style: TextStyle(
-                    fontSize: 12,
-                    color: problemCount == 0
-                        ? AppColors.success
-                        : AppColors.danger),
+                problemCount == 0 ? texts.envAllGood : texts.envProblems(problemCount),
+                style: TextStyle(fontSize: 12, color: problemCount == 0 ? AppColors.success : AppColors.danger),
               ),
             ],
           ),
@@ -100,12 +88,7 @@ class _CheckSection extends StatelessWidget {
   final bool monospacedNames;
   final bool detailFromHint;
 
-  const _CheckSection({
-    required this.title,
-    required this.checks,
-    this.monospacedNames = true,
-    this.detailFromHint = false,
-  });
+  const _CheckSection({required this.title, required this.checks, this.monospacedNames = true, this.detailFromHint = false});
 
   @override
   Widget build(BuildContext context) {
@@ -121,9 +104,7 @@ class _CheckSection extends StatelessWidget {
             CheckRow(
               level: check.level,
               name: check.name,
-              detail: detailFromHint
-                  ? texts.envKeyHint(check.name)
-                  : check.subtitle,
+              detail: detailFromHint ? texts.envKeyHint(check.name) : check.subtitle,
               result: texts.checkResultText(check),
               monospacedName: monospacedNames,
             ),
