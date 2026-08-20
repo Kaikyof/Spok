@@ -1280,6 +1280,114 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'ещё {count} в канале'**
   String handoffRecipientAlso(int count);
+
+  /// No description provided for @permissionAsk.
+  ///
+  /// In ru, this message translates to:
+  /// **'по правилам платформы'**
+  String get permissionAsk;
+
+  /// No description provided for @permissionAcceptEdits.
+  ///
+  /// In ru, this message translates to:
+  /// **'правки без вопросов'**
+  String get permissionAcceptEdits;
+
+  /// No description provided for @permissionBypass.
+  ///
+  /// In ru, this message translates to:
+  /// **'полный доступ'**
+  String get permissionBypass;
+
+  /// No description provided for @permissionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'доступ'**
+  String get permissionLabel;
+
+  /// No description provided for @permissionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'в headless-режиме подтвердить запрос вручную нельзя: если команде нужен инструмент вне allow-списка платформы, выберите режим с автоматическим разрешением'**
+  String get permissionHint;
+
+  /// No description provided for @handoffRunsWithBypass.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сессия запустится с полным доступом к инструментам — иначе команда остановится на запросе разрешения.'**
+  String get handoffRunsWithBypass;
+
+  /// No description provided for @handoffRecipientChoose.
+  ///
+  /// In ru, this message translates to:
+  /// **'выбрать'**
+  String get handoffRecipientChoose;
+
+  /// No description provided for @handoffRecipientChosen.
+  ///
+  /// In ru, this message translates to:
+  /// **'получит передачу'**
+  String get handoffRecipientChosen;
+
+  /// No description provided for @sprintCreateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый спринт'**
+  String get sprintCreateTitle;
+
+  /// No description provided for @sprintCreateNameLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Идентификатор спринта (латиницей, через дефис)'**
+  String get sprintCreateNameLabel;
+
+  /// No description provided for @sprintCreateBriefLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'ТЗ: вставьте текст или приложите файл'**
+  String get sprintCreateBriefLabel;
+
+  /// No description provided for @sprintCreateAttach.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приложить файл…'**
+  String get sprintCreateAttach;
+
+  /// No description provided for @sprintCreateAttached.
+  ///
+  /// In ru, this message translates to:
+  /// **'приложен {name}'**
+  String sprintCreateAttached(String name);
+
+  /// No description provided for @sprintCreateRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать спринт'**
+  String get sprintCreateRun;
+
+  /// No description provided for @sprintCreateHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.'**
+  String get sprintCreateHint;
+
+  /// No description provided for @sprintCreateNameError.
+  ///
+  /// In ru, this message translates to:
+  /// **'нужен идентификатор латиницей: например profile-v2'**
+  String get sprintCreateNameError;
+
+  /// No description provided for @sprintCreateBriefError.
+  ///
+  /// In ru, this message translates to:
+  /// **'нужен текст ТЗ или приложенный файл'**
+  String get sprintCreateBriefError;
+
+  /// No description provided for @sprintCreateTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый спринт из ТЗ'**
+  String get sprintCreateTooltip;
 }
 
 class _AppLocalizationsDelegate

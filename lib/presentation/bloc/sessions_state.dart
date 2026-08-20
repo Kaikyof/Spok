@@ -8,6 +8,7 @@ class SessionsState {
   final String selectedSessionId;
   final String model;
   final AgentEffort effort;
+  final AgentPermissionMode permissionMode;
   final bool cliAvailable;
   final List<SlashCommand> commands;
   final List<String> changeIds;
@@ -20,6 +21,7 @@ class SessionsState {
     this.selectedSessionId = '',
     this.model = 'sonnet',
     this.effort = AgentEffort.medium,
+    this.permissionMode = AgentPermissionMode.ask,
     this.cliAvailable = true,
     this.commands = const [],
     this.changeIds = const [],
@@ -36,6 +38,7 @@ class SessionsState {
     String? selectedSessionId,
     String? model,
     AgentEffort? effort,
+    AgentPermissionMode? permissionMode,
     bool? cliAvailable,
     List<SlashCommand>? commands,
     List<String>? changeIds,
@@ -48,6 +51,7 @@ class SessionsState {
         selectedSessionId: selectedSessionId ?? this.selectedSessionId,
         model: model ?? this.model,
         effort: effort ?? this.effort,
+        permissionMode: permissionMode ?? this.permissionMode,
         cliAvailable: cliAvailable ?? this.cliAvailable,
         commands: commands ?? this.commands,
         changeIds: changeIds ?? this.changeIds,

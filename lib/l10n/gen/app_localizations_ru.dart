@@ -741,4 +741,65 @@ class AppLocalizationsRu extends AppLocalizations {
   String handoffRecipientAlso(int count) {
     return 'ещё $count в канале';
   }
+
+  @override
+  String get permissionAsk => 'по правилам платформы';
+
+  @override
+  String get permissionAcceptEdits => 'правки без вопросов';
+
+  @override
+  String get permissionBypass => 'полный доступ';
+
+  @override
+  String get permissionLabel => 'доступ';
+
+  @override
+  String get permissionHint =>
+      'в headless-режиме подтвердить запрос вручную нельзя: если команде нужен инструмент вне allow-списка платформы, выберите режим с автоматическим разрешением';
+
+  @override
+  String get handoffRunsWithBypass =>
+      'Сессия запустится с полным доступом к инструментам — иначе команда остановится на запросе разрешения.';
+
+  @override
+  String get handoffRecipientChoose => 'выбрать';
+
+  @override
+  String get handoffRecipientChosen => 'получит передачу';
+
+  @override
+  String get sprintCreateTitle => 'Новый спринт';
+
+  @override
+  String get sprintCreateNameLabel =>
+      'Идентификатор спринта (латиницей, через дефис)';
+
+  @override
+  String get sprintCreateBriefLabel => 'ТЗ: вставьте текст или приложите файл';
+
+  @override
+  String get sprintCreateAttach => 'Приложить файл…';
+
+  @override
+  String sprintCreateAttached(String name) {
+    return 'приложен $name';
+  }
+
+  @override
+  String get sprintCreateRun => 'Создать спринт';
+
+  @override
+  String get sprintCreateHint =>
+      'Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.';
+
+  @override
+  String get sprintCreateNameError =>
+      'нужен идентификатор латиницей: например profile-v2';
+
+  @override
+  String get sprintCreateBriefError => 'нужен текст ТЗ или приложенный файл';
+
+  @override
+  String get sprintCreateTooltip => 'Новый спринт из ТЗ';
 }

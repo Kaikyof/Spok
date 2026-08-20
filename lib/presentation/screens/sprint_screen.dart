@@ -18,6 +18,7 @@ import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
+import '../widgets/create_sprint_dialog.dart';
 
 /// Главный экран: за пять секунд показать, где спринт и что мешает.
 class SprintScreen extends StatelessWidget {
@@ -81,6 +82,17 @@ class _FilterRow extends StatelessWidget {
           previous.stackFilter != current.stackFilter,
       builder: (context, state) => Row(
         children: [
+          OutlinedButton.icon(
+            onPressed: () => CreateSprintDialog.show(context),
+            icon: const Icon(Icons.add, size: 15, color: AppColors.accent),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.border),
+              backgroundColor: AppColors.card,
+              foregroundColor: AppColors.textPrimary,
+            ),
+            label: Text(texts.sprintCreateTitle,
+                style: const TextStyle(fontSize: 12)),
+          ),
           const Spacer(),
           StackFilterControl<StackFilter>(
             options: [

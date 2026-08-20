@@ -20,8 +20,16 @@ import '../ui_kit/stack_filter_control.dart';
 
 /// Передача спринта: мастер из четырёх шагов, все видны сразу,
 /// недоступные приглушены (бриф §5.3).
-class HandoffScreen extends StatelessWidget {
+class HandoffScreen extends StatefulWidget {
   const HandoffScreen({super.key});
+
+  @override
+  State<HandoffScreen> createState() => _HandoffScreenState();
+}
+
+class _HandoffScreenState extends State<HandoffScreen> {
+  HandoffRecipient? _tester;
+  HandoffRecipient? _manager;
 
   @override
   Widget build(BuildContext context) => BlocBuilder<ConsoleBloc, ConsoleState>(
@@ -53,9 +61,16 @@ class HandoffScreen extends StatelessWidget {
                         _BuildStep(sprint: sprint),
                         const SizedBox(height: AppDimens.gapL),
                         _RecipientsStep(
-                            stack: state.stackFilter == StackFilter.android
-                                ? 'android'
-                                : 'ios'),
+                          stack: state.stackFilter == StackFilter.android
+                              ? 'android'
+                              : 'ios',
+                          selectedTester: _tester,
+                          selectedManager: _manager,
+                          onTesterSelected: (person) =>
+                              setState(() => _tester = person),
+                          onManagerSelected: (person) =>
+                              setState(() => _manager = person),
+                        ),
                       ],
                     ),
                   ),
@@ -73,6 +88,8 @@ class HandoffScreen extends StatelessWidget {
                                   : 'ios')
                           ? state.recipients
                           : null,
+                      chosenTester: _tester,
+                      chosenManager: _manager,
                     ),
                   ),
                 ],
@@ -321,8 +338,18 @@ class _BuildRow extends StatelessWidget {
 
 class _RecipientsStep extends StatelessWidget {
   final String stack;
+  final HandoffRecipient? selectedTester;
+  final HandoffRecipient? selectedManager;
+  final ValueChanged<HandoffRecipient> onTesterSelected;
+  final ValueChanged<HandoffRecipient> onManagerSelected;
 
-  const _RecipientsStep({required this.stack});
+  const _RecipientsStep({
+    required this.stack,
+    required this.selectedTester,
+    required this.selectedManager,
+    required this.onTesterSelected,
+    required this.onManagerSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -383,18 +410,19 @@ class _RecipientsStep extends StatelessWidget {
                             fontSize: 12, color: AppColors.danger)),
                   ] else ...[
                     _RecipientGroup(
-                        role: texts.handoffRecipientTester,
-                        people: recipients.testers),
-                    const SizedBox(height: AppDimens.gapS),
+                      role: texts.handoffRecipientTester,
+                      people: recipients.testers,
+                      selected: selectedTester ?? recipients.testers.firstOrNull,
+                      onSelected: onTesterSelected,
+                    ),
+                    const SizedBox(height: AppDimens.gapM),
                     _RecipientGroup(
-                        role: texts.handoffRecipientManager,
-                        people: recipients.managers),
-                    if (recipients.developers.isNotEmpty) ...[
-                      const SizedBox(height: AppDimens.gapS),
-                      _RecipientGroup(
-                          role: texts.handoffRecipientsDevelopers,
-                          people: recipients.developers),
-                    ],
+                      role: texts.handoffRecipientManager,
+                      people: recipients.managers,
+                      selected:
+                          selectedManager ?? recipients.managers.firstOrNull,
+                      onSelected: onManagerSelected,
+                    ),
                   ],
                   const SizedBox(height: AppDimens.gapS),
                   Text(texts.handoffRecipientsSource,
@@ -409,61 +437,122 @@ class _RecipientsStep extends StatelessWidget {
   }
 }
 
-/// Роль и подобранные под неё люди: первый получит задачи, остальные —
-/// в канале, чтобы было видно, из кого выбирает скрипт.
+/// Роль и подобранные под неё люди: выбранный получит передачу.
+/// Список открытый — видно, из кого выбираем.
 class _RecipientGroup extends StatelessWidget {
   final String role;
   final List<HandoffRecipient> people;
+  final HandoffRecipient? selected;
+  final ValueChanged<HandoffRecipient> onSelected;
 
-  const _RecipientGroup({required this.role, required this.people});
+  const _RecipientGroup({
+    required this.role,
+    required this.people,
+    required this.selected,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    final primary = people.firstOrNull;
-    return Row(
+    if (people.isEmpty) {
+      return Row(
+        children: [
+          _RoleChip(role: role),
+          const SizedBox(width: 12),
+          Text(texts.handoffRecipientPending,
+              style: AppTextStyles.captionMuted),
+        ],
+      );
+    }
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.cardHighlight,
-            borderRadius: BorderRadius.circular(12),
+        _RoleChip(role: role),
+        const SizedBox(height: 6),
+        for (final person in people)
+          _RecipientOption(
+            person: person,
+            selected: person.redmineId == selected?.redmineId,
+            onTap: () => onSelected(person),
           ),
-          child: Text(role,
-              style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: primary == null
-              ? Text(texts.handoffRecipientPending,
-                  style: AppTextStyles.captionMuted)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        SelectableText(primary.mention,
-                            style: AppTextStyles.monospace(12,
-                                color: AppColors.monospaceText)),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(primary.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.caption),
-                        ),
-                      ],
-                    ),
-                    if (people.length > 1)
-                      Text(texts.handoffRecipientAlso(people.length - 1),
-                          style: AppTextStyles.hint),
-                  ],
-                ),
-        ),
       ],
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  final String role;
+
+  const _RoleChip({required this.role});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.cardHighlight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(role,
+            style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary)),
+      );
+}
+
+class _RecipientOption extends StatelessWidget {
+  final HandoffRecipient person;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RecipientOption({
+    required this.person,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+        child: Row(
+          children: [
+            Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 15,
+                color: selected ? AppColors.accent : AppColors.textMuted),
+            const SizedBox(width: 10),
+            SelectableText(person.mention,
+                style: AppTextStyles.monospace(12,
+                    color: selected
+                        ? AppColors.monospaceText
+                        : AppColors.textMuted)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(person.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: selected
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary)),
+            ),
+            if (selected) ...[
+              const SizedBox(width: 8),
+              Text(texts.handoffRecipientChosen,
+                  style: const TextStyle(
+                      fontSize: 10.5, color: AppColors.accent)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -474,6 +563,8 @@ class _PreviewStep extends StatelessWidget {
   final HandoffReadiness readiness;
   final StackFilter stackFilter;
   final HandoffRecipients? recipients;
+  final HandoffRecipient? chosenTester;
+  final HandoffRecipient? chosenManager;
 
   const _PreviewStep({
     required this.sprint,
@@ -481,7 +572,15 @@ class _PreviewStep extends StatelessWidget {
     required this.readiness,
     required this.stackFilter,
     required this.recipients,
+    required this.chosenTester,
+    required this.chosenManager,
   });
+
+  HandoffRecipient? get _tester =>
+      chosenTester ?? recipients?.testers.firstOrNull;
+
+  HandoffRecipient? get _manager =>
+      chosenManager ?? recipients?.managers.firstOrNull;
 
   /// Стек сообщения: передача идёт по одному стеку за раз.
   String get _messageStack =>
@@ -490,6 +589,18 @@ class _PreviewStep extends StatelessWidget {
   /// Точная команда платформы — она же уйдёт в агентную сессию.
   String get _handoffCommand =>
       '/opsx-sprint ${sprint.id} handover --stack $_messageStack';
+
+  /// Команда с уточнением получателей: скрипт подбирает список, а кого
+  /// именно назначить — решает человек здесь.
+  String get _handoffPrompt {
+    final tester = _tester;
+    final manager = _manager;
+    if (tester == null || manager == null) return _handoffCommand;
+    return '$_handoffCommand\n\n'
+        'Тестировщик: ${tester.mention} — ${tester.name} (Redmine ${tester.redmineId}).\n'
+        'Менеджер: ${manager.mention} — ${manager.name} (Redmine ${manager.redmineId}).\n'
+        'Используй именно их, не подбирай других.';
+  }
 
   /// Ничего не уходит наружу без предпросмотра (бриф §3.4): подтверждаем,
   /// затем запускаем команду платформы в сессии, где виден каждый шаг.
@@ -507,8 +618,11 @@ class _PreviewStep extends StatelessWidget {
           children: [
             Text(texts.handoffSendConfirm, style: AppTextStyles.body),
             const SizedBox(height: AppDimens.gapM),
-            SelectableText(_handoffCommand,
+            SelectableText(_handoffPrompt,
                 style: AppTextStyles.monospace(12)),
+            const SizedBox(height: AppDimens.gapS),
+            Text(texts.handoffRunsWithBypass,
+                style: AppTextStyles.hint.copyWith(height: 1.4)),
           ],
         ),
         actions: [
@@ -528,7 +642,7 @@ class _PreviewStep extends StatelessWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    context.read<SessionsBloc>().add(SessionMessageSent(_handoffCommand));
+    context.read<SessionsBloc>().add(HandoffRunRequested(_handoffPrompt));
     context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));
   }
 
@@ -550,8 +664,7 @@ class _PreviewStep extends StatelessWidget {
       texts.handoverMsgSprint(sprint.title),
       texts.handoverMsgStack(texts.stackLabel(stack)),
       texts.handoverMsgRecipients(
-          recipients?.testers.firstOrNull?.mention ?? '@—',
-          recipients?.managers.firstOrNull?.mention ?? '@—'),
+          _tester?.mention ?? '@—', _manager?.mention ?? '@—'),
       if (build != null)
         texts.handoverMsgBuild(
             '${build.versionName}${build.channel != null ? ' · ${build.channel}' : ''}'),

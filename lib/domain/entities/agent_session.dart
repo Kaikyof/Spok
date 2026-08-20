@@ -14,6 +14,23 @@ enum AgentSessionStatus { idle, running, done, failed, stopped }
 /// Уровень усилий модели (флаг --effort у CLI).
 enum AgentEffort { low, medium, high, xhigh, max }
 
+/// Режим разрешений CLI (флаг --permission-mode).
+/// В headless-режиме спросить человека не у кого: если агенту нужен
+/// инструмент вне allow-списка платформы, он остановится и напишет
+/// «approve running …». Поэтому режим выбирается заранее и явно.
+enum AgentPermissionMode {
+  ask, // по умолчанию: только разрешённое в .claude/settings платформы
+  acceptEdits, // правки файлов без вопросов
+  bypass; // полный доступ к инструментам
+
+  /// Значение флага CLI; ask — флаг не передаём.
+  String? get flagValue => switch (this) {
+        ask => null,
+        acceptEdits => 'acceptEdits',
+        bypass => 'bypassPermissions',
+      };
+}
+
 /// Агентная сессия — один диалог с Claude Code. Сообщения продолжают
 /// разговор через --resume, а не начинают новый каждый раз.
 class AgentSession {
@@ -24,6 +41,7 @@ class AgentSession {
   final List<AgentEvent> events;
   String model;
   AgentEffort effort;
+  AgentPermissionMode permissionMode;
   Duration? duration;
 
   /// id разговора на стороне CLI; появляется после первого запуска.
@@ -35,6 +53,7 @@ class AgentSession {
     required this.startedAt,
     required this.model,
     required this.effort,
+    this.permissionMode = AgentPermissionMode.ask,
     this.status = AgentSessionStatus.idle,
     List<AgentEvent>? events,
   }) : events = events ?? [];

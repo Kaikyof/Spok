@@ -27,6 +27,25 @@ class SessionModelChanged extends SessionsEvent {
   SessionModelChanged(this.model);
 }
 
+class SessionPermissionModeChanged extends SessionsEvent {
+  final AgentPermissionMode mode;
+  SessionPermissionModeChanged(this.mode);
+}
+
+/// Запустить передачу спринта: команда платформы + режим, позволяющий
+/// выполнить её без интерактивного подтверждения.
+class HandoffRunRequested extends SessionsEvent {
+  final String command;
+  HandoffRunRequested(this.command);
+}
+
+class _SettingsRestored extends SessionsEvent {
+  final String model;
+  final AgentEffort effort;
+  final AgentPermissionMode permissionMode;
+  _SettingsRestored(this.model, this.effort, this.permissionMode);
+}
+
 class SessionEffortChanged extends SessionsEvent {
   final AgentEffort effort;
   SessionEffortChanged(this.effort);

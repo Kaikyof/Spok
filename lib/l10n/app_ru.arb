@@ -608,5 +608,30 @@
         "type": "int"
       }
     }
-  }
+  },
+  "permissionAsk": "по правилам платформы",
+  "permissionAcceptEdits": "правки без вопросов",
+  "permissionBypass": "полный доступ",
+  "permissionLabel": "доступ",
+  "permissionHint": "в headless-режиме подтвердить запрос вручную нельзя: если команде нужен инструмент вне allow-списка платформы, выберите режим с автоматическим разрешением",
+  "handoffRunsWithBypass": "Сессия запустится с полным доступом к инструментам — иначе команда остановится на запросе разрешения.",
+  "handoffRecipientChoose": "выбрать",
+  "handoffRecipientChosen": "получит передачу",
+  "sprintCreateTitle": "Новый спринт",
+  "sprintCreateNameLabel": "Идентификатор спринта (латиницей, через дефис)",
+  "sprintCreateBriefLabel": "ТЗ: вставьте текст или приложите файл",
+  "sprintCreateAttach": "Приложить файл…",
+  "sprintCreateAttached": "приложен {name}",
+  "@sprintCreateAttached": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sprintCreateRun": "Создать спринт",
+  "sprintCreateHint": "Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.",
+  "sprintCreateNameError": "нужен идентификатор латиницей: например profile-v2",
+  "sprintCreateBriefError": "нужен текст ТЗ или приложенный файл",
+  "sprintCreateTooltip": "Новый спринт из ТЗ"
 }

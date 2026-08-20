@@ -255,6 +255,10 @@ class _PanelHeader extends StatelessWidget {
             ),
           const SizedBox(width: AppDimens.gapS),
           Flexible(
+            child: _PermissionPicker(mode: state.permissionMode, enabled: !running),
+          ),
+          const SizedBox(width: AppDimens.gapS),
+          Flexible(
             child: _EffortPicker(effort: state.effort, enabled: !running),
           ),
           const SizedBox(width: AppDimens.gapS),
@@ -314,15 +318,63 @@ class _EffortPicker extends StatelessWidget {
   }
 }
 
+/// Режим разрешений: в headless-режиме ответить на запрос агента некому,
+/// поэтому выбор делается заранее и виден в шапке сессии.
+class _PermissionPicker extends StatelessWidget {
+  final AgentPermissionMode mode;
+  final bool enabled;
+
+  const _PermissionPicker({required this.mode, required this.enabled});
+
+  String _label(AppLocalizations texts, AgentPermissionMode value) =>
+      switch (value) {
+        AgentPermissionMode.ask => texts.permissionAsk,
+        AgentPermissionMode.acceptEdits => texts.permissionAcceptEdits,
+        AgentPermissionMode.bypass => texts.permissionBypass,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return Tooltip(
+      message: texts.permissionHint,
+      child: PopupMenuButton<AgentPermissionMode>(
+        enabled: enabled,
+        color: AppColors.cardHighlight,
+        onSelected: (value) => context
+            .read<SessionsBloc>()
+            .add(SessionPermissionModeChanged(value)),
+        itemBuilder: (_) => [
+          for (final value in AgentPermissionMode.values)
+            PopupMenuItem(
+              value: value,
+              child: Text(_label(texts, value),
+                  style: const TextStyle(fontSize: 12.5)),
+            ),
+        ],
+        child: _PickerChip(
+            label: '${texts.permissionLabel} · ${_label(texts, mode)}',
+            warning: mode == AgentPermissionMode.bypass),
+      ),
+    );
+  }
+}
+
 class _PickerChip extends StatelessWidget {
   final String label;
+  final bool warning;
 
-  const _PickerChip({required this.label});
+  const _PickerChip({required this.label, this.warning = false});
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-    decoration: BoxDecoration(color: AppColors.cardHighlight, borderRadius: BorderRadius.circular(13)),
+    decoration: BoxDecoration(
+      color: AppColors.cardHighlight,
+      borderRadius: BorderRadius.circular(13),
+      // Полный доступ к инструментам подсвечен рамкой: режим виден сразу.
+      border: warning ? Border.all(color: AppColors.warningBorder) : null,
+    ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [

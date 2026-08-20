@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/sources/agent_cli_source.dart';
+import '../../data/sources/app_config_source.dart';
 import '../../domain/entities/agent_session.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/repositories/command_log.dart';
@@ -14,23 +15,85 @@ part 'sessions_state.dart';
 class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
   final PlatformRepository repository;
   final CommandLog? commandLog;
+  final AppConfigSource config;
   final Map<String, AgentCliSource> _runningSources = {};
 
-  SessionsBloc(this.repository, {this.commandLog})
-      : super(_initialState(repository)) {
+  SessionsBloc(this.repository, {this.commandLog, AppConfigSource? config})
+      : config = config ?? AppConfigSource(),
+        super(_initialState(repository)) {
     on<SessionMessageSent>(_onMessageSent);
     on<SessionCreated>(_onCreated);
     on<SessionDeleted>(_onDeleted);
-    on<SessionSelected>((event, emit) =>
-        emit(state.copyWith(selectedSessionId: event.sessionId)));
+    on<SessionSelected>((event, emit) {
+      final session = _sessionById(event.sessionId);
+      // Контекст сессии: её модель и усилия становятся текущими.
+      emit(state.copyWith(
+        selectedSessionId: event.sessionId,
+        model: session?.model,
+        effort: session?.effort,
+        permissionMode: session?.permissionMode,
+      ));
+    });
     on<SessionStopRequested>(_onStopRequested);
-    on<SessionModelChanged>(
-        (event, emit) => emit(state.copyWith(model: event.model)));
-    on<SessionEffortChanged>(
-        (event, emit) => emit(state.copyWith(effort: event.effort)));
+    on<SessionModelChanged>((event, emit) {
+      emit(state.copyWith(model: event.model));
+      _rememberSettings();
+    });
+    on<SessionEffortChanged>((event, emit) {
+      emit(state.copyWith(effort: event.effort));
+      _rememberSettings();
+    });
+    on<SessionPermissionModeChanged>((event, emit) {
+      emit(state.copyWith(permissionMode: event.mode));
+      _rememberSettings();
+    });
+    on<HandoffRunRequested>(_onHandoffRun);
+    on<_SettingsRestored>((event, emit) => emit(state.copyWith(
+          model: event.model,
+          effort: event.effort,
+          permissionMode: event.permissionMode,
+        )));
     on<_SessionEventReceived>(_onEventReceived);
     on<_SessionCliIdReceived>(_onCliIdReceived);
     on<_SessionFinished>(_onFinished);
+    _restoreSettings();
+  }
+
+  /// Модель, усилия и режим разрешений переживают перезапуск приложения.
+  Future<void> _restoreSettings() async {
+    final saved = await config.readAll();
+    final model = saved[AppConfigSource.sessionModelKey];
+    final effort = AgentEffort.values
+        .where((value) => value.name == saved[AppConfigSource.sessionEffortKey])
+        .firstOrNull;
+    final permission = AgentPermissionMode.values
+        .where((value) =>
+            value.name == saved[AppConfigSource.sessionPermissionKey])
+        .firstOrNull;
+    if (isClosed) return;
+    add(_SettingsRestored(
+      agentModels.contains(model) ? model! : state.model,
+      effort ?? state.effort,
+      permission ?? state.permissionMode,
+    ));
+  }
+
+  void _rememberSettings() {
+    config.write(AppConfigSource.sessionModelKey, state.model);
+    config.write(AppConfigSource.sessionEffortKey, state.effort.name);
+    config.write(
+        AppConfigSource.sessionPermissionKey, state.permissionMode.name);
+  }
+
+  /// Передача спринта: команда платформы запускается в новой сессии
+  /// с полным доступом — иначе headless-агент упрётся в запрос разрешения.
+  Future<void> _onHandoffRun(
+      HandoffRunRequested event, Emitter<SessionsState> emit) async {
+    emit(state.copyWith(
+      permissionMode: AgentPermissionMode.bypass,
+      selectedSessionId: '',
+    ));
+    add(SessionMessageSent(event.command));
   }
 
   static SessionsState _initialState(PlatformRepository repository) {
@@ -62,6 +125,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     }
     session.model = state.model;
     session.effort = state.effort;
+    session.permissionMode = state.permissionMode;
 
     final source = AgentCliSource(commandLog: commandLog);
     _runningSources[session.id] = source;
@@ -77,6 +141,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
       prompt: prompt,
       model: state.model,
       effort: state.effort.name,
+      permissionMode: state.permissionMode.flagValue,
       workingDirectory: workingDirectory,
       resumeSessionId: session.cliSessionId,
       onSessionId: (cliSessionId) =>
@@ -150,6 +215,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
         startedAt: DateTime.now(),
         model: state.model,
         effort: state.effort,
+        permissionMode: state.permissionMode,
       );
 
   String _titleFrom(String prompt) =>

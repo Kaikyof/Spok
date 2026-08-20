@@ -38,6 +38,7 @@ class AgentCliSource {
     required String prompt,
     required String model,
     required String effort,
+    String? permissionMode,
     required String workingDirectory,
     String? resumeSessionId,
     required void Function(String sessionId) onSessionId,
@@ -51,6 +52,7 @@ class AgentCliSource {
       '--verbose',
       '--model', model,
       '--effort', effort,
+      if (permissionMode != null) ...['--permission-mode', permissionMode],
       if (resumeSessionId != null) ...['--resume', resumeSessionId],
     ];
     // Команда всегда видна: её можно скопировать и выполнить руками (бриф §3.5).
