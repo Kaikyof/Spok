@@ -450,5 +450,28 @@
     }
   },
   "sessionCommandsTitle": "Команды платформы",
-  "sessionCommandsHint": "наберите / для подсказок — список и описания те же, что в терминале"
+  "sessionCommandsHint": "наберите / для подсказок — список и описания те же, что в терминале",
+  "sessionNewTooltip": "Новая сессия",
+  "sessionDeleteTooltip": "Удалить сессию",
+  "sessionUntitled": "Пустая сессия",
+  "sessionIdle": "готова",
+  "sessionMessages": "{count, plural, one{{count} сообщение} few{{count} сообщения} other{{count} сообщений}}",
+  "@sessionMessages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionEffortLabel": "усилия",
+  "sessionContinues": "диалог продолжается — агент помнит контекст",
+  "sessionKeyboardHint": "↑↓ — выбор, Tab — вставить, Enter — отправить, Esc — скрыть",
+  "sessionArgumentsFor": "аргументы {command}",
+  "@sessionArgumentsFor": {
+    "placeholders": {
+      "command": {
+        "type": "String"
+      }
+    }
+  }
 }

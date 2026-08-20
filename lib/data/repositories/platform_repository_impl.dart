@@ -57,6 +57,18 @@ class PlatformRepositoryImpl implements PlatformRepository {
   List<SlashCommand> slashCommands() => files?.loadSlashCommands() ?? const [];
 
   @override
+  ({List<String> changeIds, List<String> sprintIds}) argumentValues() {
+    final source = files;
+    if (source == null) {
+      return (changeIds: const <String>[], sprintIds: const <String>[]);
+    }
+    return (
+      changeIds: source.loadChanges().map((change) => change.id).toList(),
+      sprintIds: source.loadSprints().map((sprint) => sprint.id).toList(),
+    );
+  }
+
+  @override
   Future<String> configFilePath() => config.configPath();
 
   @override

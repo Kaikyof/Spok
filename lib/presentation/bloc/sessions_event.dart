@@ -2,9 +2,17 @@ part of 'sessions_bloc.dart';
 
 sealed class SessionsEvent {}
 
-class SessionStarted extends SessionsEvent {
+/// Отправить сообщение в текущую сессию (продолжает диалог через --resume).
+class SessionMessageSent extends SessionsEvent {
   final String prompt;
-  SessionStarted(this.prompt);
+  SessionMessageSent(this.prompt);
+}
+
+class SessionCreated extends SessionsEvent {}
+
+class SessionDeleted extends SessionsEvent {
+  final String sessionId;
+  SessionDeleted(this.sessionId);
 }
 
 class SessionSelected extends SessionsEvent {
@@ -19,10 +27,21 @@ class SessionModelChanged extends SessionsEvent {
   SessionModelChanged(this.model);
 }
 
+class SessionEffortChanged extends SessionsEvent {
+  final AgentEffort effort;
+  SessionEffortChanged(this.effort);
+}
+
 class _SessionEventReceived extends SessionsEvent {
   final String sessionId;
   final AgentEvent event;
   _SessionEventReceived(this.sessionId, this.event);
+}
+
+class _SessionCliIdReceived extends SessionsEvent {
+  final String sessionId;
+  final String cliSessionId;
+  _SessionCliIdReceived(this.sessionId, this.cliSessionId);
 }
 
 class _SessionFinished extends SessionsEvent {

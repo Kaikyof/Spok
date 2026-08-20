@@ -980,6 +980,60 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'наберите / для подсказок — список и описания те же, что в терминале'**
   String get sessionCommandsHint;
+
+  /// No description provided for @sessionNewTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая сессия'**
+  String get sessionNewTooltip;
+
+  /// No description provided for @sessionDeleteTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить сессию'**
+  String get sessionDeleteTooltip;
+
+  /// No description provided for @sessionUntitled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пустая сессия'**
+  String get sessionUntitled;
+
+  /// No description provided for @sessionIdle.
+  ///
+  /// In ru, this message translates to:
+  /// **'готова'**
+  String get sessionIdle;
+
+  /// No description provided for @sessionMessages.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} сообщение} few{{count} сообщения} other{{count} сообщений}}'**
+  String sessionMessages(int count);
+
+  /// No description provided for @sessionEffortLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'усилия'**
+  String get sessionEffortLabel;
+
+  /// No description provided for @sessionContinues.
+  ///
+  /// In ru, this message translates to:
+  /// **'диалог продолжается — агент помнит контекст'**
+  String get sessionContinues;
+
+  /// No description provided for @sessionKeyboardHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'↑↓ — выбор, Tab — вставить, Enter — отправить, Esc — скрыть'**
+  String get sessionKeyboardHint;
+
+  /// No description provided for @sessionArgumentsFor.
+  ///
+  /// In ru, this message translates to:
+  /// **'аргументы {command}'**
+  String sessionArgumentsFor(String command);
 }
 
 class _AppLocalizationsDelegate

@@ -548,4 +548,43 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sessionCommandsHint =>
       'наберите / для подсказок — список и описания те же, что в терминале';
+
+  @override
+  String get sessionNewTooltip => 'Новая сессия';
+
+  @override
+  String get sessionDeleteTooltip => 'Удалить сессию';
+
+  @override
+  String get sessionUntitled => 'Пустая сессия';
+
+  @override
+  String get sessionIdle => 'готова';
+
+  @override
+  String sessionMessages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count сообщений',
+      few: '$count сообщения',
+      one: '$count сообщение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sessionEffortLabel => 'усилия';
+
+  @override
+  String get sessionContinues => 'диалог продолжается — агент помнит контекст';
+
+  @override
+  String get sessionKeyboardHint =>
+      '↑↓ — выбор, Tab — вставить, Enter — отправить, Esc — скрыть';
+
+  @override
+  String sessionArgumentsFor(String command) {
+    return 'аргументы $command';
+  }
 }

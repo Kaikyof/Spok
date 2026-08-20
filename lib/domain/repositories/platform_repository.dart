@@ -5,6 +5,9 @@ abstract class PlatformRepository {
   /// Команды платформы (.claude/commands) для автокомплита в сессиях.
   List<SlashCommand> slashCommands();
 
+  /// Значения для подсказок аргументов: id change'ей и спринтов.
+  ({List<String> changeIds, List<String> sprintIds}) argumentValues();
+
   /// Путь к репозиторию платформы; null — не найден.
   String? get rootPath;
 

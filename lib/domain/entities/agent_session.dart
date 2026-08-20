@@ -9,28 +9,40 @@ class AgentEvent {
   const AgentEvent(this.kind, this.text, {this.toolName = ''});
 }
 
-enum AgentSessionStatus { running, done, failed, stopped }
+enum AgentSessionStatus { idle, running, done, failed, stopped }
 
-/// Агентная сессия — один диалог с Claude Code в headless-режиме.
+/// Уровень усилий модели (флаг --effort у CLI).
+enum AgentEffort { low, medium, high, xhigh, max }
+
+/// Агентная сессия — один диалог с Claude Code. Сообщения продолжают
+/// разговор через --resume, а не начинают новый каждый раз.
 class AgentSession {
   final String id;
-  final String title; // первая реплика пользователя
   final DateTime startedAt;
+  String title; // первая реплика пользователя
   AgentSessionStatus status;
   final List<AgentEvent> events;
   String model;
+  AgentEffort effort;
   Duration? duration;
+
+  /// id разговора на стороне CLI; появляется после первого запуска.
+  String? cliSessionId;
 
   AgentSession({
     required this.id,
     required this.title,
     required this.startedAt,
     required this.model,
-    this.status = AgentSessionStatus.running,
+    required this.effort,
+    this.status = AgentSessionStatus.idle,
     List<AgentEvent>? events,
   }) : events = events ?? [];
 
-  List<AgentEvent> get toolActions => events
-      .where((event) => event.kind == AgentEventKind.toolAction)
-      .toList();
+  bool get isEmpty => events.isEmpty;
+
+  bool get isRunning => status == AgentSessionStatus.running;
+
+  int get messageCount =>
+      events.where((event) => event.kind == AgentEventKind.userMessage).length;
 }

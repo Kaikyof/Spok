@@ -25,16 +25,20 @@ class AgentCliSource {
 
   bool get isRunning => _process != null;
 
-  /// Запускает сессию; события транскрипта приходят в [onEvent],
-  /// по завершении вызывается [onDone].
+  /// Запускает или продолжает сессию.
+  /// [resumeSessionId] — id разговора Claude Code: с ним сообщение уходит
+  /// в тот же диалог, без него начинается новый.
+  /// [onSessionId] возвращает id, присвоенный CLI, чтобы продолжить позже.
   Future<void> start({
     required String binary,
     required String prompt,
     required String model,
+    required String effort,
     required String workingDirectory,
+    String? resumeSessionId,
+    required void Function(String sessionId) onSessionId,
     required void Function(AgentEvent event) onEvent,
-    required void Function(AgentSessionStatus status, Duration duration)
-        onDone,
+    required void Function(AgentSessionStatus status, Duration duration) onDone,
   }) async {
     final startedAt = DateTime.now();
     final process = await Process.start(
@@ -44,15 +48,20 @@ class AgentCliSource {
         '--output-format', 'stream-json',
         '--verbose',
         '--model', model,
+        '--effort', effort,
+        if (resumeSessionId != null) ...['--resume', resumeSessionId],
       ],
       workingDirectory: workingDirectory,
     );
     _process = process;
+    // CLI ждёт данные на stdin и предупреждает, если их нет: промпт передан
+    // аргументом, поэтому вход закрываем сразу.
+    await process.stdin.close();
 
     process.stdout
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen((line) => _parseLine(line, onEvent));
+        .listen((line) => _parseLine(line, onEvent, onSessionId));
     process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -68,7 +77,9 @@ class AgentCliSource {
     onDone(
       wasStopped
           ? AgentSessionStatus.stopped
-          : (exitCode == 0 ? AgentSessionStatus.done : AgentSessionStatus.failed),
+          : (exitCode == 0
+              ? AgentSessionStatus.done
+              : AgentSessionStatus.failed),
       DateTime.now().difference(startedAt),
     );
   }
@@ -79,7 +90,11 @@ class AgentCliSource {
     process?.kill();
   }
 
-  void _parseLine(String line, void Function(AgentEvent event) onEvent) {
+  void _parseLine(
+    String line,
+    void Function(AgentEvent event) onEvent,
+    void Function(String sessionId) onSessionId,
+  ) {
     if (line.trim().isEmpty) return;
     dynamic json;
     try {
@@ -88,6 +103,11 @@ class AgentCliSource {
       return; // служебный вывод, не событие
     }
     switch (json['type']) {
+      case 'system':
+        final sessionId = json['session_id']?.toString();
+        if (json['subtype'] == 'init' && sessionId != null) {
+          onSessionId(sessionId);
+        }
       case 'assistant':
         _parseAssistantMessage(json['message'], onEvent);
       case 'result':
