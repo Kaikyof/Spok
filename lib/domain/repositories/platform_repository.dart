@@ -1,4 +1,4 @@
-import '../entities/snapshot.dart';
+import '../entities/console_snapshot.dart';
 
 abstract class PlatformRepository {
   /// Путь к репозиторию платформы; null — не найден.

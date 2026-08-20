@@ -1,8 +1,13 @@
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-import 'package:platform_console/domain/entities/entities.dart';
+import '../../domain/entities/build_info.dart';
+import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/sprint.dart';
+import '../../domain/entities/stack_state.dart';
+import '../../domain/entities/task_item.dart';
 
 /// Чтение файлов avtoto-platform. Ничего не пишет и не кэширует на диске.
 class PlatformFilesSource {
@@ -11,196 +16,203 @@ class PlatformFilesSource {
 
   /// Ищет репозиторий платформы: $AVTOTO_PLATFORM_DIR, затем типовые пути.
   static PlatformFilesSource? locate() {
-    final candidates = <String>[
-      if (Platform.environment['AVTOTO_PLATFORM_DIR'] != null)
-        Platform.environment['AVTOTO_PLATFORM_DIR']!,
-      '${Platform.environment['HOME']}/webAnt-poject/avtoto-platform',
-      '${Platform.environment['HOME']}/webant-project/avtoto-platform',
-      '${Platform.environment['HOME']}/avtoto-platform',
+    final home = Platform.environment['HOME'];
+    final candidates = [
+      ?Platform.environment['AVTOTO_PLATFORM_DIR'],
+      '$home/webAnt-poject/avtoto-platform',
+      '$home/webant-project/avtoto-platform',
+      '$home/avtoto-platform',
     ];
-    for (final p in candidates) {
-      final d = Directory(p);
-      if (File('${d.path}/workspace.yaml').existsSync()) return PlatformFilesSource(d);
+    for (final candidate in candidates) {
+      if (File(p.join(candidate, 'workspace.yaml')).existsSync()) {
+        return PlatformFilesSource(Directory(candidate));
+      }
     }
     return null;
   }
 
   String get path => root.path;
-  File _file(String rel) => File('${root.path}/$rel');
-  Directory _dir(String rel) => Directory('${root.path}/$rel');
 
   // ─── Спринты ───────────────────────────────────────────────────────────────
 
   List<Sprint> loadSprints() {
-    final docDir = _dir('openspec/doc');
+    final docDir = Directory(p.join(root.path, 'openspec', 'doc'));
     if (!docDir.existsSync()) return [];
-    final sprints = <Sprint>[];
-    for (final e in docDir.listSync().whereType<Directory>()) {
-      final id = e.path.split('/').last;
-      sprints.add(_loadSprint(id, e));
-    }
+    final sprints = [
+      for (final entry in docDir.listSync().whereType<Directory>())
+        _loadSprint(p.basename(entry.path), entry),
+    ];
     sprints.sort((a, b) => a.id.compareTo(b.id));
     return sprints;
   }
 
-  Sprint _loadSprint(String id, Directory dir) {
-    var title = id;
-    final doc = File('${dir.path}/doc.md');
-    if (doc.existsSync()) {
-      final first = doc.readAsLinesSync().firstWhere(
-          (l) => l.startsWith('# '),
-          orElse: () => '# $id');
-      // «# pin-biometric-auth — Название: master-spec»
-      final m = RegExp(r'^#\s*\S+\s*—\s*(.+?)(:\s*master-spec)?\s*$')
-          .firstMatch(first);
-      if (m != null) title = m.group(1)!;
-    }
+  Sprint _loadSprint(String sprintId, Directory sprintDir) => Sprint(
+        id: sprintId,
+        title: _sprintTitle(sprintId, sprintDir),
+        branchIos: _sprintYamlValue(sprintDir, ['branches', 'ios', 'name']),
+        branchAndroid:
+            _sprintYamlValue(sprintDir, ['branches', 'android', 'name']),
+        delivery: _sprintYamlValue(sprintDir, ['delivery']) ?? 'batch',
+        buildIos: _latestBuild(sprintDir, 'ios'),
+        buildAndroid: _latestBuild(sprintDir, 'android'),
+      );
 
-    String? branchIos, branchAndroid;
-    var delivery = 'batch';
-    final sy = File('${dir.path}/sprint.yaml');
-    if (sy.existsSync()) {
-      final y = loadYaml(sy.readAsStringSync());
-      branchIos = y['branches']?['ios']?['name']?.toString();
-      branchAndroid = y['branches']?['android']?['name']?.toString();
-      delivery = y['delivery']?.toString() ?? 'batch';
-    }
-
-    BuildInfo? bIos, bAndroid;
-    final by = File('${dir.path}/builds.yaml');
-    if (by.existsSync()) {
-      final y = loadYaml(by.readAsStringSync());
-      bIos = _buildInfo(y['ios'], iosChannel: true);
-      bAndroid = _buildInfo(y['android'], iosChannel: false);
-    }
-
-    return Sprint(
-      id: id,
-      title: title,
-      branchIos: branchIos,
-      branchAndroid: branchAndroid,
-      delivery: delivery,
-      buildIos: bIos,
-      buildAndroid: bAndroid,
-    );
+  String _sprintTitle(String sprintId, Directory sprintDir) {
+    final docFile = File(p.join(sprintDir.path, 'doc.md'));
+    if (!docFile.existsSync()) return sprintId;
+    final heading = docFile.readAsLinesSync().firstWhere(
+        (line) => line.startsWith('# '),
+        orElse: () => '# $sprintId');
+    // «# pin-biometric-auth — Название: master-spec»
+    final match = RegExp(r'^#\s*\S+\s*—\s*(.+?)(:\s*master-spec)?\s*$')
+        .firstMatch(heading);
+    return match?.group(1) ?? sprintId;
   }
 
-  BuildInfo? _buildInfo(dynamic node, {required bool iosChannel}) {
-    if (node == null) return null;
-    final builds = node['builds'];
+  String? _sprintYamlValue(Directory sprintDir, List<String> keyPath) {
+    final file = File(p.join(sprintDir.path, 'sprint.yaml'));
+    if (!file.existsSync()) return null;
+    dynamic node = loadYaml(file.readAsStringSync());
+    for (final key in keyPath) {
+      node = node?[key];
+    }
+    return node?.toString();
+  }
+
+  BuildInfo? _latestBuild(Directory sprintDir, String stack) {
+    final file = File(p.join(sprintDir.path, 'builds.yaml'));
+    if (!file.existsSync()) return null;
+    final builds = loadYaml(file.readAsStringSync())[stack]?['builds'];
     if (builds is! YamlList || builds.isEmpty) return null;
-    final b = builds.first;
-    final name = iosChannel
-        ? b['version_name']?.toString()
-        : '${b['version_name']}(${b['version_code']})';
+    final build = builds.first;
+    final versionName = stack == 'ios'
+        ? build['version_name']?.toString()
+        : '${build['version_name']}(${build['version_code']})';
     return BuildInfo(
-      versionName: name ?? '?',
-      channel: b['channel']?.toString() ??
-          (b['nextcloud_url'] != null ? 'QA APK в Nextcloud' : null),
-      publishedAt: DateTime.tryParse(b['published_at']?.toString() ?? ''),
+      versionName: versionName ?? '?',
+      channel: build['channel']?.toString() ??
+          (build['nextcloud_url'] != null ? 'QA APK в Nextcloud' : null),
+      publishedAt: DateTime.tryParse(build['published_at']?.toString() ?? ''),
     );
   }
 
   // ─── Change'и ──────────────────────────────────────────────────────────────
 
   List<ChangeUnit> loadChanges() {
-    final chDir = _dir('openspec/changes');
-    if (!chDir.existsSync()) return [];
-    final changes = <ChangeUnit>[];
-    for (final e in chDir.listSync().whereType<Directory>()) {
-      final id = e.path.split('/').last;
-      if (id == 'archive') continue;
-      changes.add(_loadChange(id, e));
-    }
-    // Порядок сдачи из group.members (у всех change'ей он общий).
-    final order = <String, int>{};
-    for (final c in changes) {
-      for (var i = 0; i < c.dependsOn.length; i++) {
-        order.putIfAbsent(c.dependsOn[i], () => i);
-      }
-    }
-    changes.sort((a, b) =>
-        (order[a.id] ?? 99).compareTo(order[b.id] ?? 99));
+    final changesDir = Directory(p.join(root.path, 'openspec', 'changes'));
+    if (!changesDir.existsSync()) return [];
+    final changes = [
+      for (final entry in changesDir.listSync().whereType<Directory>())
+        if (p.basename(entry.path) != 'archive')
+          _loadChange(p.basename(entry.path), entry),
+    ];
+    _sortByDeliveryOrder(changes);
     return changes;
   }
 
-  ChangeUnit _loadChange(String id, Directory dir) {
-    int? iosIssue, androidIssue;
-    var members = const <String>[];
-    final ry = File('${dir.path}/redmine.yaml');
-    if (ry.existsSync()) {
-      final y = loadYaml(ry.readAsStringSync());
-      iosIssue = int.tryParse('${y['stacks']?['ios']?['issue_id']}');
-      androidIssue = int.tryParse('${y['stacks']?['android']?['issue_id']}');
-      final g = y['group']?['members'];
-      if (g is YamlList) members = g.map((e) => e.toString()).toList();
+  /// Порядок сдачи задан списком group.members — он общий у всех change'ей.
+  void _sortByDeliveryOrder(List<ChangeUnit> changes) {
+    final deliveryOrder = <String, int>{};
+    for (final change in changes) {
+      for (final (index, memberId) in change.dependsOn.indexed) {
+        deliveryOrder.putIfAbsent(memberId, () => index);
+      }
     }
+    changes.sort((a, b) =>
+        (deliveryOrder[a.id] ?? 99).compareTo(deliveryOrder[b.id] ?? 99));
+  }
 
-    final iosTasks = _loadTasks(File('${dir.path}/tasks_ios.md'));
-    final androidTasks = _loadTasks(File('${dir.path}/tasks_android.md'));
-    final title = iosTasks.$2 ?? androidTasks.$2 ?? _proposalTitle(dir) ?? id;
+  ChangeUnit _loadChange(String changeId, Directory changeDir) {
+    final links = _loadRedmineLinks(changeDir);
+    final (iosTasks, iosTitle) =
+        _loadTasksFile(File(p.join(changeDir.path, 'tasks_ios.md')));
+    final (androidTasks, androidTitle) =
+        _loadTasksFile(File(p.join(changeDir.path, 'tasks_android.md')));
 
     return ChangeUnit(
-      id: id,
-      title: title,
-      dir: dir.path,
-      ios: iosTasks.$1.isEmpty
+      id: changeId,
+      title: iosTitle ?? androidTitle ?? _proposalTitle(changeDir) ?? changeId,
+      dir: changeDir.path,
+      ios: iosTasks.isEmpty
           ? null
-          : StackState(stack: 'ios', issueId: iosIssue, tasks: iosTasks.$1),
-      android: androidTasks.$1.isEmpty
+          : StackState(stack: 'ios', issueId: links.iosIssue, tasks: iosTasks),
+      android: androidTasks.isEmpty
           ? null
           : StackState(
-              stack: 'android', issueId: androidIssue, tasks: androidTasks.$1),
-      dependsOn: members.takeWhile((m) => m != id).toList(),
+              stack: 'android',
+              issueId: links.androidIssue,
+              tasks: androidTasks),
+      dependsOn:
+          links.members.takeWhile((member) => member != changeId).toList(),
+    );
+  }
+
+  ({int? iosIssue, int? androidIssue, List<String> members}) _loadRedmineLinks(
+      Directory changeDir) {
+    final file = File(p.join(changeDir.path, 'redmine.yaml'));
+    if (!file.existsSync()) {
+      return (iosIssue: null, androidIssue: null, members: const []);
+    }
+    final yaml = loadYaml(file.readAsStringSync());
+    final members = yaml['group']?['members'];
+    return (
+      iosIssue: int.tryParse('${yaml['stacks']?['ios']?['issue_id']}'),
+      androidIssue: int.tryParse('${yaml['stacks']?['android']?['issue_id']}'),
+      members: members is YamlList
+          ? members.map((member) => member.toString()).toList()
+          : const <String>[],
     );
   }
 
   /// Возвращает (задачи, redmine_title из финального front-matter блока).
-  (List<TaskItem>, String?) _loadTasks(File f) {
-    if (!f.existsSync()) return (const [], null);
+  (List<TaskItem>, String?) _loadTasksFile(File file) {
+    if (!file.existsSync()) return (const [], null);
     final tasks = <TaskItem>[];
-    String? title;
-    for (final line in f.readAsLinesSync()) {
-      final m = RegExp(r'^-\s*\[( |x)\]\s*(\d+\.\d+)\s+(.+)$').firstMatch(line);
-      if (m != null) {
-        tasks.add(TaskItem(m.group(2)!, m.group(3)!, m.group(1) == 'x'));
+    String? redmineTitle;
+    final checkboxPattern = RegExp(r'^-\s*\[( |x)\]\s*(\d+\.\d+)\s+(.+)$');
+    final titlePattern = RegExp(r'^redmine_title:\s*(.+)$');
+    for (final line in file.readAsLinesSync()) {
+      final checkbox = checkboxPattern.firstMatch(line);
+      if (checkbox != null) {
+        tasks.add(TaskItem(
+            checkbox.group(2)!, checkbox.group(3)!, checkbox.group(1) == 'x'));
       }
-      final t = RegExp(r'^redmine_title:\s*(.+)$').firstMatch(line);
-      if (t != null) title = t.group(1)!.trim();
+      redmineTitle =
+          titlePattern.firstMatch(line)?.group(1)?.trim() ?? redmineTitle;
     }
-    return (tasks, title);
+    return (tasks, redmineTitle);
   }
 
-  String? _proposalTitle(Directory dir) {
-    final f = File('${dir.path}/proposal.md');
-    if (!f.existsSync()) return null;
-    final first = f
+  String? _proposalTitle(Directory changeDir) {
+    final file = File(p.join(changeDir.path, 'proposal.md'));
+    if (!file.existsSync()) return null;
+    final heading = file
         .readAsLinesSync()
-        .firstWhere((l) => l.startsWith('# '), orElse: () => '');
-    return first.isEmpty ? null : first.substring(2).trim();
+        .firstWhere((line) => line.startsWith('# '), orElse: () => '');
+    return heading.isEmpty ? null : heading.substring(2).trim();
   }
 
   // ─── Окружение ─────────────────────────────────────────────────────────────
 
   Map<String, String> loadEnv() {
-    final env = <String, String>{};
-    final f = _file('.env');
-    if (!f.existsSync()) return env;
-    for (final line in f.readAsLinesSync()) {
-      final m = RegExp(r'^([A-Z0-9_]+)=(.*)$').firstMatch(line.trim());
-      if (m != null) env[m.group(1)!] = m.group(2)!;
-    }
-    return env;
+    final file = File(p.join(root.path, '.env'));
+    if (!file.existsSync()) return {};
+    final entryPattern = RegExp(r'^([A-Z0-9_]+)=(.*)$');
+    return {
+      for (final line in file.readAsLinesSync())
+        if (entryPattern.firstMatch(line.trim()) case final match?)
+          match.group(1)!: match.group(2)!,
+    };
   }
 
   /// Ключи из .env.example — источник списка проверок (только имена).
   List<String> loadEnvExampleKeys() {
-    final f = _file('.env.example');
-    if (!f.existsSync()) return [];
+    final file = File(p.join(root.path, '.env.example'));
+    if (!file.existsSync()) return [];
+    final keyPattern = RegExp(r'^[A-Z0-9_]+=');
     return [
-      for (final line in f.readAsLinesSync())
-        if (RegExp(r'^[A-Z0-9_]+=').hasMatch(line.trim()))
-          line.trim().split('=').first
+      for (final line in file.readAsLinesSync())
+        if (keyPattern.hasMatch(line.trim())) line.trim().split('=').first,
     ];
   }
 
@@ -208,52 +220,47 @@ class PlatformFilesSource {
 
   /// Сервисы workspace.yaml, отфильтрованные по роли машины.
   List<({String name, String ref})> workspaceServices() {
-    final f = _file('workspace.yaml');
-    if (!f.existsSync()) return [];
-    final y = loadYaml(f.readAsStringSync());
-    final services = y['services'];
+    final file = File(p.join(root.path, 'workspace.yaml'));
+    if (!file.existsSync()) return [];
+    final services = loadYaml(file.readAsStringSync())['services'];
     if (services is! YamlList) return [];
-    final r = role;
-    final out = <({String name, String ref})>[];
-    for (final s in services) {
-      final roles = (s['roles']?.toString() ?? '')
-          .split(',')
-          .map((e) => e.trim())
-          .toList();
-      if (r.isEmpty || roles.contains(r) || roles.contains('dev') && r == 'dev') {
-        if (r.isEmpty || roles.contains(r)) {
-          out.add((name: s['name'].toString(), ref: s['ref'].toString()));
-        }
-      }
-    }
-    return out;
+    final machineRole = role;
+    return [
+      for (final service in services)
+        if (_serviceMatchesRole(service, machineRole))
+          (name: service['name'].toString(), ref: service['ref'].toString()),
+    ];
+  }
+
+  bool _serviceMatchesRole(dynamic service, String machineRole) {
+    if (machineRole.isEmpty) return true;
+    final serviceRoles =
+        (service['roles']?.toString() ?? '').split(',').map((r) => r.trim());
+    return serviceRoles.contains(machineRole);
   }
 
   // ─── Git ───────────────────────────────────────────────────────────────────
 
-  Future<({String branch, int behind})?> gitInfo(String repoDirName) async {
-    final dir = '${root.path}/workspace/$repoDirName';
-    if (!Directory(dir).existsSync()) return null;
-    final branch = await _git(dir, ['rev-parse', '--abbrev-ref', 'HEAD']);
+  Future<({String branch, int behind})?> workspaceGitInfo(String repoDirName) =>
+      _gitInfo(p.join(root.path, 'workspace', repoDirName));
+
+  Future<({String branch, int behind})?> platformGitInfo() =>
+      _gitInfo(root.path);
+
+  Future<({String branch, int behind})?> _gitInfo(String repoDir) async {
+    if (!Directory(repoDir).existsSync()) return null;
+    final branch = await _git(repoDir, ['rev-parse', '--abbrev-ref', 'HEAD']);
     if (branch == null) return null;
-    final behindRaw =
-        await _git(dir, ['rev-list', '--count', 'HEAD..@{upstream}']);
-    return (branch: branch, behind: int.tryParse(behindRaw ?? '') ?? 0);
+    final behind =
+        await _git(repoDir, ['rev-list', '--count', 'HEAD..@{upstream}']);
+    return (branch: branch, behind: int.tryParse(behind ?? '') ?? 0);
   }
 
-  Future<({String branch, int behind})?> platformGitInfo() async {
-    final branch = await _git(root.path, ['rev-parse', '--abbrev-ref', 'HEAD']);
-    if (branch == null) return null;
-    final behindRaw =
-        await _git(root.path, ['rev-list', '--count', 'HEAD..@{upstream}']);
-    return (branch: branch, behind: int.tryParse(behindRaw ?? '') ?? 0);
-  }
-
-  Future<String?> _git(String dir, List<String> args) async {
+  Future<String?> _git(String repoDir, List<String> args) async {
     try {
-      final r = await Process.run('git', ['-C', dir, ...args]);
-      if (r.exitCode != 0) return null;
-      return (r.stdout as String).trim();
+      final result = await Process.run('git', ['-C', repoDir, ...args]);
+      if (result.exitCode != 0) return null;
+      return (result.stdout as String).trim();
     } catch (_) {
       return null;
     }

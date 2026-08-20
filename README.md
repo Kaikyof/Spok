@@ -38,11 +38,17 @@ Clean Architecture, слои:
 
 ```
 lib/
-  core/            тема (палитра из Penpot-макета)
-  domain/          сущности и контракты репозиториев
+  core/            ресурсы (AppColors, AppTextStyles, AppDimens) и тема
+  domain/          сущности, контракты репозиториев, usecases (FindDivergences)
   data/            sources (файлы платформы, Redmine API на dio) + repositories
-  presentation/    ConsoleBloc (flutter_bloc) + shell + screens + widgets
+  presentation/    bloc (event/state/bloc), shell, screens, ui_kit
+  l10n/            строки интерфейса (gen-l10n, app_ru.arb)
 ```
+
+Правила стиля: тексты — только через локализацию (домен возвращает
+структуры, форматирует presentation); подписка на блок — BlocBuilder;
+виджеты — классами; каждый класс — отдельный файл (кроме приватных
+виджетов); переиспользуемые компоненты — в `presentation/ui_kit`.
 
 Стек: flutter_bloc, dio, get_it, intl, path, yaml, flutter_markdown_plus
 (маинтейнящийся форк flutter_markdown с тем же API), window_manager.

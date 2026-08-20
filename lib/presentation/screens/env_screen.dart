@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/theme.dart';
-import '../../domain/entities/entities.dart';
+import '../../core/resources/app_colors.dart';
+import '../../core/resources/app_dimens.dart';
+import '../../core/resources/app_text_styles.dart';
+import '../../domain/entities/env_check.dart';
+import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
-import '../widgets/common.dart';
+import '../localization/text_formatters.dart';
+import '../ui_kit/check_row.dart';
+import '../ui_kit/section_card.dart';
 
 /// Экран «Окружение»: поймать проблему до запуска, а не в середине.
 class EnvScreen extends StatelessWidget {
@@ -12,67 +17,119 @@ class EnvScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.watch<ConsoleBloc>();
-    final env = bloc.state.snapshot?.env;
-    if (env == null) return const Center(child: CircularProgressIndicator());
-    final problems = env.problems;
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    final texts = AppLocalizations.of(context);
+    return BlocBuilder<ConsoleBloc, ConsoleState>(
+      builder: (context, state) {
+        final envReport = state.snapshot?.env;
+        if (envReport == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return ListView(
+          padding: AppDimens.screenPadding,
+          children: [
+            _EnvHeader(problemCount: envReport.problemCount),
+            const SizedBox(height: AppDimens.gapL),
+            _CheckSection(
+                title: texts.envKeysSection,
+                checks: envReport.keys,
+                detailFromHint: true),
+            const SizedBox(height: AppDimens.gapM),
+            _CheckSection(title: texts.envReposSection, checks: envReport.repos),
+            const SizedBox(height: AppDimens.gapM),
+            _CheckSection(
+                title: texts.envSystemsSection,
+                checks: envReport.systems,
+                monospacedNames: false),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _EnvHeader extends StatelessWidget {
+  final int problemCount;
+
+  const _EnvHeader({required this.problemCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return Row(
       children: [
-        Row(children: [
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Проверки окружения',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: C.text)),
-              const SizedBox(height: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(texts.envTitle,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
+              const SizedBox(height: AppDimens.gapXs),
               Text(
-                problems == 0
-                    ? 'всё готово к работе'
-                    : '$problems ${_plural(problems)} — часть действий не сработает',
+                problemCount == 0
+                    ? texts.envAllGood
+                    : texts.envProblems(problemCount),
                 style: TextStyle(
-                    fontSize: 12, color: problems == 0 ? C.ok : C.danger),
+                    fontSize: 12,
+                    color: problemCount == 0
+                        ? AppColors.success
+                        : AppColors.danger),
               ),
-            ]),
+            ],
           ),
-          OutlinedButton(
-            onPressed: () => bloc.add(ConsoleRefreshed()),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: C.border),
-              backgroundColor: C.cardHi,
-              foregroundColor: C.text,
-            ),
-            child: const Text('Перепроверить всё',
-                style: TextStyle(fontSize: 12)),
+        ),
+        OutlinedButton(
+          onPressed: () => context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: AppColors.border),
+            backgroundColor: AppColors.cardHighlight,
+            foregroundColor: AppColors.textPrimary,
           ),
-        ]),
-        const SizedBox(height: 20),
-        _section('Ключи в .env — показывается только наличие, не значения',
-            env.keys),
-        const SizedBox(height: 16),
-        _section('Репозитории', env.repos),
-        const SizedBox(height: 16),
-        _section('Внешние системы', env.systems, monoName: false),
+          child: Text(texts.envRecheck, style: const TextStyle(fontSize: 12)),
+        ),
       ],
     );
   }
+}
 
-  String _plural(int n) =>
-      n == 1 ? 'проблема' : (n < 5 ? 'проблемы' : 'проблем');
+class _CheckSection extends StatelessWidget {
+  final String title;
+  final List<EnvCheck> checks;
+  final bool monospacedNames;
+  final bool detailFromHint;
 
-  Widget _section(String title, List<EnvCheck> checks,
-          {bool monoName = true}) =>
-      SectionCard(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: C.text)),
-          const SizedBox(height: 8),
-          for (final (i, c) in checks.indexed) ...[
-            if (i > 0) const Divider(height: 1),
-            CheckRow(check: c, monoName: monoName),
+  const _CheckSection({
+    required this.title,
+    required this.checks,
+    this.monospacedNames = true,
+    this.detailFromHint = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTextStyles.sectionTitle),
+          const SizedBox(height: AppDimens.gapS),
+          for (final (index, check) in checks.indexed) ...[
+            if (index > 0) const Divider(height: 1),
+            CheckRow(
+              level: check.level,
+              name: check.name,
+              detail: detailFromHint
+                  ? texts.envKeyHint(check.name)
+                  : check.subtitle,
+              result: texts.checkResultText(check),
+              monospacedName: monospacedNames,
+            ),
           ],
-        ]),
-      );
+        ],
+      ),
+    );
+  }
 }

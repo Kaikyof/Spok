@@ -1,21 +1,25 @@
+// ignore_for_file: avoid_print
 // Смоук: читает реальные файлы платформы и печатает слепок без UI.
 import 'package:platform_console/data/repositories/platform_repository_impl.dart';
 import 'package:platform_console/data/sources/platform_files_source.dart';
 
 Future<void> main() async {
-  final src = PlatformFilesSource.locate();
-  print('repo: ${src?.path}');
-  final repo = PlatformRepositoryImpl(src);
-  final s = await repo.load();
-  print('sprints: ${s.sprints.map((e) => '${e.id} · ${e.title} · ios=${e.buildIos?.versionName} android=${e.buildAndroid?.versionName}').join('; ')}');
-  print('role: ${repo.role}');
-  print('redmineProblem: ${s.redmineProblem}');
-  for (final c in s.changes) {
-    print('  ${c.id}: «${c.title}» ios=${c.ios?.doneCount}/${c.ios?.tasks.length}(#${c.ios?.issueId},${c.ios?.redmineStatus}) android=${c.android?.doneCount}/${c.android?.tasks.length}(#${c.android?.issueId},${c.android?.redmineStatus}) deps=${c.dependsOn}');
+  final source = PlatformFilesSource.locate();
+  print('repo: ${source?.path}');
+  final repository = PlatformRepositoryImpl(source);
+  final snapshot = await repository.load();
+  print('sprints: ${snapshot.sprints.map((s) => '${s.id} · ${s.title} · ios=${s.buildIos?.versionName} android=${s.buildAndroid?.versionName}').join('; ')}');
+  print('role: ${repository.role}');
+  print('redmineProblem: ${snapshot.redmineProblem.name} ${snapshot.redmineProblemDetail}');
+  for (final change in snapshot.changes) {
+    print('  ${change.id}: «${change.title}» '
+        'ios=${change.ios?.doneCount}/${change.ios?.tasks.length}(#${change.ios?.issueId},${change.ios?.redmineStatus}) '
+        'android=${change.android?.doneCount}/${change.android?.tasks.length}(#${change.android?.issueId},${change.android?.redmineStatus}) '
+        'deps=${change.dependsOn}');
   }
-  print('divergences: ${s.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.message}').join(' | ')}');
-  print('env problems: ${s.env.problems}');
-  for (final g in [s.env.keys, s.env.repos, s.env.systems]) {
-    for (final c in g) { print('  [${c.level.name}] ${c.name} · ${c.detail} · ${c.result}'); }
+  print('divergences: ${snapshot.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.kind.name} open=${d.openTaskNumbers}').join(' | ')}');
+  print('env problems: ${snapshot.env.problemCount}');
+  for (final check in snapshot.env.all) {
+    print('  [${check.level.name}] ${check.name} · ${check.subtitle} · ${check.outcome.name}(${check.count}${check.param})');
   }
 }

@@ -3,15 +3,34 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../../domain/entities/entities.dart';
-import '../../domain/entities/snapshot.dart';
+import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/console_snapshot.dart';
+import '../../domain/entities/env_check.dart';
+import '../../domain/entities/env_report.dart';
+import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
 
+/// Ключи .env, критичные для работы консоли, — в порядке показа.
+const _criticalEnvKeys = [
+  'REDMINE_URL',
+  'REDMINE_API_KEY',
+  'GITLAB_URL',
+  'GITLAB_TOKEN',
+  'MATTERMOST_URL',
+  'MATTERMOST_BOT_TOKEN',
+  'MATTERMOST_DEVELOPERS_CHANNEL_ID',
+  'MATTERMOST_TEAM_CHANNEL_ID',
+  'AVTOTO_ROLE',
+];
+
 class PlatformRepositoryImpl implements PlatformRepository {
   final PlatformFilesSource? files;
-  PlatformRepositoryImpl(this.files);
+  final FindDivergences findDivergences;
+
+  PlatformRepositoryImpl(this.files, {FindDivergences? findDivergences})
+      : findDivergences = findDivergences ?? FindDivergences();
 
   @override
   String? get rootPath => files?.path;
@@ -30,184 +49,182 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   @override
   Future<ConsoleSnapshot> load() async {
-    final f = files;
-    if (f == null) {
+    final source = files;
+    if (source == null) {
       return ConsoleSnapshot(
         sprints: const [],
         changes: const [],
         divergences: const [],
-        env: EnvReport(keys: const [], repos: const [], systems: const []),
-        redmineProblem: 'репозиторий платформы не найден',
+        env: const EnvReport(keys: [], repos: [], systems: []),
+        redmineProblem: RedmineProblem.platformNotFound,
         refreshedAt: DateTime.now(),
       );
     }
 
-    final sprints = f.loadSprints();
-    final changes = f.loadChanges();
-    final redmineProblem = await _fetchStatuses(f, changes);
-    final divergences =
-        findDivergences(sprints.firstOrNull, changes);
-    final env = await _buildEnvReport(f);
+    final sprints = source.loadSprints();
+    final changes = source.loadChanges();
+    final (redmineProblem, redmineDetail) =
+        await _fetchStatuses(source, changes);
 
     return ConsoleSnapshot(
       sprints: sprints,
       changes: changes,
-      divergences: divergences,
-      env: env,
+      divergences: findDivergences(sprints.firstOrNull, changes),
+      env: await _buildEnvReport(source),
       redmineProblem: redmineProblem,
+      redmineProblemDetail: redmineDetail,
       refreshedAt: DateTime.now(),
     );
   }
 
-  Future<String?> _fetchStatuses(
-      PlatformFilesSource f, List<ChangeUnit> changes) async {
-    final env = f.loadEnv();
-    final url = env['REDMINE_URL'] ?? '';
-    final key = env['REDMINE_API_KEY'] ?? '';
-    if (url.isEmpty || key.isEmpty) return 'нет ключа REDMINE_API_KEY';
-    final ids = [
-      for (final c in changes)
-        for (final s in c.stacks)
-          if (s.issueId != null) s.issueId!,
-    ];
+  Future<(RedmineProblem, String)> _fetchStatuses(
+      PlatformFilesSource source, List<ChangeUnit> changes) async {
+    final env = source.loadEnv();
+    final baseUrl = env['REDMINE_URL'] ?? '';
+    final apiKey = env['REDMINE_API_KEY'] ?? '';
+    if (baseUrl.isEmpty || apiKey.isEmpty) {
+      return (RedmineProblem.noApiKey, '');
+    }
+    final issueIds = changes
+        .expand((change) => change.stacks)
+        .map((stack) => stack.issueId)
+        .nonNulls
+        .toList();
     try {
-      final statuses = await RedmineApi(url, key).issueStatuses(ids);
-      for (final c in changes) {
-        for (final s in c.stacks) {
-          s.redmineStatus = statuses[s.issueId];
-        }
+      final statuses = await RedmineApi(baseUrl, apiKey).issueStatuses(issueIds);
+      for (final stack in changes.expand((change) => change.stacks)) {
+        stack.redmineStatus = statuses[stack.issueId];
       }
-      return null;
-    } on DioException catch (e) {
-      return 'Redmine недоступен: ${e.message ?? e.type.name}';
-    } catch (e) {
-      return 'Redmine недоступен: $e';
+      return (RedmineProblem.none, '');
+    } on DioException catch (error) {
+      return (RedmineProblem.unreachable, error.message ?? error.type.name);
+    } catch (error) {
+      return (RedmineProblem.unreachable, '$error');
     }
   }
 
-  Future<EnvReport> _buildEnvReport(PlatformFilesSource f) async {
-    final env = f.loadEnv();
+  // ─── Окружение ─────────────────────────────────────────────────────────────
 
-    const hints = {
-      'REDMINE_URL': 'адрес Redmine',
-      'REDMINE_API_KEY': 'доступ к задачам',
-      'GITLAB_URL': 'адрес GitLab',
-      'GITLAB_TOKEN': 'доступ к MR и веткам',
-      'MATTERMOST_URL': 'адрес Mattermost',
-      'MATTERMOST_BOT_TOKEN': 'бот уведомлений',
-      'MATTERMOST_DEVELOPERS_CHANNEL_ID': 'канал разработчиков',
-      'MATTERMOST_TEAM_CHANNEL_ID': 'канал команды — уведомление о передаче',
-      'AVTOTO_ROLE': 'роль машины',
-    };
-
-    final keys = <EnvCheck>[
-      for (final k in f.loadEnvExampleKeys().where(hints.containsKey))
-        (env[k] ?? '').isNotEmpty
-            ? EnvCheck(CheckLevel.ok, k, hints[k]!,
-                k == 'AVTOTO_ROLE' ? env[k]! : 'заполнен')
-            : EnvCheck(
-                CheckLevel.error, k, hints[k]!, 'отсутствует — добавьте в .env'),
-    ];
-
-    final repos = <EnvCheck>[];
-    final pg = await f.platformGitInfo();
-    if (pg != null) repos.add(_gitCheck('avtoto-platform', pg));
-    for (final s in f.workspaceServices()) {
-      final gi = await f.gitInfo(s.name);
-      repos.add(gi == null
-          ? EnvCheck(CheckLevel.error, s.name, 'ожидается ${s.ref}',
-              'не склонирован — make init')
-          : _gitCheck(s.name, gi));
-    }
-
-    final systems = <EnvCheck>[
-      await _ping('Redmine', env['REDMINE_URL'],
-          (url) => RedmineApi(url, env['REDMINE_API_KEY'] ?? '').ping()),
-      await _ping('GitLab', env['GITLAB_URL'], (url) async {
-        final sw = Stopwatch()..start();
-        await Dio(BaseOptions(
-                connectTimeout: const Duration(seconds: 8),
-                headers: {'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? ''}))
-            .get('$url/api/v4/projects?per_page=1');
-        return sw.elapsedMilliseconds;
-      }),
-      await _ping('Mattermost', env['MATTERMOST_URL'], (url) async {
-        final sw = Stopwatch()..start();
-        await Dio(BaseOptions(connectTimeout: const Duration(seconds: 8)))
-            .get('$url/api/v4/system/ping');
-        return sw.elapsedMilliseconds;
-      }),
-    ];
-
-    return EnvReport(keys: keys, repos: repos, systems: systems);
+  Future<EnvReport> _buildEnvReport(PlatformFilesSource source) async {
+    final env = source.loadEnv();
+    return EnvReport(
+      keys: _checkEnvKeys(source, env),
+      repos: await _checkRepos(source),
+      systems: await _checkSystems(env),
+    );
   }
 
-  EnvCheck _gitCheck(String name, ({String branch, int behind}) gi) => EnvCheck(
-        gi.behind > 0 ? CheckLevel.warn : CheckLevel.ok,
-        name,
-        gi.branch,
-        gi.behind > 0 ? 'отстаёт от origin на ${gi.behind}' : 'синхронизирован',
+  List<EnvCheck> _checkEnvKeys(
+      PlatformFilesSource source, Map<String, String> env) {
+    final exampleKeys = source.loadEnvExampleKeys();
+    return [
+      for (final key in _criticalEnvKeys.where(exampleKeys.contains))
+        _checkEnvKey(key, env[key] ?? ''),
+    ];
+  }
+
+  EnvCheck _checkEnvKey(String key, String value) {
+    if (value.isEmpty) {
+      return EnvCheck(
+          level: CheckLevel.error, name: key, outcome: CheckOutcome.keyMissing);
+    }
+    if (key == 'AVTOTO_ROLE') {
+      return EnvCheck(
+          level: CheckLevel.ok,
+          name: key,
+          outcome: CheckOutcome.roleValue,
+          param: value);
+    }
+    return EnvCheck(
+        level: CheckLevel.ok, name: key, outcome: CheckOutcome.keyFilled);
+  }
+
+  Future<List<EnvCheck>> _checkRepos(PlatformFilesSource source) async {
+    final checks = <EnvCheck>[];
+    final platformInfo = await source.platformGitInfo();
+    if (platformInfo != null) {
+      checks.add(_gitCheck('avtoto-platform', platformInfo));
+    }
+    for (final service in source.workspaceServices()) {
+      final info = await source.workspaceGitInfo(service.name);
+      checks.add(info == null
+          ? EnvCheck(
+              level: CheckLevel.error,
+              name: service.name,
+              subtitle: service.ref,
+              outcome: CheckOutcome.repoNotCloned)
+          : _gitCheck(service.name, info));
+    }
+    return checks;
+  }
+
+  EnvCheck _gitCheck(String repoName, ({String branch, int behind}) info) =>
+      EnvCheck(
+        level: info.behind > 0 ? CheckLevel.warn : CheckLevel.ok,
+        name: repoName,
+        subtitle: info.branch,
+        outcome: info.behind > 0
+            ? CheckOutcome.repoBehind
+            : CheckOutcome.repoSynced,
+        count: info.behind,
       );
 
-  Future<EnvCheck> _ping(
-      String name, String? url, Future<int> Function(String) call) async {
+  Future<List<EnvCheck>> _checkSystems(Map<String, String> env) async => [
+        await _pingSystem('Redmine', env['REDMINE_URL'],
+            (url) => RedmineApi(url, env['REDMINE_API_KEY'] ?? '').ping()),
+        await _pingSystem('GitLab', env['GITLAB_URL'],
+            (url) => _timedGet('$url/api/v4/projects?per_page=1', headers: {
+                  'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? '',
+                })),
+        await _pingSystem('Mattermost', env['MATTERMOST_URL'],
+            (url) => _timedGet('$url/api/v4/system/ping')),
+      ];
+
+  Future<int> _timedGet(String url, {Map<String, String>? headers}) async {
+    final stopwatch = Stopwatch()..start();
+    await Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 8),
+      receiveTimeout: const Duration(seconds: 8),
+      headers: headers,
+    )).get(url);
+    return stopwatch.elapsedMilliseconds;
+  }
+
+  Future<EnvCheck> _pingSystem(String systemName, String? url,
+      Future<int> Function(String url) request) async {
     if (url == null || url.isEmpty) {
       return EnvCheck(
-          CheckLevel.warn, name, 'не проверялся', 'адрес не задан в .env');
+          level: CheckLevel.warn,
+          name: systemName,
+          outcome: CheckOutcome.systemNotConfigured);
     }
     final host = Uri.tryParse(url)?.host ?? url;
     try {
-      final ms = await call(url);
-      return EnvCheck(CheckLevel.ok, name, host, 'отвечает · $ms мс');
-    } on DioException catch (e) {
-      final code = e.response?.statusCode;
-      if (code != null && code < 500) {
-        // Система жива, ключ может быть неверным — это уже другой уровень.
-        return EnvCheck(CheckLevel.ok, name, host, 'отвечает · код $code');
+      final milliseconds = await request(url);
+      return EnvCheck(
+          level: CheckLevel.ok,
+          name: systemName,
+          subtitle: host,
+          outcome: CheckOutcome.systemResponds,
+          count: milliseconds);
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode != null && statusCode < 500) {
+        // Система жива; неверный ключ — уже другой уровень проблемы.
+        return EnvCheck(
+            level: CheckLevel.ok,
+            name: systemName,
+            subtitle: host,
+            outcome: CheckOutcome.systemRespondsWithCode,
+            count: statusCode);
       }
-      return EnvCheck(CheckLevel.error, name, host,
-          e.type == DioExceptionType.connectionTimeout ? 'таймаут 8 с' : 'нет соединения');
-    } catch (e) {
-      return EnvCheck(CheckLevel.error, name, host, '$e');
+      return EnvCheck(
+          level: CheckLevel.error,
+          name: systemName,
+          subtitle: host,
+          outcome: error.type == DioExceptionType.connectionTimeout
+              ? CheckOutcome.systemTimeout
+              : CheckOutcome.systemNoConnection);
     }
   }
-}
-
-/// Правила расхождений: сравнение ярлыка (Redmine) с фактом (файлы, сборки).
-/// Чистая функция — расширяется новыми правилами без изменения слоёв.
-List<Divergence> findDivergences(Sprint? sprint, List<ChangeUnit> changes) {
-  final out = <Divergence>[];
-  for (final c in changes) {
-    for (final s in c.stacks) {
-      final status = s.redmineStatus;
-      if (status == null || s.tasks.isEmpty) continue;
-      final full = s.openTasks.isEmpty;
-      if (full &&
-          ['Новая', 'В работе', 'Возвращена с ревью', 'Возвращена']
-              .contains(status)) {
-        out.add(Divergence(c.id, c.title, s.stack,
-            'галочки ${s.doneCount}/${s.tasks.length}, но задача в статусе «$status»'));
-      }
-      if (!full &&
-          ['Ожидает тестирования', 'На тестировании', 'Готово к релизу']
-              .contains(status)) {
-        final open = s.openTasks.map((t) => t.num).join(', ');
-        out.add(Divergence(c.id, c.title, s.stack,
-            'статус «$status», но не закрыты задачи $open'));
-      }
-    }
-  }
-  if (sprint != null) {
-    final waiting = changes.any(
-        (c) => c.stacks.any((s) => s.redmineStatus == 'Ожидает тестирования'));
-    if (waiting && sprint.buildIos == null) {
-      out.add(Divergence(sprint.id, sprint.title, 'ios',
-          'есть задачи в «Ожидает тестирования», но сборка iOS не записана'));
-    }
-    if (waiting && sprint.buildAndroid == null) {
-      out.add(Divergence(sprint.id, sprint.title, 'android',
-          'есть задачи в «Ожидает тестирования», но сборка Android не записана'));
-    }
-  }
-  return out;
 }
