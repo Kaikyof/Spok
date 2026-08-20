@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/sprint.dart';
@@ -27,6 +28,12 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
         emit(state.copyWith(comments: () => event.comments)));
     on<_MergeRequestsLoaded>((event, emit) =>
         emit(state.copyWith(mergeRequests: () => event.mergeRequests)));
+    on<RecipientsRequested>(_onRecipientsRequested);
+    on<_RecipientsLoaded>((event, emit) => emit(state.copyWith(
+          recipients: () => event.recipients,
+          recipientsStack: event.stack,
+          recipientsLoading: false,
+        )));
     on<DocOpened>(_onDocOpened);
     on<PlatformPathSubmitted>(_onPathSubmitted);
     on<StackFilterChanged>(
@@ -84,6 +91,17 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
       if (isClosed || state.selectedChange?.id != change.id) return;
       add(_MergeRequestsLoaded(mergeRequests));
     }));
+  }
+
+  /// Получателей подбирает скрипт платформы — он ходит в Redmine
+  /// и Mattermost, поэтому запускаем по запросу экрана, а не при refresh.
+  Future<void> _onRecipientsRequested(
+      RecipientsRequested event, Emitter<ConsoleState> emit) async {
+    if (state.recipientsLoading && state.recipientsStack == event.stack) return;
+    emit(state.copyWith(recipientsLoading: true, recipientsStack: event.stack));
+    final recipients = await repository.handoffRecipients(event.stack);
+    if (isClosed) return;
+    add(_RecipientsLoaded(event.stack, recipients));
   }
 
   Future<void> _onDocOpened(

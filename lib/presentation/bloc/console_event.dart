@@ -39,6 +39,18 @@ class _MergeRequestsLoaded extends ConsoleEvent {
   _MergeRequestsLoaded(this.mergeRequests);
 }
 
+/// Подобрать получателей для стека (скрипт платформы).
+class RecipientsRequested extends ConsoleEvent {
+  final String stack;
+  RecipientsRequested(this.stack);
+}
+
+class _RecipientsLoaded extends ConsoleEvent {
+  final String stack;
+  final HandoffRecipients recipients;
+  _RecipientsLoaded(this.stack, this.recipients);
+}
+
 class StackFilterChanged extends ConsoleEvent {
   final StackFilter filter;
   StackFilterChanged(this.filter);

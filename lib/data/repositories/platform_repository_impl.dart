@@ -7,6 +7,7 @@ import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_report.dart';
+import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/slash_command.dart';
@@ -15,6 +16,7 @@ import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/app_config_source.dart';
 import '../sources/gitlab_api.dart';
+import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
 
@@ -117,6 +119,16 @@ class PlatformRepositoryImpl implements PlatformRepository {
     } catch (_) {
       return const [];
     }
+  }
+
+  @override
+  Future<HandoffRecipients> handoffRecipients(String stack) async {
+    final source = files;
+    if (source == null) {
+      return const HandoffRecipients(error: 'platform-not-found');
+    }
+    return HandoverRecipientsSource(source.root, commandLog: commandLog)
+        .forStack(stack);
   }
 
   @override

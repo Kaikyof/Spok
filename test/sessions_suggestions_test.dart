@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:platform_console/domain/entities/console_snapshot.dart';
 import 'package:platform_console/domain/entities/env_report.dart';
+import 'package:platform_console/domain/entities/handoff_recipient.dart';
 import 'package:platform_console/domain/entities/issue_comment.dart';
 import 'package:platform_console/domain/entities/merge_request_info.dart';
 import 'package:platform_console/domain/entities/slash_command.dart';
@@ -56,6 +57,10 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   Future<List<MergeRequestInfo>> mergeRequests(String changeId) async => const [];
+
+  @override
+  Future<HandoffRecipients> handoffRecipients(String stack) async =>
+      const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';

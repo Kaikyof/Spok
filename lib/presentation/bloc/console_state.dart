@@ -25,6 +25,9 @@ class ConsoleState {
   final StackFilter stackFilter;
   final List<IssueComment>? comments; // null — ещё грузятся
   final List<MergeRequestInfo>? mergeRequests;
+  final HandoffRecipients? recipients; // null — ещё не подбирали
+  final String recipientsStack;
+  final bool recipientsLoading;
 
   const ConsoleState({
     this.status = LoadStatus.initial,
@@ -38,6 +41,9 @@ class ConsoleState {
     this.stackFilter = StackFilter.all,
     this.comments,
     this.mergeRequests,
+    this.recipients,
+    this.recipientsStack = '',
+    this.recipientsLoading = false,
   });
 
   /// Платформа не найдена — нужен экран первичной настройки.
@@ -67,6 +73,9 @@ class ConsoleState {
     StackFilter? stackFilter,
     List<IssueComment>? Function()? comments,
     List<MergeRequestInfo>? Function()? mergeRequests,
+    HandoffRecipients? Function()? recipients,
+    String? recipientsStack,
+    bool? recipientsLoading,
   }) =>
       ConsoleState(
         status: status ?? this.status,
@@ -82,5 +91,8 @@ class ConsoleState {
         comments: comments != null ? comments() : this.comments,
         mergeRequests:
             mergeRequests != null ? mergeRequests() : this.mergeRequests,
+        recipients: recipients != null ? recipients() : this.recipients,
+        recipientsStack: recipientsStack ?? this.recipientsStack,
+        recipientsLoading: recipientsLoading ?? this.recipientsLoading,
       );
 }

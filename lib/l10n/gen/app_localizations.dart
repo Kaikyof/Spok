@@ -1232,6 +1232,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'выберите стек в фильтре: передача идёт по одному стеку'**
   String get handoffPickStack;
+
+  /// No description provided for @handoffRecipientsResolve.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подобрать получателей'**
+  String get handoffRecipientsResolve;
+
+  /// No description provided for @handoffRecipientsResolving.
+  ///
+  /// In ru, this message translates to:
+  /// **'скрипт платформы опрашивает Redmine и Mattermost…'**
+  String get handoffRecipientsResolving;
+
+  /// No description provided for @handoffRecipientsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача'**
+  String get handoffRecipientsHint;
+
+  /// No description provided for @handoffRecipientsSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'роли Redmine × участники канала · scripts/sprint-handover-recipients.mjs'**
+  String get handoffRecipientsSource;
+
+  /// No description provided for @handoffRecipientsError.
+  ///
+  /// In ru, this message translates to:
+  /// **'не удалось подобрать: {reason}'**
+  String handoffRecipientsError(String reason);
+
+  /// No description provided for @handoffRecipientsDevelopers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разработчики'**
+  String get handoffRecipientsDevelopers;
+
+  /// No description provided for @handoffRecipientMain.
+  ///
+  /// In ru, this message translates to:
+  /// **'получит задачи'**
+  String get handoffRecipientMain;
+
+  /// No description provided for @handoffRecipientAlso.
+  ///
+  /// In ru, this message translates to:
+  /// **'ещё {count} в канале'**
+  String handoffRecipientAlso(int count);
 }
 
 class _AppLocalizationsDelegate

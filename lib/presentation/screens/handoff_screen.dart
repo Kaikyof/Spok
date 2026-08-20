@@ -8,6 +8,7 @@ import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/handoff_blocker.dart';
+import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/sprint.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -51,7 +52,10 @@ class HandoffScreen extends StatelessWidget {
                         const SizedBox(height: AppDimens.gapL),
                         _BuildStep(sprint: sprint),
                         const SizedBox(height: AppDimens.gapL),
-                        const _RecipientsStep(),
+                        _RecipientsStep(
+                            stack: state.stackFilter == StackFilter.android
+                                ? 'android'
+                                : 'ios'),
                       ],
                     ),
                   ),
@@ -63,6 +67,12 @@ class HandoffScreen extends StatelessWidget {
                       changes: snapshot.changes,
                       readiness: readiness,
                       stackFilter: state.stackFilter,
+                      recipients: state.recipientsStack ==
+                              (state.stackFilter == StackFilter.android
+                                  ? 'android'
+                                  : 'ios')
+                          ? state.recipients
+                          : null,
                     ),
                   ),
                 ],
@@ -310,46 +320,109 @@ class _BuildRow extends StatelessWidget {
 }
 
 class _RecipientsStep extends StatelessWidget {
-  const _RecipientsStep();
+  final String stack;
+
+  const _RecipientsStep({required this.stack});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _StepHeader(
-            number: 3,
-            title: texts.handoffStepRecipients,
-            color: AppColors.textMuted,
-            dimmed: true),
-        SectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _RecipientRow(role: texts.handoffRecipientTester),
-              const SizedBox(height: AppDimens.gapS),
-              _RecipientRow(role: texts.handoffRecipientManager),
-              const SizedBox(height: AppDimens.gapS),
-              Text(texts.handoffRecipientsNote,
-                  style: AppTextStyles.hint.copyWith(height: 1.4)),
-            ],
-          ),
-        ),
-      ],
+    return BlocBuilder<ConsoleBloc, ConsoleState>(
+      builder: (context, state) {
+        final recipients =
+            state.recipientsStack == stack ? state.recipients : null;
+        final resolved = recipients?.resolved ?? false;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _StepHeader(
+              number: 3,
+              title: texts.handoffStepRecipients,
+              color: resolved ? AppColors.success : AppColors.textMuted,
+              dimmed: !resolved,
+            ),
+            SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (state.recipientsLoading &&
+                      state.recipientsStack == stack) ...[
+                    Row(
+                      children: [
+                        const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child:
+                                CircularProgressIndicator(strokeWidth: 1.5)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(texts.handoffRecipientsResolving,
+                              style: AppTextStyles.captionMuted),
+                        ),
+                      ],
+                    ),
+                  ] else if (recipients == null) ...[
+                    Text(texts.handoffRecipientsHint,
+                        style: AppTextStyles.captionMuted),
+                    const SizedBox(height: AppDimens.gapS),
+                    OutlinedButton(
+                      onPressed: () => context
+                          .read<ConsoleBloc>()
+                          .add(RecipientsRequested(stack)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.border),
+                        backgroundColor: AppColors.cardHighlight,
+                        foregroundColor: AppColors.textPrimary,
+                      ),
+                      child: Text(texts.handoffRecipientsResolve,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+                  ] else if (recipients.error.isNotEmpty) ...[
+                    Text(texts.handoffRecipientsError(recipients.error),
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.danger)),
+                  ] else ...[
+                    _RecipientGroup(
+                        role: texts.handoffRecipientTester,
+                        people: recipients.testers),
+                    const SizedBox(height: AppDimens.gapS),
+                    _RecipientGroup(
+                        role: texts.handoffRecipientManager,
+                        people: recipients.managers),
+                    if (recipients.developers.isNotEmpty) ...[
+                      const SizedBox(height: AppDimens.gapS),
+                      _RecipientGroup(
+                          role: texts.handoffRecipientsDevelopers,
+                          people: recipients.developers),
+                    ],
+                  ],
+                  const SizedBox(height: AppDimens.gapS),
+                  Text(texts.handoffRecipientsSource,
+                      style: AppTextStyles.hint.copyWith(height: 1.4)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _RecipientRow extends StatelessWidget {
+/// Роль и подобранные под неё люди: первый получит задачи, остальные —
+/// в канале, чтобы было видно, из кого выбирает скрипт.
+class _RecipientGroup extends StatelessWidget {
   final String role;
+  final List<HandoffRecipient> people;
 
-  const _RecipientRow({required this.role});
+  const _RecipientGroup({required this.role, required this.people});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final primary = people.firstOrNull;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -364,7 +437,32 @@ class _RecipientRow extends StatelessWidget {
                   color: AppColors.textSecondary)),
         ),
         const SizedBox(width: 12),
-        Text(texts.handoffRecipientPending, style: AppTextStyles.captionMuted),
+        Expanded(
+          child: primary == null
+              ? Text(texts.handoffRecipientPending,
+                  style: AppTextStyles.captionMuted)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        SelectableText(primary.mention,
+                            style: AppTextStyles.monospace(12,
+                                color: AppColors.monospaceText)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(primary.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption),
+                        ),
+                      ],
+                    ),
+                    if (people.length > 1)
+                      Text(texts.handoffRecipientAlso(people.length - 1),
+                          style: AppTextStyles.hint),
+                  ],
+                ),
+        ),
       ],
     );
   }
@@ -375,12 +473,14 @@ class _PreviewStep extends StatelessWidget {
   final List<ChangeUnit> changes;
   final HandoffReadiness readiness;
   final StackFilter stackFilter;
+  final HandoffRecipients? recipients;
 
   const _PreviewStep({
     required this.sprint,
     required this.changes,
     required this.readiness,
     required this.stackFilter,
+    required this.recipients,
   });
 
   /// Стек сообщения: передача идёт по одному стеку за раз.
@@ -449,7 +549,9 @@ class _PreviewStep extends StatelessWidget {
       texts.handoverMsgTitle,
       texts.handoverMsgSprint(sprint.title),
       texts.handoverMsgStack(texts.stackLabel(stack)),
-      texts.handoverMsgRecipients('@—', '@—'),
+      texts.handoverMsgRecipients(
+          recipients?.testers.firstOrNull?.mention ?? '@—',
+          recipients?.managers.firstOrNull?.mention ?? '@—'),
       if (build != null)
         texts.handoverMsgBuild(
             '${build.versionName}${build.channel != null ? ' · ${build.channel}' : ''}'),

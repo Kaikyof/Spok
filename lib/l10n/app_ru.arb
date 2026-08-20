@@ -586,5 +586,27 @@
       }
     }
   },
-  "handoffPickStack": "выберите стек в фильтре: передача идёт по одному стеку"
+  "handoffPickStack": "выберите стек в фильтре: передача идёт по одному стеку",
+  "handoffRecipientsResolve": "Подобрать получателей",
+  "handoffRecipientsResolving": "скрипт платформы опрашивает Redmine и Mattermost…",
+  "handoffRecipientsHint": "получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача",
+  "handoffRecipientsSource": "роли Redmine × участники канала · scripts/sprint-handover-recipients.mjs",
+  "handoffRecipientsError": "не удалось подобрать: {reason}",
+  "@handoffRecipientsError": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffRecipientsDevelopers": "Разработчики",
+  "handoffRecipientMain": "получит задачи",
+  "handoffRecipientAlso": "ещё {count} в канале",
+  "@handoffRecipientAlso": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -1,4 +1,5 @@
 import '../entities/console_snapshot.dart';
+import '../entities/handoff_recipient.dart';
 import '../entities/issue_comment.dart';
 import '../entities/merge_request_info.dart';
 import '../entities/slash_command.dart';
@@ -17,6 +18,9 @@ abstract class PlatformRepository {
   String get role;
 
   Future<ConsoleSnapshot> load();
+
+  /// Получатели передачи для стека — подбирает скрипт платформы.
+  Future<HandoffRecipients> handoffRecipients(String stack);
 
   /// Состояние MR change'а по стекам: ярлык GitLab и факт влития.
   Future<List<MergeRequestInfo>> mergeRequests(String changeId);

@@ -710,4 +710,35 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get handoffPickStack =>
       'выберите стек в фильтре: передача идёт по одному стеку';
+
+  @override
+  String get handoffRecipientsResolve => 'Подобрать получателей';
+
+  @override
+  String get handoffRecipientsResolving =>
+      'скрипт платформы опрашивает Redmine и Mattermost…';
+
+  @override
+  String get handoffRecipientsHint =>
+      'получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача';
+
+  @override
+  String get handoffRecipientsSource =>
+      'роли Redmine × участники канала · scripts/sprint-handover-recipients.mjs';
+
+  @override
+  String handoffRecipientsError(String reason) {
+    return 'не удалось подобрать: $reason';
+  }
+
+  @override
+  String get handoffRecipientsDevelopers => 'Разработчики';
+
+  @override
+  String get handoffRecipientMain => 'получит задачи';
+
+  @override
+  String handoffRecipientAlso(int count) {
+    return 'ещё $count в канале';
+  }
 }
