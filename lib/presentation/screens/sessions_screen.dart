@@ -11,6 +11,7 @@ import '../../domain/entities/slash_command.dart';
 import '../../domain/usecases/suggest_command_arguments.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/sessions_bloc.dart';
+import '../ui_kit/agent_markdown.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/suggestion_list.dart';
 
@@ -482,7 +483,7 @@ class _TranscriptEntry extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10, right: 60),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: AppColors.cardHighlight, borderRadius: BorderRadius.circular(10)),
-      child: SelectableText(event.text, style: AppTextStyles.caption.copyWith(height: 1.5)),
+      child: AgentMarkdown(data: event.text),
     ),
     AgentEventKind.toolAction => Padding(
       padding: const EdgeInsets.only(bottom: 6, left: 4),
@@ -518,7 +519,7 @@ class _TranscriptEntry extends StatelessWidget {
             style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5),
           ),
           const SizedBox(height: 6),
-          SelectableText(event.text, style: AppTextStyles.caption.copyWith(height: 1.5)),
+          AgentMarkdown(data: event.text),
         ],
       ),
     ),

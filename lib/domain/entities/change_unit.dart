@@ -5,6 +5,7 @@ class ChangeUnit {
   final String id; // имя папки openspec/changes/<id>
   final String title;
   final String dir; // абсолютный путь к папке change'а
+  final String sprintId; // group.feature_sprint; пусто — вне спринта
   final StackState? ios;
   final StackState? android;
   final List<String> dependsOn; // предшественники из group.members
@@ -13,6 +14,7 @@ class ChangeUnit {
     required this.id,
     required this.title,
     required this.dir,
+    this.sprintId = '',
     this.ios,
     this.android,
     this.dependsOn = const [],

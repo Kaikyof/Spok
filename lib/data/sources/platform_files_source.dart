@@ -147,6 +147,7 @@ class PlatformFilesSource {
       id: changeId,
       title: iosTitle ?? androidTitle ?? _proposalTitle(changeDir) ?? changeId,
       dir: changeDir.path,
+      sprintId: links.sprintId,
       ios: iosTasks.isEmpty
           ? null
           : StackState(stack: 'ios', issueId: links.iosIssue, tasks: iosTasks),
@@ -161,11 +162,20 @@ class PlatformFilesSource {
     );
   }
 
-  ({int? iosIssue, int? androidIssue, List<String> members}) _loadRedmineLinks(
-      Directory changeDir) {
+  ({
+    int? iosIssue,
+    int? androidIssue,
+    List<String> members,
+    String sprintId
+  }) _loadRedmineLinks(Directory changeDir) {
     final file = File(p.join(changeDir.path, 'redmine.yaml'));
     if (!file.existsSync()) {
-      return (iosIssue: null, androidIssue: null, members: const []);
+      return (
+        iosIssue: null,
+        androidIssue: null,
+        members: const <String>[],
+        sprintId: ''
+      );
     }
     final yaml = loadYaml(file.readAsStringSync());
     final members = yaml['group']?['members'];
@@ -175,6 +185,7 @@ class PlatformFilesSource {
       members: members is YamlList
           ? members.map((member) => member.toString()).toList()
           : const <String>[],
+      sprintId: yaml['group']?['feature_sprint']?.toString() ?? '',
     );
   }
 

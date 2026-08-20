@@ -802,4 +802,45 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sprintCreateTooltip => 'Новый спринт из ТЗ';
+
+  @override
+  String sprintNoChanges(String title) {
+    return 'В спринте «$title» пока нет change\'ей';
+  }
+
+  @override
+  String get sprintNoChangesHint =>
+      'Change — единица работы: спека, задачи, код и тест-кейсы. Создайте первый, чтобы спринт начал двигаться.';
+
+  @override
+  String get sprintCreateChange => 'Создать change';
+
+  @override
+  String get changeCreateTitle => 'Новый change в спринте';
+
+  @override
+  String get changeCreateNameLabel =>
+      'Идентификатор change\'а (латиницей, через дефис)';
+
+  @override
+  String get changeCreateBriefLabel =>
+      'Что нужно сделать — коротко или подробно';
+
+  @override
+  String get changeCreateHint =>
+      'Запустится /opsx-propose с мастер-спекой спринта — агент создаст спеку, задачи и тест-кейсы.';
+
+  @override
+  String get changeCreateRun => 'Создать change';
+
+  @override
+  String applyRun(String stack) {
+    return 'Реализовать $stack';
+  }
+
+  @override
+  String get applyHint => 'запустит /opsx-apply в агентной сессии';
+
+  @override
+  String get applyDone => 'все задачи закрыты';
 }

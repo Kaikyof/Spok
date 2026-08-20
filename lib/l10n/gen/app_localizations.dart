@@ -1388,6 +1388,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Новый спринт из ТЗ'**
   String get sprintCreateTooltip;
+
+  /// No description provided for @sprintNoChanges.
+  ///
+  /// In ru, this message translates to:
+  /// **'В спринте «{title}» пока нет change\'ей'**
+  String sprintNoChanges(String title);
+
+  /// No description provided for @sprintNoChangesHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Change — единица работы: спека, задачи, код и тест-кейсы. Создайте первый, чтобы спринт начал двигаться.'**
+  String get sprintNoChangesHint;
+
+  /// No description provided for @sprintCreateChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать change'**
+  String get sprintCreateChange;
+
+  /// No description provided for @changeCreateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый change в спринте'**
+  String get changeCreateTitle;
+
+  /// No description provided for @changeCreateNameLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Идентификатор change\'а (латиницей, через дефис)'**
+  String get changeCreateNameLabel;
+
+  /// No description provided for @changeCreateBriefLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что нужно сделать — коротко или подробно'**
+  String get changeCreateBriefLabel;
+
+  /// No description provided for @changeCreateHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запустится /opsx-propose с мастер-спекой спринта — агент создаст спеку, задачи и тест-кейсы.'**
+  String get changeCreateHint;
+
+  /// No description provided for @changeCreateRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать change'**
+  String get changeCreateRun;
+
+  /// No description provided for @applyRun.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реализовать {stack}'**
+  String applyRun(String stack);
+
+  /// No description provided for @applyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'запустит /opsx-apply в агентной сессии'**
+  String get applyHint;
+
+  /// No description provided for @applyDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'все задачи закрыты'**
+  String get applyDone;
 }
 
 class _AppLocalizationsDelegate

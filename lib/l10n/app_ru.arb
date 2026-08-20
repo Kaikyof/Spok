@@ -633,5 +633,30 @@
   "sprintCreateHint": "Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.",
   "sprintCreateNameError": "нужен идентификатор латиницей: например profile-v2",
   "sprintCreateBriefError": "нужен текст ТЗ или приложенный файл",
-  "sprintCreateTooltip": "Новый спринт из ТЗ"
+  "sprintCreateTooltip": "Новый спринт из ТЗ",
+  "sprintNoChanges": "В спринте «{title}» пока нет change'ей",
+  "@sprintNoChanges": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "sprintNoChangesHint": "Change — единица работы: спека, задачи, код и тест-кейсы. Создайте первый, чтобы спринт начал двигаться.",
+  "sprintCreateChange": "Создать change",
+  "changeCreateTitle": "Новый change в спринте",
+  "changeCreateNameLabel": "Идентификатор change'а (латиницей, через дефис)",
+  "changeCreateBriefLabel": "Что нужно сделать — коротко или подробно",
+  "changeCreateHint": "Запустится /opsx-propose с мастер-спекой спринта — агент создаст спеку, задачи и тест-кейсы.",
+  "changeCreateRun": "Создать change",
+  "applyRun": "Реализовать {stack}",
+  "@applyRun": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "applyHint": "запустит /opsx-apply в агентной сессии",
+  "applyDone": "все задачи закрыты"
 }

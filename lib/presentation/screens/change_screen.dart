@@ -18,6 +18,7 @@ import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
+import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/redmine_issue_link.dart';
@@ -42,7 +43,7 @@ class ChangeScreen extends StatelessWidget {
           if (state.selectedChange != null) {
             return _ChangeCard(
               change: state.selectedChange!,
-              allChanges: state.snapshot?.changes ?? const [],
+              allChanges: state.sprintChanges,
               filter: state.stackFilter,
               redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
               sprintBranchIos: state.sprint?.branchIos,
@@ -52,7 +53,7 @@ class ChangeScreen extends StatelessWidget {
             );
           }
           return _ChangeList(
-            changes: state.snapshot?.changes ?? const [],
+            changes: state.sprintChanges,
             filter: state.stackFilter,
             redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
           );
@@ -284,7 +285,7 @@ class _ChangeCard extends StatelessWidget {
               child: Column(
                 children: [
                   for (final stackState in visibleStacks) ...[
-                    _TaskChecklist(stack: stackState),
+                    _TaskChecklist(stack: stackState, changeId: change.id),
                     const SizedBox(height: AppDimens.gapM),
                   ],
                 ],
@@ -722,8 +723,9 @@ class _ArtifactRow extends StatelessWidget {
 
 class _TaskChecklist extends StatelessWidget {
   final StackState stack;
+  final String changeId;
 
-  const _TaskChecklist({required this.stack});
+  const _TaskChecklist({required this.stack, required this.changeId});
 
   @override
   Widget build(BuildContext context) {
@@ -749,8 +751,62 @@ class _TaskChecklist extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           for (final task in stack.tasks) _TaskRow(task: task),
+          const SizedBox(height: AppDimens.gapS),
+          _ApplyButton(stack: stack, changeId: changeId, allDone: allDone),
         ],
       ),
+    );
+  }
+}
+
+/// Реализация стека — работа, требующая суждения: запускаем /opsx-apply
+/// в агентной сессии прямо отсюда, чтобы не переключаться в терминал.
+class _ApplyButton extends StatelessWidget {
+  final StackState stack;
+  final String changeId;
+  final bool allDone;
+
+  const _ApplyButton({
+    required this.stack,
+    required this.changeId,
+    required this.allDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    if (allDone) {
+      return Row(
+        children: [
+          const Icon(Icons.check_circle_outline,
+              size: 14, color: AppColors.success),
+          const SizedBox(width: 8),
+          Text(texts.applyDone, style: AppTextStyles.hint),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: () {
+            context.read<SessionsBloc>().add(HandoffRunRequested(
+                '/opsx-apply $changeId --stack ${stack.stack}'));
+            context
+                .read<ConsoleBloc>()
+                .add(ScreenSelected(ConsoleScreen.sessions));
+          },
+          icon: const Icon(Icons.play_arrow, size: 15, color: AppColors.accent),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: AppColors.border),
+            backgroundColor: AppColors.cardHighlight,
+            foregroundColor: AppColors.textPrimary,
+          ),
+          label: Text(texts.applyRun(texts.stackLabel(stack.stack)),
+              style: const TextStyle(fontSize: 12)),
+        ),
+        const SizedBox(width: 12),
+        Flexible(child: Text(texts.applyHint, style: AppTextStyles.hint)),
+      ],
     );
   }
 }

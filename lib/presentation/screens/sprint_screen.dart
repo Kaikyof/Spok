@@ -18,6 +18,7 @@ import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
+import '../widgets/create_change_dialog.dart';
 import '../widgets/create_sprint_dialog.dart';
 
 /// Главный экран: за пять секунд показать, где спринт и что мешает.
@@ -33,11 +34,15 @@ class SprintScreen extends StatelessWidget {
         if (snapshot == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.changes.isEmpty) {
+        final sprintChanges = state.sprintChanges;
+        if (snapshot.sprints.isEmpty) {
           return Center(
             child: Text(texts.sprintEmpty,
                 textAlign: TextAlign.center, style: AppTextStyles.body),
           );
+        }
+        if (sprintChanges.isEmpty) {
+          return _EmptySprint(sprintTitle: state.sprint?.title ?? '');
         }
         final filter = state.stackFilter;
         final visibleDivergences = snapshot.divergences
@@ -57,13 +62,13 @@ class SprintScreen extends StatelessWidget {
               const SizedBox(height: AppDimens.gapL),
             ],
             _ChangesTable(
-              changes: snapshot.changes,
+              changes: sprintChanges,
               divergences: snapshot.divergences,
               filter: filter,
               redmineBaseUrl: snapshot.redmineBaseUrl,
             ),
             const SizedBox(height: AppDimens.gapL),
-            _NextStepSection(changes: snapshot.changes, filter: filter),
+            _NextStepSection(changes: sprintChanges, filter: filter),
           ],
         );
       },
@@ -105,6 +110,46 @@ class _FilterRow extends StatelessWidget {
                 context.read<ConsoleBloc>().add(StackFilterChanged(filter)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Спринт создан, но change'ей ещё нет: объясняем и даём первый шаг,
+/// а не показываем пустую таблицу (бриф §8, состояние «Пусто»).
+class _EmptySprint extends StatelessWidget {
+  final String sprintTitle;
+
+  const _EmptySprint({required this.sprintTitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(texts.sprintNoChanges(sprintTitle),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.sectionTitle),
+            const SizedBox(height: AppDimens.gapS),
+            Text(texts.sprintNoChangesHint,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.captionMuted.copyWith(height: 1.5)),
+            const SizedBox(height: AppDimens.gapL),
+            FilledButton.icon(
+              onPressed: () => CreateChangeDialog.show(
+                  context, context.read<ConsoleBloc>().state.sprint?.id ?? ''),
+              icon: const Icon(Icons.add, size: 16),
+              style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.background),
+              label: Text(texts.sprintCreateChange),
+            ),
+          ],
+        ),
       ),
     );
   }

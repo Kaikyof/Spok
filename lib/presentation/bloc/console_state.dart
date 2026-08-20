@@ -46,6 +46,15 @@ class ConsoleState {
     this.recipientsLoading = false,
   });
 
+  /// Change'и выбранного спринта: переключение спринта меняет и список.
+  /// Change без привязки показываем только когда спринт не выбран.
+  List<ChangeUnit> get sprintChanges {
+    final all = snapshot?.changes ?? const <ChangeUnit>[];
+    final current = sprint;
+    if (current == null) return all;
+    return all.where((change) => change.sprintId == current.id).toList();
+  }
+
   /// Платформа не найдена — нужен экран первичной настройки.
   bool get needsSetup =>
       snapshot?.redmineProblem == RedmineProblem.platformNotFound;

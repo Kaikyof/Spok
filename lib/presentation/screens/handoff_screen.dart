@@ -39,9 +39,10 @@ class _HandoffScreenState extends State<HandoffScreen> {
           if (snapshot == null || sprint == null) {
             return const Center(child: CircularProgressIndicator());
           }
+          final sprintChanges = state.sprintChanges;
           final readiness = AssessHandoffReadiness()(
             sprint: sprint,
-            changes: snapshot.changes,
+            changes: sprintChanges,
             stackVisible: state.stackFilter.allows,
           );
           return ListView(
@@ -79,7 +80,7 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     flex: 50,
                     child: _PreviewStep(
                       sprint: sprint,
-                      changes: snapshot.changes,
+                      changes: sprintChanges,
                       readiness: readiness,
                       stackFilter: state.stackFilter,
                       recipients: state.recipientsStack ==
