@@ -1,0 +1,793 @@
+<meta charset="utf-8">
+<title>Консоль спеки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --ground:#F2F4F6;
+  --surface:#FFFFFF;
+  --surface-2:#E9EDF0;
+  --ink:#161C22;
+  --ink-2:#414D57;
+  --ink-3:#6C7A85;
+  --line:#D6DDE3;
+  --line-soft:#E5EAEE;
+  --accent:#16606B;
+  --accent-soft:#DCEDEF;
+  --ok:#2C6E49;
+  --warn:#8A5A12;
+  --warn-soft:#F6ECDA;
+  --crit:#9B3630;
+  --shadow:0 1px 2px rgba(22,28,34,.05),0 8px 24px -18px rgba(22,28,34,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#10151A;
+    --surface:#171E24;
+    --surface-2:#1F282F;
+    --ink:#E6ECF0;
+    --ink-2:#B3C0C9;
+    --ink-3:#7F8E99;
+    --line:#2B363E;
+    --line-soft:#232D34;
+    --accent:#5EBAC5;
+    --accent-soft:#173236;
+    --ok:#79C295;
+    --warn:#D9A75C;
+    --warn-soft:#2E2618;
+    --crit:#E08A84;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -20px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#10151A;
+  --surface:#171E24;
+  --surface-2:#1F282F;
+  --ink:#E6ECF0;
+  --ink-2:#B3C0C9;
+  --ink-3:#7F8E99;
+  --line:#2B363E;
+  --line-soft:#232D34;
+  --accent:#5EBAC5;
+  --accent-soft:#173236;
+  --ok:#79C295;
+  --warn:#D9A75C;
+  --warn-soft:#2E2618;
+  --crit:#E08A84;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -20px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:0 24px 96px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+}
+
+/* ---- header ---- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  padding:56px 0 28px;
+  margin-bottom:40px;
+}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 18px;
+}
+h1{
+  font-size:clamp(34px,5vw,52px);
+  line-height:1.08;
+  letter-spacing:-.02em;
+  font-weight:600;
+  margin:0 0 16px;
+  text-wrap:balance;
+}
+.standfirst{
+  font-family:"IBM Plex Serif",Georgia,serif;
+  font-size:19px;
+  line-height:1.62;
+  color:var(--ink-2);
+  max-width:64ch;
+  margin:0 0 26px;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 10px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:12.5px;
+  color:var(--ink-3);
+}
+.meta span{
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:4px 9px;
+  background:var(--surface);
+}
+
+/* ---- layout with rail ---- */
+.body-grid{display:grid;grid-template-columns:1fr;gap:48px}
+@media (min-width:1000px){
+  .body-grid{grid-template-columns:210px minmax(0,1fr);gap:64px;align-items:start}
+  nav.toc{position:sticky;top:32px}
+}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+nav.toc a{
+  display:flex;
+  gap:10px;
+  text-decoration:none;
+  color:var(--ink-3);
+  font-size:13.5px;
+  padding:5px 8px 5px 0;
+  border-left:2px solid transparent;
+  padding-left:12px;
+  line-height:1.35;
+}
+nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
+nav.toc a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav.toc .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);min-width:14px}
+
+/* ---- sections ---- */
+section{margin:0 0 64px;scroll-margin-top:24px}
+h2{
+  font-size:13px;
+  font-family:"IBM Plex Mono",monospace;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  font-weight:500;
+  margin:0 0 6px;
+  padding-bottom:0;
+}
+h2 .num{color:var(--accent)}
+.h2-title{
+  font-size:clamp(24px,3vw,31px);
+  line-height:1.2;
+  letter-spacing:-.015em;
+  font-weight:600;
+  margin:0 0 22px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--line);
+  text-wrap:balance;
+}
+h3{
+  font-size:18.5px;
+  font-weight:600;
+  letter-spacing:-.01em;
+  margin:36px 0 10px;
+}
+h4{
+  font-size:13px;
+  font-family:"IBM Plex Mono",monospace;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--ink-3);
+  font-weight:500;
+  margin:28px 0 10px;
+}
+p{margin:0 0 16px;max-width:70ch}
+.lead{font-family:"IBM Plex Serif",Georgia,serif;font-size:17.5px;color:var(--ink-2);max-width:66ch}
+ul,ol.plain{margin:0 0 18px;padding-left:20px;max-width:70ch}
+li{margin:0 0 7px}
+strong{font-weight:600;color:var(--ink)}
+a{color:var(--accent)}
+code,.mono{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.88em;
+  background:var(--surface-2);
+  border-radius:2px;
+  padding:1px 5px;
+}
+hr{border:0;border-top:1px solid var(--line-soft);margin:32px 0}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+th{
+  text-align:left;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  font-weight:500;
+  color:var(--ink-3);
+  padding:11px 14px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface-2);
+  white-space:nowrap;
+}
+td{padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+td strong{color:var(--ink)}
+td.code,th.code{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--accent);font-size:13px}
+
+
+/* ---- devices ---- */
+.chip{
+  display:inline-block;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;
+  letter-spacing:.04em;
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:2px 7px;
+  color:var(--ink-3);
+  background:var(--surface);
+  white-space:nowrap;
+}
+.chip.new{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.callout{
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  background:var(--surface);
+  padding:18px 20px;
+  border-radius:0 3px 3px 0;
+  margin:0 0 24px;
+  box-shadow:var(--shadow);
+}
+.callout p:last-child{margin-bottom:0}
+.callout .k{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:block;
+  margin-bottom:8px;
+}
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));margin:0 0 24px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:18px;
+}
+.card h5{margin:0 0 6px;font-size:15.5px;font-weight:600}
+.card p{font-size:14px;color:var(--ink-2);margin:0}
+.card p + p{margin-top:10px}
+.card .tag{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  display:block;
+  margin-bottom:10px;
+}
+
+/* stat tiles */
+.stats{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:0 0 26px}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:18px 18px 16px;
+}
+.stat .v{
+  font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums;
+  font-size:34px;
+  line-height:1.05;
+  font-weight:600;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  display:block;
+  margin-bottom:8px;
+}
+.stat .v small{font-size:16px;font-weight:500;color:var(--ink-3);letter-spacing:0}
+.stat .l{font-size:13.5px;color:var(--ink-2);line-height:1.45;display:block}
+.stat.flag .v{color:var(--warn)}
+
+/* before / after */
+.ba{display:grid;gap:14px;grid-template-columns:1fr;margin:0 0 26px}
+@media (min-width:720px){.ba{grid-template-columns:1fr 1fr}}
+.ba .card.now{border-left:3px solid var(--warn)}
+.ba .card.next{border-left:3px solid var(--accent)}
+.steps{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+.steps li{margin:0 0 5px}
+
+/* status pills */
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;
+  letter-spacing:.03em;
+  white-space:nowrap;
+  color:var(--ink-2);
+}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;flex:none}
+.pill.ok::before{background:var(--ok)}
+.pill.part::before{background:var(--warn)}
+.pill.off::before{background:transparent;border:1.5px solid var(--crit)}
+.pill.dead::before{background:var(--crit)}
+
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.dot.ok{background:var(--ok)}
+.dot.warn{background:var(--warn)}
+.dot.crit{background:var(--crit)}
+.dot.hollow{background:transparent;border:1.5px solid var(--ink-3)}
+footer{
+  border-top:1px solid var(--line);
+  padding-top:22px;
+  margin-top:16px;
+  font-size:13.5px;
+  color:var(--ink-3);
+  font-family:"IBM Plex Mono",monospace;
+  line-height:1.7;
+}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Бизнес-техзадание · версия 3 · 25.08.2026</p>
+  <h1>Консоль спеки</h1>
+  <p class="standfirst">Настольное приложение, которое собирает состояние разработки из трекера, хостинга кода, git и файлов репозитория — и показывает его на одном экране. Подключается к любой спеке по ссылке на репозиторий.</p>
+  <div class="meta">
+    <span>аудитория: менеджеры · аналитики</span>
+    <span>макеты: Penpot «Platform Console» · 31 борд</span>
+    <span>тема: тёмная</span>
+    <span>язык: русский</span>
+  </div>
+</header>
+
+<div class="body-grid">
+
+<nav class="toc" aria-label="Содержание">
+  <ol>
+    <li><a href="#s1"><span class="n">1</span><span>Зачем продукт</span></a></li>
+    <li><a href="#s2"><span class="n">2</span><span>Проблема в цифрах</span></a></li>
+    <li><a href="#s3"><span class="n">3</span><span>Понятия</span></a></li>
+    <li><a href="#s4"><span class="n">4</span><span>Почему любая спека</span></a></li>
+    <li><a href="#s5"><span class="n">5</span><span>Роли и покрытие</span></a></li>
+    <li><a href="#s6"><span class="n">6</span><span>Функциональные блоки</span></a></li>
+    <li><a href="#s7"><span class="n">7</span><span>Экраны</span></a></li>
+    <li><a href="#s8"><span class="n">8</span><span>Состояния данных</span></a></li>
+    <li><a href="#s9"><span class="n">9</span><span>Принципы</span></a></li>
+    <li><a href="#s10"><span class="n">10</span><span>Порядок поставки</span></a></li>
+    <li><a href="#s11"><span class="n">11</span><span>Ограничения</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="s1">
+  <h2><span class="num">01</span> · Постановка</h2>
+  <p class="h2-title">Зачем продукт</p>
+
+  <p class="lead">Команда ведёт разработку по строгому процессу: спека → задачи в трекере → реализация → ревью → сборка → тестирование → архив. Процесс хороший, но невидимый: состояние размазано по пяти системам, и ни один существующий экран не показывает их вместе.</p>
+
+  <h3>Где сегодня лежит состояние</h3>
+  <p>Каждая система знает про работу что-то своё и ничего — про остальные. Никто не сводит их автоматически, поэтому свод делает человек, в голове, каждый раз заново.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Система</th><th>Что она знает</th><th>Чего не знает</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Трекер задач</strong></td><td>статус задачи, исполнителя, комментарии</td><td>влит ли код, собрана ли сборка</td></tr>
+      <tr><td><strong>Файлы спеки</strong></td><td>чеклист задач, состав артефактов, состав группы</td><td>что происходит в трекере прямо сейчас</td></tr>
+      <tr><td><strong>git</strong></td><td>какие ветки есть и что в них влито</td><td>считается ли это «готовым» по процессу команды</td></tr>
+      <tr><td><strong>Хостинг кода</strong></td><td>merge request'ы и их состояние</td><td>к какому change'у они относятся</td></tr>
+      <tr><td><strong>Мессенджер</strong></td><td>кому и что уже отдали</td><td>всё остальное</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Что происходит из-за этого</h3>
+  <p>Чтобы ответить на один рабочий вопрос — «можно ли отдавать эту работу тестировщику» — человек выполняет 5–10 команд в терминале и сводит ответ в голове. И ошибается, потому что <strong>системы расходятся молча</strong>: в трекере задача «готова», а код не влит; галочки проставлены, а ветка со спеками не доехала. Никто не получает уведомления о расхождении — его надо заметить.</p>
+
+  <div class="ba">
+    <div class="card now">
+      <span class="tag">сегодня · вопрос «готов ли спринт к сдаче»</span>
+      <ol class="steps">
+        <li>открыть трекер, посмотреть статусы шести change'ей;</li>
+        <li>открыть файлы задач, сверить галочки по каждому стеку;</li>
+        <li>проверить в git, влиты ли ветки в ветку сдачи;</li>
+        <li>найти merge request'ы и их состояние;</li>
+        <li>вспомнить, записана ли сборка и где она лежит;</li>
+        <li>свести всё это и решить.</li>
+      </ol>
+      <p>Ответ живёт только в голове того, кто его собрал, и устаревает за час.</p>
+    </div>
+    <div class="card next">
+      <span class="tag">с приложением</span>
+      <ol class="steps">
+        <li>открыть экран группы;</li>
+        <li>прочитать строку «следующий шаг».</li>
+      </ol>
+      <p>Свод собран приложением, расхождения подсвечены, рядом — команда, которая закрывает блокер, и кнопка, которая её запускает.</p>
+    </div>
+  </div>
+
+  <h3>Что продукт делает</h3>
+  <div class="cards">
+    <div class="card"><span class="tag">видимость</span><h5>Показывает состояние целиком</h5><p>Собирает слепок из всех источников сразу и показывает работу группы на одном экране.</p></div>
+    <div class="card"><span class="tag">контроль</span><h5>Подсвечивает расхождения</h5><p>Сравнивает то, что записано в трекере, с тем, что реально в коде и файлах.</p></div>
+    <div class="card"><span class="tag">действие</span><h5>Запускает работу без терминала</h5><p>Реализация, передача тестировщику, создание задач — командами самой спеки и с предпросмотром.</p></div>
+    <div class="card"><span class="tag">масштаб</span><h5>Подключается к любой спеке</h5><p>По ссылке на репозиторий, а не только к одному «своему» проекту.</p></div>
+  </div>
+
+  <h3>Что продукт сознательно не делает</h3>
+  <ul>
+    <li>не хранит и не вычисляет собственное состояние — только пересобирает слепок из источников;</li>
+    <li>не дублирует действия — запускает существующие команды и скрипты спеки;</li>
+    <li>не отправляет ничего наружу без предпросмотра.</li>
+  </ul>
+</section>
+
+<section id="s2">
+  <h2><span class="num">02</span> · Аналитика</h2>
+  <p class="h2-title">Проблема в цифрах</p>
+
+  <div class="stats">
+    <div class="stat"><span class="v">5</span><span class="l">систем, между которыми размазано состояние работы</span></div>
+    <div class="stat"><span class="v">5–10</span><span class="l">команд в терминале, чтобы ответить на один вопрос о готовности</span></div>
+    <div class="stat"><span class="v">6</span><span class="l">способов собрать работу в группу — процессы команд устроены по-разному</span></div>
+    <div class="stat flag"><span class="v">0 <small>из 3</small></span><span class="l">ролей имеет сегодня инструмент под свой вопрос</span></div>
+  </div>
+
+  <p>Расхождение между ярлыком и фактом не подсвечивается нигде: чтобы его увидеть, нужно сопоставить трекер, файлы и git по каждому change'у отдельно. Поэтому оно всплывает на сдаче — там, где исправление стоит дороже всего.</p>
+
+  <h3>Цена вопроса по каждому сценарию</h3>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Рабочий вопрос</th><th>Сколько источников надо свести</th><th>Что ломается</th></tr></thead>
+    <tbody>
+      <tr><td>Готов ли change к передаче?</td><td>трекер · файлы задач · git</td><td>статус «готово» при невлитой ветке замечается на сдаче, а не раньше</td></tr>
+      <tr><td>Что мешает группе прямо сейчас?</td><td>трекер · чеклисты всех change'ей</td><td>одна и та же открытая задача в четырёх change'ах не видна как одна причина</td></tr>
+      <tr><td>Что уже отдали тестировщику и на какой сборке?</td><td>файл сборок · мессенджер · трекер</td><td>ответ есть только у того, кто отдавал</td></tr>
+      <tr><td>Что закрыто автотестами, а что руками?</td><td>QA-репозиторий · отчёты прогонов</td><td>тестировщик не видит связи кейса со спекой</td></tr>
+      <tr><td>Почему у меня в приложении пусто?</td><td>ключи · структура спеки</td><td>без диагностики неотличимо: «спека такая» или «я не настроил»</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="k">вывод для приоритетов</span>
+    <p>Ценность даёт не «ещё один дашборд», а <strong>сведение и объяснение</strong>: показать расхождение, назвать следующий шаг и дать его выполнить. Всё остальное в продукте обслуживает эти три вещи.</p>
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">03</span> · Словарь</h2>
+  <p class="h2-title">Понятия</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Термин</th><th>Что означает на человеческом языке</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Спека</strong></td><td>репозиторий с описанием процесса команды: документы, изменения, задачи, команды запуска</td></tr>
+      <tr><td><strong>Проект</strong></td><td>одна подключённая спека. Проектов может быть несколько, между ними переключаются в шапке</td></tr>
+      <tr><td><strong>Группа</strong></td><td>верхний уровень объединения работы. У разных команд это спринт, мастер-спека, релиз или родительская задача трекера</td></tr>
+      <tr><td><strong>Change</strong></td><td>единица работы: одна фича или изменение. Внутри — артефакты (спека, дизайн, задачи, тест-кейсы) и задачи в трекере</td></tr>
+      <tr><td><strong>Стек</strong></td><td>направление работы внутри change: iOS, Android, backend, design. Может отсутствовать</td></tr>
+      <tr><td><strong>Расхождение</strong></td><td>конфликт между ярлыком и фактом: трекер говорит «готово», а ветка не влита</td></tr>
+      <tr><td><strong>Фича приложения</strong></td><td>функциональный блок (Сборки, Передача, Код, Мессенджер, Тестирование), который включается сам, если спека даёт нужные данные</td></tr>
+      <tr><td><strong>Выключенная фича</strong></td><td>блок недоступен, но не спрятан: приложение объясняет, чего не хватает и как включить</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">04</span> · Обоснование</h2>
+  <p class="h2-title">Почему любая спека, а не одна</p>
+
+  <p class="lead">Инструмент, привязанный к одной спеке, — внутренняя утилита одной команды. Инструмент, который подключается к любой спеке за минуту, можно раздать всем командам. Разница между этими двумя продуктами — предмет большей части этого ТЗ, и она сводится к одному требованию: устройство процесса нигде не фиксируется заранее, а вычитывается из самой спеки.</p>
+
+  <div class="callout">
+    <span class="k">ключевое решение</span>
+    <p>Придумывать формат описания спеки <strong>не нужно</strong>: метаданные уже лежат внутри самой спеки — схема артефактов, список стеков, статусы с их смыслом, перечень нужных ключей. Приложение должно их читать, а не спрашивать у человека. Вопрос «какой статус означает готовность» отпадает сам.</p>
+  </div>
+
+  <h3>Ни один экран не исчезает</h3>
+  <p>Когда данных для блока нет, экран остаётся в навигации, но объясняет, чего именно не хватает и как это включить. Отсюда второе ключевое решение — <strong>не прятать, а объяснять</strong>: фича не забывается, новая команда получает инструкцию по внедрению прямо в интерфейсе, а отладка «почему пусто» занимает секунды вместо часа.</p>
+
+  <h3>Насколько разными бывают процессы</h3>
+  <p>Приложение не должно требовать структуры, которой у команды нет, и не должно показывать переключатели с одним вариантом. Отсюда — <strong>шесть способов собрать работу в группу</strong>; приложение выбирает подходящий само, человек может сменить выбор в настройках.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">№</th><th>Что становится группой</th><th>По какому признаку выбирается</th><th>Подпись в шапке</th></tr></thead>
+    <tbody>
+      <tr><td class="code">1</td><td>Спринт</td><td>каталог спринта с описанием веток и сборок</td><td>Спринт: …</td></tr>
+      <tr><td class="code">2</td><td>Мастер-спека</td><td>документ, на который ссылаются change'и</td><td>Мастер-спека: …</td></tr>
+      <tr><td class="code">3</td><td>Родительская задача трекера</td><td>указан номер задачи-родителя</td><td>Родительская задача: …</td></tr>
+      <tr><td class="code">4</td><td>Версия трекера</td><td>задачи привязаны к версии или майлстоуну</td><td>Релиз: …</td></tr>
+      <tr><td class="code">5</td><td>Явный список change'ей</td><td>состав группы перечислен в файле</td><td>по названию списка</td></tr>
+      <tr><td class="code">6</td><td>Группы нет</td><td>ничего из перечисленного не найдено</td><td>селектор скрыт, заголовок «Change'и»</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Поверх этого — <strong>три уровня, каждый из которых может отсутствовать</strong>: группа, стек, задачи внутри стека. Именно поэтому главный экран спроектирован в четырёх вариантах, а не в одном: группа и два стека · группа и один стек · группа без стеков · без группировки вовсе.</p>
+
+  <div class="callout">
+    <span class="k">почему это важно бизнесу</span>
+    <p>Подключение новой команды не должно быть проектом. Если приложение читает устройство процесса само и честно показывает, что из этого поняло, команда подключается за минуту и не ждёт доработок под себя.</p>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">05</span> · Пользователи</h2>
+  <p class="h2-title">Роли и покрытие</p>
+
+  <p>Ролей ровно три, и у каждой свой вопрос к экрану. Сегодня ни у одной нет инструмента, который на этот вопрос отвечает, — все три рабочих места проектируются с нуля.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Роль</th><th>Главный вопрос</th><th>Что должен видеть</th><th>Состояние</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Разработчик</strong></td>
+        <td>что у меня в работе, что мешает, какая команда следующая</td>
+        <td>полный набор: группа, change'и, передача, окружение, сессии, документы</td>
+        <td><span class="pill off">не покрыт</span></td>
+      </tr>
+      <tr>
+        <td><strong>Менеджер</strong></td>
+        <td>где работа целиком и что заблокировано; как запустить работу по новому ТЗ</td>
+        <td>сокращённый набор: «Что происходит», «Мои запуски», «Документы»</td>
+        <td><span class="pill off">не покрыт</span></td>
+      </tr>
+      <tr>
+        <td><strong>Тестировщик</strong></td>
+        <td>что проверять, на какой сборке, что закрыто автотестами</td>
+        <td>раздел «Тестирование» и блок покрытия в карточке change'а</td>
+        <td><span class="pill off">не покрыт</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Роль берётся из окружения машины <strong>как предустановка</strong> — она решает, какой экран открыть первым, но не запирает человека: лид может смотреть оба среза. Переключатель рабочего места живёт в шапке рядом с селектором проекта.</p>
+
+  <h3>Менеджер — две половины роли</h3>
+  <p>Менеджер смотрит редко и хочет ответ за пять секунд. Стеки, ветки и чеклисты ему не нужны — он в них не разбирается и не должен. Фильтр над таблицей разработчика эту задачу не решает: у менеджера другая единица показа — не задача, а группа и блокер.</p>
+  <ol class="plain">
+    <li><strong>Смотреть.</strong> Карточки групп с одной строкой состояния и список блокеров с именами тех, кто держит.</li>
+    <li><strong>Запускать.</strong> Менеджер приносит ТЗ и получает результат, ни разу не открыв терминал: вставил текст → видит живой прогресс → получает ссылку на merge request, которую скидывает разработчикам.</li>
+  </ol>
+
+  <h3>Тестировщик — состав экранов, а не отдельный продукт</h3>
+  <p>QA-инструменты подключены к той же спеке, поэтому тестировщику не нужна отдельная сборка приложения — нужен другой состав разделов. Раздел «Тестирование» появляется, когда источник кейсов подключён, и отсутствует, когда нет; связь кейса с change'ем берётся из самого кейса, а результаты прогонов — из отчётов, без локальной копии репозитория.</p>
+</section>
+<section id="s6">
+  <h2><span class="num">06</span> · Функциональность</h2>
+  <p class="h2-title">Функциональные блоки</p>
+
+  <h3>Подключение проекта</h3>
+  <p>Человек вставляет git-ссылку на спеку своей команды — приложение клонирует репозиторий, <strong>распознаёт устройство спеки</strong> (как сгруппирована работа, какие стеки, какие статусы, какие команды) и спрашивает только недостающие ключи. Альтернативный путь — указать уже склонированный локальный каталог, без второй копии. Секреты сохраняются в системной связке ключей; если системного хранилища нет, приложение честно предупреждает, что значения лежат в файле.</p>
+
+  <h3>Видимость состояния</h3>
+  <p>Главный экран показывает все change'и группы: статус в трекере, счётчик задач, расхождения. Отдельно выделяется <strong>источник данных</strong>: <span class="dot hollow"></span>полая точка — статус из файлов спеки, читается мгновенно; <span class="dot ok"></span>залитая — статус из трекера, обновляется по запросу. Это разные степени доверия, и они различаются визуально.</p>
+
+  <h3>Расхождения и «следующий шаг»</h3>
+  <p>Приложение сопоставляет ярлыки и факты и выводит наверх строку «следующий шаг» — одно конкретное действие, которое разблокирует работу. Например: «закрыть задачу 3.3 „Выполнить проверки на устройстве“ — открыта в четырёх change'ах».</p>
+
+  <h3>Запуск работы</h3>
+  <p>Действия делятся на три класса, различимых по форме и весу: <strong>посмотреть</strong> · <strong>изменить локально</strong> · <strong>отправить наружу</strong>. Рядом с каждым действием всегда видна команда, которую можно скопировать и выполнить руками.</p>
+
+  <h3>Передача тестировщику</h3>
+  <p>Одно действие собирает сборку, получателей и текст сообщения, показывает точный предпросмотр — «в 4 задачах сменится исполнитель, в 4 задачи уйдёт комментарий со сборкой, в канал команды уйдёт 1 сообщение» — и запускает команду сдачи.</p>
+
+  <h3>Работа с агентом</h3>
+  <p>Часть работы требует суждения и ведётся моделью в диалоге. На уровне ТЗ здесь решаются три вещи:</p>
+  <ol class="plain">
+    <li>центр экрана сессий — <strong>одна строка ввода</strong>, работа описывается словами;</li>
+    <li>команды спеки вызываются из неё же: кнопками для команд с назначенной ролью и палитрой для всех остальных — <strong>ни одна команда спеки не теряется</strong>;</li>
+    <li>параметры запуска (модель, доступ, усилие) выбираются рядом со строкой, а не в настройках.</li>
+  </ol>
+  <p>Механика ввода и палитры — в описании экранов, карточки <span class="chip">05b</span> <span class="chip">05c</span>.</p>
+
+  <h3>Объяснение выключенного</h3>
+  <p>Если у спеки нет сборок или передачи, пункт меню не исчезает — он приглушается и получает счётчик невыполненных требований, а по клику открывается диагностика. Три природы нехватки — три разных экрана:</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Природа</th><th>Когда</th><th>Что человек видит</th><th>Действие</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Не предусмотрено спекой</strong></td><td>процесс команды не использует эту систему</td><td>«Эта спека не настроена на работу с MR» и чеклист требований</td><td>Скопировать шаблон · Создать через агента · Инструкция</td></tr>
+      <tr><td><strong>Не настроено у меня</strong></td><td>спека поддерживает, но мой ключ пустой</td><td>«Чтобы видеть MR, введите свой токен GitLab»</td><td>одна кнопка <strong>«Заполнить»</strong> — ведёт в форму ключей к нужному полю</td></tr>
+      <tr><td><strong>Не отвечает</strong></td><td>ключ есть, но 401 или нет сети</td><td>«GitLab отклонил ключ» с временем проверки</td><td>Проверить снова · Изменить ключ</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Второй случай — самый частый, это новый человек в команде, и он <strong>не должен</strong> выглядеть как недоделанная спека.</p>
+</section>
+
+<section id="s7">
+  <h2><span class="num">07</span> · Состав</h2>
+  <p class="h2-title">Экраны</p>
+  <p>Коды соответствуют бордам на странице «Platform Console» в Penpot — аналитик может открыть макет и сверить построчно.</p>
+
+  <h4>Рабочее место разработчика</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Борд</th><th>Экран</th><th>Что закрывает</th><th>Ключевое на экране</th></tr></thead>
+    <tbody>
+      <tr><td class="code">01</td><td><strong>Группа — главный</strong></td><td>«где работа и что мешает» за пять секунд</td><td>таблица change'ей по стекам, строка расхождений, «следующий шаг», панель запуска</td></tr>
+      <tr><td class="code">01b</td><td>Группа и один стек</td><td>спека с одним направлением работы</td><td>одна колонка на всю ширину, переключатель стеков скрыт</td></tr>
+      <tr><td class="code">01c</td><td>Группа без стеков</td><td>спека без разделения на стеки</td><td>одна колонка «Работа», задачи на уровне change'а</td></tr>
+      <tr><td class="code">01d</td><td>Без группировки</td><td>плоский процесс</td><td>селектор группы скрыт, заголовок «Change'и»</td></tr>
+      <tr><td class="code">01e</td><td>Пустая группа</td><td>группа заведена, работы ещё нет</td><td>объяснение и кнопки «Создать change» / «Открыть мастер-спеку»</td></tr>
+      <tr><td class="code">02</td><td><strong>Карточка change</strong></td><td>всё об одной единице работы и запуск реализации</td><td>чеклисты по стекам, блок «Код», артефакты с индикатором полноты, покрытие тестами, кнопка «Реализовать» и меню «Ещё действия»</td></tr>
+      <tr><td class="code">02b</td><td>Change без стеков</td><td>тот же экран для спеки без стеков</td><td>один чеклист, раскрытое меню действий, выключенный блок «Код» с причиной</td></tr>
+      <tr><td class="code">03</td><td><strong>Передача</strong></td><td>собрать и отдать тестировщику одним действием</td><td>четыре шага: Готовность · Сборка · Получатели · Предпросмотр и отправка; шаг может быть «недоступен с причиной»</td></tr>
+      <tr><td class="code">04</td><td>Окружение</td><td>поймать проблему до запуска, а не в середине</td><td>секции «Ключи в .env» · «Репозитории роли» · «Внешние системы»; наличие ключей без показа значений</td></tr>
+      <tr><td class="code">05</td><td>Агентная сессия</td><td>работа, требующая суждения</td><td>лог, список выполненного, остановка на решении человека, строка ввода с параметрами запуска</td></tr>
+      <tr><td class="code">05b</td><td>Сессии — палитра открыта</td><td>какую команду запустить</td><td>кнопки для команд с ролью, палитра для всех остальных</td></tr>
+      <tr><td class="code">05c</td><td>Строка ввода — высоты и состояния</td><td>ввод команды и задания словами</td><td>три высоты (свёрнута / обычная / развёрнутая), пять состояний поля</td></tr>
+      <tr><td class="code">05d</td><td><span class="chip new">новый</span> Сессия завершена</td><td>что делать после сессии</td><td>«Выполнено по ходу» и блок «Следующие шаги»: создать MR · перевести задачу · открыть change</td></tr>
+      <tr><td class="code">06</td><td>Документы</td><td>спеки и задачи читаются в приложении</td><td>дерево артефактов из схемы спеки и рендер markdown</td></tr>
+      <tr><td class="code">06b</td><td>Документы — файл и архив</td><td>другое устройство спеки</td><td>мастер-спека одним файлом, архивные change'и с датой</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Подключение и настройки</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Борд</th><th>Экран</th><th>Что закрывает</th></tr></thead>
+    <tbody>
+      <tr><td class="code">08</td><td>Подключение — адрес</td><td>git-ссылка на спеку либо указание локального каталога</td></tr>
+      <tr><td class="code">09</td><td>Подключение — клонирование</td><td>прогресс с процентами и отменой; состояние ошибки объясняется по-человечески, а не выводом git</td></tr>
+      <tr><td class="code">10</td><td><strong>Что распознано</strong></td><td>ключевой экран доверия: группировка · стеки · статусы · команды · что будет работать. У каждой карточки «изменить», внизу сводка «распознано 5 требований из 6»</td></tr>
+      <tr><td class="code">11</td><td>Ключи спеки</td><td>форма из полей, нужных именно этой спеке; секреты маскированы, кнопка «Проверить» с тремя состояниями</td></tr>
+      <tr><td class="code">12</td><td>Диагностика выключенной фичи</td><td>три вида объяснения и чеклист требований с разделением на блокирующие и необязательные</td></tr>
+      <tr><td class="code">13</td><td>Настройки проекта</td><td>правка распознанного позже: стратегия группировки, статусы, стеки, роли команд, «Перечитать спеку», удаление проекта</td></tr>
+      <tr><td class="code">13b</td><td>Все команды спеки</td><td>список всех найденных команд с колонкой «где показывается» и переключателем «скрыть» — ни одна команда не потерялась</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Диалоги и общие элементы</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Борд</th><th>Экран</th><th>Что закрывает</th></tr></thead>
+    <tbody>
+      <tr><td class="code">07 · 07b</td><td>Шапка: два уровня</td><td>селектор проекта над селектором группы; подпись второго меняется по типу группировки — «Спринт», «Мастер-спека», «Релиз», «Родительская задача»; индикатор свежести данных</td></tr>
+      <tr><td class="code">15</td><td>Выбор корня в трекере</td><td>чекбокс «Добавить в существующую версию или задачу», список из трекера, ручной ввод номера или адреса, строка «задачи будут созданы внутри: …» в предпросмотре</td></tr>
+      <tr><td class="code">15b</td><td>Выбор корня — состояния</td><td>список загружается · пуст · трекер недоступен · номер не найден</td></tr>
+      <tr><td class="code">18</td><td>Компоненты и состояния</td><td>навигация в трёх составах, селектор проекта, поле секрета, прогресс, меню действий, чеклист требований, строка блокера</td></tr>
+      <tr><td class="code">19</td><td>Состояния данных</td><td>загрузка · частичная ошибка · устарело · не распознано · пусто · нет доступа</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Рабочее место менеджера</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Борд</th><th>Экран</th><th>Что закрывает</th></tr></thead>
+    <tbody>
+      <tr><td class="code">16</td><td>Что происходит</td><td>карточки групп («готово 4 из 6», индикатор блокеров), блок «Что мешает» с именами исполнителей и сроком в статусе, крупная кнопка <strong>«Новая фича из ТЗ»</strong></td></tr>
+      <tr><td class="code">17</td><td>Прогресс работы</td><td>упрощённая сессия: заголовок, живая строка «что делает агент», шаги; по завершении — <strong>«Отдать разработчикам»</strong> и ссылка на MR с кнопкой «Скопировать»</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>На этих экранах нет стеков, веток, чеклистов, панели запуска, окружения, лога агента и выбора модели.</p>
+
+  <h4>Рабочее место тестировщика</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Борд</th><th>Экран</th><th>Что закрывает</th></tr></thead>
+    <tbody>
+      <tr><td class="code">14</td><td>Тестирование</td><td>список тест-кейсов: тип (UI / API / E2E), признак автоматизации, связь со спекой, последний прогон; сверху счётчики кейсов, покрытия и результата прогона</td></tr>
+      <tr><td class="code">см. 02</td><td>Покрытие в карточке change</td><td>«5 кейсов · 3 автоматизированы · 60 %» — блок на уже описанном борде 02, отдельного экрана нет</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Раздел появляется только при подключённом QA-тулчейне; при его отсутствии пункта в навигации нет вовсе.</p>
+</section>
+
+<section id="s8">
+  <h2><span class="num">08</span> · Приёмка</h2>
+  <p class="h2-title">Состояния данных</p>
+  <p>Проектируются и принимаются <strong>все</strong> девять состояний, а не только «данные загрузились». Как выглядит каждое — вопрос макета: принимается по борду <span class="chip">19</span> и экрану <span class="chip">12</span>.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Состояние</th><th>Когда</th><th class="code">Принимается по</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Загрузка</strong></td><td>первое открытие, обновление</td><td class="code">19</td></tr>
+      <tr><td><strong>Данные</strong></td><td>обычная работа</td><td class="code">01</td></tr>
+      <tr><td><strong>Пусто</strong></td><td>нет группы или change'ей</td><td class="code">01e · 19</td></tr>
+      <tr><td><strong>Частичная ошибка</strong></td><td>трекер недоступен, файлы прочитаны</td><td class="code">19</td></tr>
+      <tr><td><strong>Устарело</strong></td><td>данные старше нескольких минут</td><td class="code">19 · 07b</td></tr>
+      <tr><td><strong>Нет доступа</strong></td><td>ключ не заполнен у меня</td><td class="code">12 · 19</td></tr>
+      <tr><td><strong>Система не отвечает</strong></td><td>ключ есть, 401 или нет сети</td><td class="code">12</td></tr>
+      <tr><td><strong>Фича выключена</strong></td><td>спека не содержит нужных данных</td><td class="code">12</td></tr>
+      <tr><td><strong>Не распознано</strong></td><td>подключение не поняло структуру спеки</td><td class="code">19</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="num">09</span> · Критерии</h2>
+  <p class="h2-title">Принципы интерфейса</p>
+  <p>Это не украшение, а критерии приёмки макетов и реализации.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Принцип</th><th>Как проверить</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Состояние важнее действий</strong></td><td>экран отвечает «где мы»; кнопки — следствие состояния, а не меню</td></tr>
+      <tr><td><strong>Факт рядом с ярлыком</strong></td><td>статус трекера и реальное состояние ветки видны вместе, расхождение выделено</td></tr>
+      <tr><td><strong>Три класса действий</strong></td><td>посмотреть · изменить локально · отправить наружу различаются формой и весом</td></tr>
+      <tr><td><strong>Предпросмотр перед отправкой</strong></td><td>до нажатия виден точный текст и список побочных эффектов</td></tr>
+      <tr><td><strong>Команда всегда видна</strong></td><td>рядом с действием строка, которую можно скопировать</td></tr>
+      <tr><td><strong>Выключенное объясняется</strong></td><td>пункт не исчезает, а получает счётчик и диагностику</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10</span> · План</h2>
+  <p class="h2-title">Порядок поставки</p>
+  <p>Очерёдность продиктована ценностью для пользователя, а не техническим удобством.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th class="code">Очередь</th><th>Что даёт</th><th>Состав</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="code">1</td>
+        <td><strong>Подключение работает</strong><br><span style="color:var(--ink-3)">команда подключает свою спеку и видит работу</span></td>
+        <td>шапка с двумя уровнями <span class="chip">07b</span> · мастер подключения <span class="chip">08–11</span> · варианты таблицы «один стек» и «без группировки» <span class="chip">01b</span> <span class="chip">01d</span></td>
+      </tr>
+      <tr>
+        <td class="code">2</td>
+        <td><strong>Приложение объясняет себя</strong><br><span style="color:var(--ink-3)">пропадает вопрос «почему пусто»</span></td>
+        <td>диагностика выключенной фичи <span class="chip">12</span> · третье состояние шагов передачи <span class="chip">03</span> · признак «статус из файла» <span class="chip">01</span></td>
+      </tr>
+      <tr>
+        <td class="code">3</td>
+        <td><strong>Полнота и роли</strong><br><span style="color:var(--ink-3)">менеджер и тестировщик получают свои экраны</span></td>
+        <td>выбор существующей версии <span class="chip">15</span> · настройки проекта <span class="chip">13</span> <span class="chip">13b</span> · следующие шаги в сессиях <span class="chip">05d</span> · экраны менеджера <span class="chip">16</span> <span class="chip">17</span> · раздел «Тестирование» <span class="chip">14</span> · остальные состояния данных <span class="chip">19</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Экраны менеджера имеют самостоятельную ценность: роль получает инструмент, которого у неё сейчас нет вовсе.</p>
+</section>
+
+<section id="s11">
+  <h2><span class="num">11</span> · Риски</h2>
+  <p class="h2-title">Ограничения</p>
+  <ul>
+    <li>трекер и хостинг кода сейчас фиксированы (Redmine и GitLab); абстракция делается, когда появится команда на других системах;</li>
+    <li>спека, не следующая ожидаемому формату, распознаётся эвристикой — результат обязательно показывается человеку и правится;</li>
+    <li>история агентных сессий не сохраняется между запусками приложения;</li>
+    <li>сборка приложения не подписана — первый запуск у коллег задерживает системная проверка.</li>
+  </ul>
+</section>
+
+<footer>
+  Парный документ: docs/platform-console-mvp.html — описание всех экранов с макетом под каждым описанием<br>Источники: макеты Penpot — страница «Platform Console», 31 борд · docs/platform-console-master.md · docs/platform-console-design.md
+</footer>
+
+</main>
+</div>
+</div>
