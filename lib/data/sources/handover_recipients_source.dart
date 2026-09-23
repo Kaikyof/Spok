@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/repositories/command_log.dart';
+import 'executable_locator.dart';
 
 /// Получатели передачи — их подбирает существующий скрипт платформы
 /// (роли Redmine × членство в канале Mattermost). Приложение не повторяет
@@ -26,11 +27,17 @@ class HandoverRecipientsSource {
         !File(p.join(platformRoot.path, scriptPath)).existsSync()) {
       return const HandoffRecipients(error: 'script-missing');
     }
+    // .app из Finder наследует урезанный PATH: ищем node по абсолютному пути.
+    final node = ExecutableLocator.locate('node');
+    if (node == null) {
+      return const HandoffRecipients(
+          error: 'node не найден: установите Node.js (brew install node)');
+    }
     final command = 'node $scriptPath --stack $stack';
     final run = commandLog?.begin(command);
     try {
       final result = await Process.run(
-        'node',
+        node,
         [scriptPath, '--stack', stack],
         workingDirectory: platformRoot.path,
         stdoutEncoding: utf8,

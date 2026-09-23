@@ -13,6 +13,7 @@ import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
+import 'executable_locator.dart';
 
 /// Ключ .env с подсказкой из комментария над строкой в `.env.example`.
 /// `optional` — ключ в примере закомментирован, спека работает и без него.
@@ -547,7 +548,7 @@ class PlatformFilesSource {
   Future<bool> envIgnoredByGit() async {
     try {
       final result = await Process.run(
-          'git', ['-C', root.path, 'check-ignore', '-q', '.env']);
+          ExecutableLocator.resolve('git'), ['-C', root.path, 'check-ignore', '-q', '.env']);
       return result.exitCode == 0;
     } catch (_) {
       return false;
@@ -800,7 +801,7 @@ class PlatformFilesSource {
     final run = commandLog?.begin('git -C ${root.path} pull --ff-only');
     try {
       final result =
-          await Process.run('git', ['-C', root.path, 'pull', '--ff-only'])
+          await Process.run(ExecutableLocator.resolve('git'), ['-C', root.path, 'pull', '--ff-only'])
               .timeout(const Duration(seconds: 15));
       if (run != null) {
         commandLog?.complete(run,
@@ -832,7 +833,7 @@ class PlatformFilesSource {
 
   Future<String?> _git(String repoDir, List<String> args) async {
     try {
-      final result = await Process.run('git', ['-C', repoDir, ...args]);
+      final result = await Process.run(ExecutableLocator.resolve('git'), ['-C', repoDir, ...args]);
       if (result.exitCode != 0) return null;
       return (result.stdout as String).trim();
     } catch (_) {

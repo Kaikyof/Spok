@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../../domain/entities/agent_session.dart';
 import '../../domain/repositories/command_log.dart';
+import 'executable_locator.dart';
 
 /// Запуск Claude Code как дочернего процесса в headless-режиме
 /// (`claude -p --output-format stream-json`) и разбор его событий.
@@ -24,7 +25,8 @@ class AgentCliSource {
     for (final candidate in _binaryCandidates) {
       if (File(candidate).existsSync()) return candidate;
     }
-    return null;
+    // Запуск из Finder не даёт PATH с nvm/volta — ищем по типовым местам.
+    return ExecutableLocator.locate('claude');
   }
 
   bool get isRunning => _process != null;
