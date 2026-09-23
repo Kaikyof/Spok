@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform Console MVP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;600&display=swap">
+
+<style>
+  :root {
+    --ground:#F5F7FA; --surface:#FFFFFF; --surface-alt:#EDF1F6; --line:#DCE3EC; --line-soft:#E8EDF3;
+    --ink:#14171D; --ink-2:#414A59; --muted:#68717F; --accent:#2C6FD1; --accent-soft:#E4EDFB;
+    --ok:#2F8A5E; --warn:#A8770B; --stop:#B84A35; --code-bg:#EFF3F8; --shadow:0 1px 2px rgba(20,23,29,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#111318; --surface:#191D24; --surface-alt:#1E232B; --line:#2C323D; --line-soft:#232830;
+      --ink:#E8EBF1; --ink-2:#B6BECC; --muted:#79828F; --accent:#5B9BFF; --accent-soft:#1D2A3F;
+      --ok:#5FBF8A; --warn:#E8B33F; --stop:#E06A55; --code-bg:#0D1015; --shadow:0 1px 2px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#111318; --surface:#191D24; --surface-alt:#1E232B; --line:#2C323D; --line-soft:#232830;
+    --ink:#E8EBF1; --ink-2:#B6BECC; --muted:#79828F; --accent:#5B9BFF; --accent-soft:#1D2A3F;
+    --ok:#5FBF8A; --warn:#E8B33F; --stop:#E06A55; --code-bg:#0D1015; --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { background:var(--ground); color:var(--ink); font-family:"IBM Plex Sans",-apple-system,sans-serif;
+    font-size:16px; line-height:1.62; margin:0; -webkit-font-smoothing:antialiased; }
+  .page { display:grid; grid-template-columns:1fr; gap:48px; max-width:1200px; margin:0 auto; padding:56px 28px 96px; }
+  @media (min-width:1040px){ .page{ grid-template-columns:232px minmax(0,1fr); gap:60px; padding-top:72px; } }
+
+  .toc { font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  @media (min-width:1040px){ .toc{ position:sticky; top:36px; align-self:start; max-height:calc(100vh - 72px); overflow-y:auto; } }
+  .toc-label { text-transform:uppercase; letter-spacing:.12em; font-size:10.5px; color:var(--muted); font-weight:600; margin:18px 0 10px; }
+  .toc-label:first-child { margin-top:0; }
+  .toc ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px; }
+  .toc a { color:var(--ink-2); text-decoration:none; display:block; padding:4px 10px 4px 12px;
+    border-left:2px solid var(--line-soft); border-radius:0 3px 3px 0; transition:color .12s,border-color .12s,background .12s; }
+  .toc a:hover,.toc a:focus-visible { color:var(--accent); border-left-color:var(--accent); background:var(--accent-soft); }
+
+  .lede { margin-bottom:56px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; text-transform:uppercase; letter-spacing:.14em;
+    font-size:11px; color:var(--accent); font-weight:600; margin-bottom:16px; }
+  h1 { font-family:"IBM Plex Mono",monospace; font-size:clamp(30px,5vw,42px); font-weight:600;
+    line-height:1.12; letter-spacing:-.02em; margin:0 0 18px; text-wrap:balance; }
+  .standfirst { font-size:18px; line-height:1.55; color:var(--ink-2); max-width:64ch; margin:0 0 28px; }
+  .meta { display:flex; flex-wrap:wrap; gap:10px 28px; font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px; padding-top:22px; border-top:1px solid var(--line); }
+  .meta div { display:flex; gap:8px; } .meta dt { color:var(--muted); } .meta dd { margin:0; color:var(--ink-2); }
+
+  section { margin-bottom:56px; scroll-margin-top:28px; }
+  h2 { font-family:"IBM Plex Mono",monospace; font-size:21px; font-weight:600; letter-spacing:-.01em;
+    margin:0 0 20px; padding-bottom:14px; border-bottom:1px solid var(--line); text-wrap:balance; }
+  h3 { font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:600; margin:34px 0 10px; }
+  p { margin:0 0 15px; max-width:70ch; } strong { font-weight:600; } a { color:var(--accent); }
+  ul,ol { margin:0 0 16px; padding-left:20px; max-width:70ch; } li { margin-bottom:6px; }
+  li::marker { color:var(--muted); }
+  code { font-family:"IBM Plex Mono",monospace; font-size:.875em; background:var(--code-bg);
+    padding:1.5px 5px; border-radius:3px; border:1px solid var(--line-soft); }
+
+  .screen { background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:22px 24px; margin-bottom:18px; box-shadow:var(--shadow); }
+  .screen-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .screen-num { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;
+    color:var(--accent); background:var(--accent-soft); padding:2px 8px; border-radius:4px; }
+  .screen-name { font-family:"IBM Plex Mono",monospace; font-size:16px; font-weight:600; }
+  .screen-role { font-size:12px; color:var(--muted); margin-left:auto; }
+  .purpose { color:var(--ink-2); margin:10px 0 16px; font-size:15px; }
+
+  .block-label { font-family:"IBM Plex Mono",monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--muted); font-weight:600; margin:18px 0 8px; }
+  .table-wrap { overflow-x:auto; margin:10px 0 4px; border:1px solid var(--line-soft); border-radius:5px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th,td { text-align:left; padding:9px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  thead th { font-family:"IBM Plex Mono",monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.09em; color:var(--muted); font-weight:600; background:var(--surface-alt);
+    border-bottom:1px solid var(--line); white-space:nowrap; }
+  tbody tr:last-child td { border-bottom:none; }
+  td.mono,th.mono { font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .btn { font-family:"IBM Plex Mono",monospace; font-size:12.5px; white-space:nowrap; }
+
+  .note { background:var(--surface-alt); border-left:2px solid var(--accent); border-radius:0 5px 5px 0;
+    padding:14px 18px; margin:16px 0; font-size:14.5px; color:var(--ink-2); }
+  .note strong { color:var(--ink); }
+  .pill { display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500;
+    padding:2px 9px; border-radius:11px; border:1px solid var(--line); background:var(--surface-alt); color:var(--ink-2); }
+  .pill.ok { color:var(--ok); border-color:color-mix(in srgb,var(--ok) 34%,transparent); }
+  .pill.warn { color:var(--warn); border-color:color-mix(in srgb,var(--warn) 34%,transparent); }
+  .pill.stop { color:var(--stop); border-color:color-mix(in srgb,var(--stop) 34%,transparent); }
+
+
+  .shot { margin:14px 0 4px; border:1px solid var(--line-soft); border-radius:5px;
+    background:var(--surface-alt); overflow:hidden; }
+  .shot > summary { cursor:pointer; list-style:none; padding:9px 14px;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:500; color:var(--accent);
+    display:flex; align-items:center; gap:9px; user-select:none; }
+  .shot > summary::-webkit-details-marker { display:none; }
+  .shot > summary::before { content:"\25B8"; font-size:11px; color:var(--muted); }
+  .shot[open] > summary::before { content:"\25BE"; }
+  .shot > summary:hover { color:var(--ink); }
+  .shot[open] > summary { border-bottom:1px solid var(--line-soft); }
+  .shot-body { padding:14px; display:flex; flex-direction:column; gap:18px; }
+  .shot figure { margin:0; }
+  .shot img { display:block; width:100%; height:auto; border:1px solid var(--line);
+    border-radius:4px; background:var(--ground); }
+  .shot figcaption { font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+    color:var(--muted); margin-top:7px; }
+  .shot figure.missing img { display:none; }
+  .shot figure.missing figcaption::before { content:"файла нет · "; color:var(--stop); }
+  .shot-all { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--accent);
+    background:var(--surface); border:1px solid var(--line); border-radius:4px;
+    padding:6px 12px; cursor:pointer; margin-top:18px; }
+  .shot-all:hover { background:var(--accent-soft); }
+
+  footer { margin-top:64px; padding-top:22px; border-top:1px solid var(--line);
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="page">
+<nav class="toc" aria-label="Экраны">
+  <div class="toc-label">Общее</div>
+  <ul>
+    <li><a href="#about">Что это такое</a></li>
+    <li><a href="#frame">Каркас интерфейса</a></li>
+  </ul>
+  <div class="toc-label">Подключение</div>
+  <ul>
+    <li><a href="#s08">08 · Адрес</a></li>
+    <li><a href="#s09">09 · Клонирование</a></li>
+    <li><a href="#s10">10 · Что распознано</a></li>
+    <li><a href="#s11">11 · Ключи спеки</a></li>
+  </ul>
+  <div class="toc-label">Работа</div>
+  <ul>
+    <li><a href="#s01">01 · Группа — главный</a></li>
+    <li><a href="#s01v">01b–01e · Варианты</a></li>
+    <li><a href="#s07">07 · Селектор группы</a></li>
+    <li><a href="#s02">02 · Карточка change</a></li>
+    <li><a href="#s15">15 · Создание change</a></li>
+    <li><a href="#s03">03 · Передача</a></li>
+  </ul>
+  <div class="toc-label">Инструменты</div>
+  <ul>
+    <li><a href="#s05">05 · Сессия</a></li>
+    <li><a href="#s05b">05b · Быстрый запуск</a></li>
+    <li><a href="#s05c">05c · Строка ввода</a></li>
+    <li><a href="#s05d">05d · Следующие шаги</a></li>
+    <li><a href="#s06">06 · Документы</a></li>
+    <li><a href="#s04">04 · Окружение</a></li>
+    <li><a href="#s13">13 · Настройки</a></li>
+    <li><a href="#s12">12 · Диагностика</a></li>
+  </ul>
+  <div class="toc-label">Роли</div>
+  <ul>
+    <li><a href="#s16">16–17 · Менеджер</a></li>
+    <li><a href="#s14">14 · Тестировщик</a></li>
+  </ul>
+  <div class="toc-label">Общее для всех экранов</div>
+  <ul>
+    <li><a href="#s19">19 · Состояния данных</a></li>
+    <li><a href="#s18">18 · Элементы</a></li>
+  </ul>
+  <div class="toc-label">Итоги</div>
+  <ul>
+    <li><a href="#buttons">Все кнопки</a></li>
+    <li><a href="#status">Готовность MVP</a></li>
+  </ul>
+</nav>
+
+<main>
+<header class="lede">
+  <div class="eyebrow">MVP · описание интерфейса</div>
+  <h1>Platform Console</h1>
+  <p class="standfirst">
+    Приложение, которое показывает состояние разработки по спеке в одном окне и запускает
+    работу без терминала. Ниже — все экраны: зачем каждый нужен, что на нём происходит
+    и что делает каждая кнопка.
+  </p>
+  <dl class="meta">
+    <div><dt>Экранов</dt><dd>31 макет</dd></div>
+    <div><dt>Платформа</dt><dd>десктоп, тёмная тема</dd></div>
+    <div><dt>Роли</dt><dd>разработчик · менеджер · тестировщик</dd></div>
+    <div><dt>Статус</dt><dd>прототип + макеты</dd></div>
+  </dl>
+  <button type="button" class="shot-all" id="shot-all">Раскрыть все экраны</button>
+</header>
+<section id="about">
+  <h2>Что это такое и как читать</h2>
+  <p>
+    Приложение показывает состояние разработки по спеке в одном окне и запускает работу
+    без терминала. <strong>Зачем оно нужно, какую проблему решает, сколько это стоит
+    команде сегодня и в каком порядке поставляется — в бизнес-ТЗ «Консоль спеки»</strong>,
+    разделы 1–5. Здесь — только интерфейс: каждый экран, что на нём происходит
+    и что делает каждая кнопка.
+  </p>
+  <div class="note">
+    <strong>Один принцип, из которого следует всё остальное:</strong> приложение ничего
+    не придумывает от себя. Оно читает файлы спеки, спрашивает трекер и запускает команды,
+    которые в спеке уже описаны. Поэтому оно работает с любой спекой, а не только с той,
+    под которую написано.
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Роль</th><th>Её экраны в этом документе</th></tr></thead>
+    <tbody>
+      <tr><td>Разработчик</td><td class="mono">01–06, 12, 13, 15</td></tr>
+      <tr><td>Менеджер</td><td class="mono">16, 17</td></tr>
+      <tr><td>Тестировщик</td><td class="mono">14</td></tr>
+    </tbody>
+  </table></div>
+  <p>
+    Разбор самих ролей — какой у каждой вопрос, что покрыто сегодня, почему у менеджера
+    две половины роли — в разделе 5 ТЗ и здесь не повторяется.
+  </p>
+</section>
+
+<section id="frame">
+  <h2>Каркас интерфейса</h2>
+  <p>Эти элементы одинаковы на всех рабочих экранах, поэтому описаны один раз.</p>
+
+  <h3>Шапка — два уровня</h3>
+  <p>
+    Верхняя строка — <strong>проект</strong> (спека, с которой работаем; их может быть
+    несколько). Нижняя — <strong>группа работы</strong> внутри проекта. Подпись группы
+    меняется в зависимости от того, как спека организует работу. Стратегий шесть;
+    приложение выбирает подходящую само, человек может сменить выбор в настройках —
+    признаки выбора разобраны в разделе 4 ТЗ:
+  </p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Подпись</th><th>Когда</th><th>Пример</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Спринт:</td><td>в спеке есть каталоги спринтов</td><td>Локальный вход по PIN</td></tr>
+      <tr><td class="mono">Мастер-спека:</td><td>работа группируется вокруг документа</td><td>Рассылка из Master Ticket</td></tr>
+      <tr><td class="mono">Релиз:</td><td>группировка по версии трекера</td><td>3.7 · оформление карточек</td></tr>
+      <tr><td class="mono">Родительская задача:</td><td>группировка по задаче-родителю</td><td>#63368 · Проактивные тикеты</td></tr>
+      <tr><td class="mono">по названию списка</td><td>состав группы перечислен в файле спеки</td><td>Набор изменений 3.7</td></tr>
+      <tr><td class="mono">Change'и</td><td>группировки нет — плоский список</td><td>7 изменений</td></tr>
+    </tbody>
+  </table></div>
+  <p>
+    Под заголовком группы — <strong>строка контекста</strong>: ветка спеки, режим сдачи
+    и версии сборок по каждому стеку — «<code>features/pin-biometric-auth ·
+    сдача целиком (batch) · iOS 3.6.7 (TestFlight) · Android 2.5.1(569)</code>». Она
+    отвечает на вопросы «в какой ветке идёт работа» и «что сейчас у тестировщика»,
+    не занимая отдельного места на экране. Состав строки зависит от спеки: нет сборок —
+    останутся ветка и режим сдачи.
+  </p>
+  <p>Справа — индикатор свежести данных и кнопка обновления.</p>
+
+  <div class="block-label">Кнопки шапки</div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Элемент</th><th>Что делает</th></tr></thead>
+    <tbody>
+      <tr><td class="btn">Проект: … ⌄</td><td>раскрывает список подключённых спек и пункт «Подключить проект». Если проект один — чип не показывается</td></tr>
+      <tr><td class="btn">Спринт / Мастер-спека … ⌄</td><td>раскрывает список групп: спринты, мастер-спеки, версии и задачи трекера вперемешку — с названием, типом и счётчиком change'ей</td></tr>
+      <tr><td class="btn">обновлено N мин назад</td><td>показывает возраст данных: «только что» (из файлов), «12 минут» (из трекера), «данные устарели» с мягкой подсветкой</td></tr>
+      <tr><td class="btn">⟳ (R)</td><td>обновляет всё: подтягивает спеку из git, перечитывает файлы, опрашивает трекер</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Левое меню</h3>
+  <p>
+    Состав пунктов зависит от того, что спека умеет. Нет сборок — «Передача» останется,
+    но с приглушённой иконкой и счётчиком невыполненных требований. Нет QA-тулчейна —
+    раздела «Тестирование» не будет вовсе. Внизу — <strong>рабочее место</strong>:
+    роль и проект (например «Разработчик · ios · avtoto»).
+  </p>
+
+  <h3>Панель запуска (низ окна)</h3>
+  <p>
+    Показывает последнюю выполненную команду: саму строку моноширинным, код возврата,
+    длительность и проект, в котором она выполнялась. Разворачивается кликом — внутри
+    полный вывод. Кнопка <span class="btn">копировать команду</span> кладёт строку в буфер,
+    чтобы выполнить её руками в терминале.
+  </p>
+  <div class="note">
+    Панель существует ради доверия: человек всегда видит, что именно приложение сделало
+    от его имени, и может это повторить.
+  </div>
+</section>
+
+<section id="s08">
+  <h2>Подключение проекта</h2>
+  <p>
+    Мастер из четырёх шагов. Все шаги видны сразу, пройденные помечены галочкой,
+    будущие приглушены. Так человек с самого начала понимает объём работы.
+  </p>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">08</span>
+      <span class="screen-name">Адрес репозитория</span>
+      <span class="screen-role">шаг 1 из 4</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/08.png" alt="Макет 08 · Подключение проекта — адрес" loading="lazy">
+          <figcaption>08 · Подключение проекта — адрес</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Начало работы с новой спекой. Человек вставляет git-адрес — больше ничего знать не нужно.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>поле для git-URL с примером формата;</li>
+      <li>пояснение: «Клонируем вашим git — используются ключи и credential helper, уже настроенные на машине»;</li>
+      <li>альтернатива «Указать локальный каталог» — если репозиторий уже склонирован, второй копии не будет;</li>
+      <li>внизу блок «Что нужно от вас»: доступ по SSH; токены спросим на шаге 4.</li>
+    </ul>
+    <div class="block-label">Кнопки</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Подключить</td><td>запускает клонирование и переводит на шаг 2</td></tr>
+        <tr><td class="btn">Указать локальный каталог</td><td>открывает выбор папки — клонирование пропускается</td></tr>
+        <tr><td class="btn">+ Подключить проект</td><td>в левом списке: тот же мастер для ещё одной спеки</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s09">
+    <div class="screen-head"><span class="screen-num">09</span>
+      <span class="screen-name">Клонирование</span>
+      <span class="screen-role">шаг 2 из 4</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/09.png" alt="Макет 09 · Подключение — клонирование" loading="lazy">
+          <figcaption>09 · Подключение — клонирование</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Показывает долгую операцию честно: сколько скачано, сколько осталось, и что происходит.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>полоса прогресса с процентами: «62 % · 18,4 МБ из 29,6 МБ · осталось ~20 с»;</li>
+      <li>живой вывод git моноширинным — то же, что человек увидел бы в терминале;</li>
+      <li>шаг 1 свёрнут в строку с адресом и кнопкой «изменить».</li>
+    </ul>
+    <div class="block-label">Состояние ошибки</div>
+    <p>
+      Отдельно отрисован самый частый случай — <strong>«GitLab не принял ваш SSH-ключ»</strong>:
+      объяснение человеческим языком, точная строка ошибки git и три выхода.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Отменить</td><td>прерывает клонирование, возвращает на шаг 1</td></tr>
+        <tr><td class="btn">Повторить</td><td>пробует снова с тем же адресом</td></tr>
+        <tr><td class="btn">Подключиться по HTTPS</td><td>переключает способ доступа — вместо ключа токен</td></tr>
+        <tr><td class="btn">Как добавить ключ</td><td>инструкция по добавлению SSH-ключа в профиль GitLab</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s10">
+    <div class="screen-head"><span class="screen-num">10</span>
+      <span class="screen-name">Что распознано</span>
+      <span class="screen-role">шаг 3 из 4</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/10.png" alt="Макет 10 · Подключение — что распознано" loading="lazy">
+          <figcaption>10 · Подключение — что распознано</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Ключевой экран доверия. Приложение прочитало спеку и показывает, что поняло, —
+      до того, как начнёт этим пользоваться. Всё можно поправить.
+    </p>
+    <div class="block-label">Пять карточек распознанного</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Карточка</th><th>Что показывает</th><th>Откуда</th></tr></thead>
+      <tbody>
+        <tr><td>Группировка</td><td>«Мастер-спека · 1 документ», пояснение «спринтов нет»</td><td class="mono">openspec/doc</td></tr>
+        <tr><td>Стеки</td><td>«1 рабочий · 3 объявлено»: backend с задачами, mobile и design объявлены схемой, но файлов нет</td><td class="mono">schema.yaml</td></tr>
+        <tr><td>Статусы трекера</td><td>«15 статусов · семантика найдена»: какой статус означает «в работе», «на ревью», «готово»</td><td class="mono">redmine.yaml</td></tr>
+        <tr><td>Команды спеки</td><td>«9 команд · зеркала скрыты» и какие из них получат роли</td><td class="mono">.claude/commands</td></tr>
+        <tr><td>Что будет работать</td><td>галочки и крестики по фичам: change'и, расхождения, документы, команды — есть; сборки, код, мессенджер — нет и почему</td><td>сводка</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Внизу итог: <strong>«Распознано 5 требований из 6»</strong> и честная строка
+      «Передачу включить нечем — это нормально: спека её не использует. Всё остальное готово».
+      Приложение не делает вид, что чего-то не хватает по вине человека.
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">изменить</td><td>у каждой карточки: правка распознанного вручную</td></tr>
+        <tr><td class="btn">Указать вручную</td><td>полная ручная настройка, если разбор не удался</td></tr>
+        <tr><td class="btn">Продолжить</td><td>принять распознанное и перейти к ключам</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s11">
+    <div class="screen-head"><span class="screen-num">11</span>
+      <span class="screen-name">Ключи спеки</span>
+      <span class="screen-role">шаг 4 из 4</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/11.png" alt="Макет 11 · Подключение — ключи спеки" loading="lazy">
+          <figcaption>11 · Подключение — ключи спеки</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Ключи вводятся в приложении, а не в файле. Состав полей — из <code>.env.example</code>
+      конкретной спеки, поэтому у разных команд он разный.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>поля сгруппированы по системам: «Трекер · Redmine», «Хостинг кода · GitLab», «Прочее»;</li>
+      <li>секреты маскируются, под ними подпись «сохранится в связке ключей macOS · в файл не попадёт»;</li>
+      <li>отдельно оговорён запасной путь: «если keyring-демона нет, приложение честно скажет,
+        что значения лежат в файле с правами 600» — молчаливой подмены хранилища не будет;</li>
+      <li>у необязательных полей — пометка и пояснение из комментария в <code>.env.example</code>;</li>
+      <li>если спека не объявляет систему — блок так и говорит: «Спека не объявляет ключи GitLab… Это решение спеки, а не пропуск в настройке»;</li>
+      <li>отдельно показаны три состояния проверки: не проверялось · отвечает · отклонил ключ (401).</li>
+    </ul>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Проверить</td><td>у каждой группы: пробует подключиться с введённым ключом и показывает результат со временем ответа</td></tr>
+        <tr><td class="btn">Всё равно добавить ключ</td><td>добавить ключ системы, которую спека не объявляет</td></tr>
+        <tr><td class="btn">Открыть проект</td><td>завершает мастер и открывает главный экран</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+<section id="s01">
+  <h2>Главный экран — состояние работы</h2>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">01</span>
+      <span class="screen-name">Группа — таблица change'ей</span>
+      <span class="screen-role">разработчик</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/01.png" alt="Макет 01 · Группа — главный (спринт · 2 стека)" loading="lazy">
+          <figcaption>01 · Группа — главный (спринт · 2 стека)</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Отвечает на вопрос «где мы и что мешает» за пять секунд. Это экран, ради которого
+      сделано приложение.
+    </p>
+    <div class="block-label">Сверху вниз</div>
+    <ol>
+      <li><strong>Блок расхождений</strong> — самое заметное на экране. Пример: «Отложенная
+        навигация — Android: галочки 12 из 12, но ветка спеки не влита в main». Рядом ссылка
+        «Открыть change →». Если расхождений нет, блок исчезает, а не показывает пустую рамку.</li>
+      <li><strong>Таблица change'ей</strong> — строка на изменение, колонка на стек.
+        В ячейке: статус трекера, номер задачи, отметки задач («10/11»), пометка какая
+        задача открыта («открыта 3.3») и знак расхождения.</li>
+      <li><strong>Подпись о свежести</strong>: «статусы из кэша спеки · трекер опрошен
+        2 мин назад», с пояснением «полая точка — статус из файла, трекер не отвечал».</li>
+      <li><strong>Плашка следующего шага</strong> — одна на экран: что сделать дальше,
+        почему это важно и точная команда, которую можно скопировать.</li>
+    </ol>
+    <div class="note">
+      <strong>Зачем показывать источник статуса.</strong> Статусы читаются из файлов спеки
+      мгновенно, а из трекера — при обновлении. Полая точка честно говорит: «это из файла,
+      трекер сейчас не отвечал», чтобы устаревшее не выдавалось за живое.
+    </div>
+    <div class="block-label">Кнопки</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Все стеки · iOS · Android</td><td>переключатель справа над таблицей — фильтр колонок. При одном рабочем стеке не показывается вовсе (см. 01b)</td></tr>
+        <tr><td class="btn">строка таблицы</td><td>открывает карточку change'а</td></tr>
+        <tr><td class="btn">Открыть change →</td><td>в блоке расхождений: ведёт к тому изменению, где расхождение</td></tr>
+        <tr><td class="btn">#63573</td><td>номер задачи — открывает её в трекере в браузере</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s01v">
+    <div class="screen-head"><span class="screen-num">01b–01e</span>
+      <span class="screen-name">Четыре варианта того же экрана</span></div>
+    <details class="shot">
+      <summary>Показать экрана (4)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/01b.png" alt="Макет 01b · Группа + 1 стек (avelacom)" loading="lazy">
+          <figcaption>01b · Группа + 1 стек (avelacom)</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/01c.png" alt="Макет 01c · Группа без стеков" loading="lazy">
+          <figcaption>01c · Группа без стеков</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/01d.png" alt="Макет 01d · Без группировки — плоский список" loading="lazy">
+          <figcaption>01d · Без группировки — плоский список</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/01e.png" alt="Макет 01e · Пустая группа" loading="lazy">
+          <figcaption>01e · Пустая группа</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      У разных команд разная глубина процесса. Экран один, меняется только раскладка —
+      это то, что делает приложение пригодным для любой спеки.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Вариант</th><th>Когда</th><th>Что меняется</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">01b · один стек</td><td>спека ведёт одну дорожку работы (avelacom: backend)</td><td>одна колонка на всю ширину, переключатель стеков скрыт</td></tr>
+        <tr><td class="mono">01c · без стеков</td><td>спека не делит работу на стеки</td><td>колонка называется «Работа», задачи и статус на уровне change'а</td></tr>
+        <tr><td class="mono">01d · без группировки</td><td>спека ведёт плоский список изменений</td><td>селектор группы скрыт, заголовок «Change'и», сортировка по порядку сдачи</td></tr>
+        <tr><td class="mono">01e · пустая группа</td><td>группа создана, изменений ещё нет</td><td>вместо таблицы — объяснение и кнопки «Создать change» и «Открыть мастер-спеку», под ними готовая команда</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s07">
+    <div class="screen-head"><span class="screen-num">07 · 07b</span>
+      <span class="screen-name">Селектор группы и шапка</span></div>
+    <details class="shot">
+      <summary>Показать экрана (2)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/07.png" alt="Макет 07 · Переключатель группы (шапка)" loading="lazy">
+          <figcaption>07 · Переключатель группы (шапка)</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/07b.png" alt="Макет 07b · Шапка — уровни, варианты подписи, селектор проекта" loading="lazy">
+          <figcaption>07b · Шапка — уровни, варианты подписи, селектор проекта</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Переключение между спринтами, мастер-спеками, релизами и родительскими задачами —
+      всё в одном списке.
+    </p>
+    <div class="block-label">Что в списке</div>
+    <p>
+      Каждая строка: название, тип источника и счётчик. «Локальный вход по PIN · спринт ·
+      6 change'ей», «Релиз 3.7 · версия трекера #63598 · 12 задач». Версии и задачи трекера
+      показываются наравне со спринтами — с названием, а не голым номером.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">строка списка</td><td>переключает группу; таблица, передача и документы перестраиваются</td></tr>
+        <tr><td class="btn">+ Новая группа</td><td>последняя строка списка. Открывает агентную сессию с командой создания группы — на макете подписано, с какой именно: «откроет агентную сессию <code>/opsx-doc</code>». Название берётся из роли «новая группа» в настройках проекта</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="s02">
+  <h2>Карточка change — всё об одной единице работы</h2>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">02 · 02b</span>
+      <span class="screen-name">Карточка change</span>
+      <span class="screen-role">разработчик</span></div>
+    <details class="shot">
+      <summary>Показать экрана (2)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/02.png" alt="Макет 02 · Change — карточка" loading="lazy">
+          <figcaption>02 · Change — карточка</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/02b.png" alt="Макет 02b · Change без стеков — чеклист и меню действий" loading="lazy">
+          <figcaption>02b · Change без стеков — чеклист и меню действий</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Собирает в одном месте то, что раньше искали по трём системам: что сделано,
+      что мешает, где код, что обсуждали. И отсюда же запускается работа.
+    </p>
+
+    <div class="block-label">Левая колонка — задачи</div>
+    <ul>
+      <li>чеклист по каждому стеку с отметками и счётчиком «10 / 11 · одна открыта»;</li>
+      <li>незакрытая задача подсвечена и помечена «блокирует передачу»;</li>
+      <li>подсказка, если та же задача открыта в нескольких change'ах: «закрывается одной проверкой на устройстве»;</li>
+      <li>у спеки без стеков (02b) чеклист один, без заголовка стека.</li>
+    </ul>
+
+    <div class="block-label">Правая колонка — контекст</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Блок</th><th>Что показывает</th></tr></thead>
+      <tbody>
+        <tr><td>Артефакты</td><td>спека, дизайн, задачи, тест-кейсы — с признаком заполненности и счётчиком «3 из 5». Состав задаётся схемой спеки, поэтому у разных команд разный. Отсутствующий файл помечен «файла нет»</td></tr>
+        <tr><td>Зависимости</td><td>от каких change'ей зависит и кто зависит от него</td></tr>
+        <tr><td>Код</td><td>ветка, состояние MR и <strong>факт влития</strong>: «MR !482 — смержен» + «коммит e41c9d7 есть в features/pin-biometric-auth»</td></tr>
+        <tr><td>Комментарии</td><td>лента обсуждения из трекера — то, чем обмениваются разработчик и тестировщик</td></tr>
+        <tr><td>Покрытие тестами</td><td>«5 кейсов · 3 автоматизированы · 60 %» — если подключён QA-тулчейн</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note">
+      <strong>Блок «Код» имеет три разных вида,</strong> и это важно не путать:
+      <br>• <span class="pill">спека не использует MR</span> — «В .env.example нет GITLAB_TOKEN — блок выключен спекой, а не пропущен вами»;
+      <br>• <span class="pill warn">ключа нет у меня</span> — «Чтобы видеть MR, введите свой токен» + кнопка <span class="btn">Заполнить</span>;
+      <br>• <span class="pill stop">система не отвечает</span> — «GitLab отклонил ключ · ответ 401» + «Проверить снова».
+      <br>В любом случае доступна ссылка <span class="btn">Открыть ветку в GitLab →</span> — она собирается из адреса и не требует API.
+    </div>
+
+    <div class="block-label">Кнопки</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Реализовать</td><td>запускает команду реализации спеки в агентной сессии для этого change'а и стека</td></tr>
+        <tr><td class="btn">Ещё действия ⌄</td><td>меню остальных команд, применимых к этому change'у: отдать на ревью · провести ревью · ревью спеки · QA-прогон · в архив. Состав собирается из сигнатур команд спеки, а не задан жёстко</td></tr>
+        <tr><td class="btn">строка артефакта</td><td>открывает документ в приложении</td></tr>
+        <tr><td class="btn">#63577 в Redmine ↗</td><td>открывает задачу в браузере</td></tr>
+        <tr><td class="btn">Заполнить</td><td>ведёт в форму ключей к нужному полю</td></tr>
+        <tr><td class="btn">← Ко всем change'ам</td><td>возврат к списку</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s15">
+    <div class="screen-head"><span class="screen-num">15 · 15b</span>
+      <span class="screen-name">Создание change с выбором корня</span></div>
+    <details class="shot">
+      <summary>Показать экрана (2)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/15.png" alt="Макет 15 · Диалог создания — выбор корня в трекере" loading="lazy">
+          <figcaption>15 · Диалог создания — выбор корня в трекере</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/15b.png" alt="Макет 15b · Выбор корня — состояния списка" loading="lazy">
+          <figcaption>15b · Выбор корня — состояния списка</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Создать новое изменение — и, если нужно, положить его в уже существующую версию
+      или задачу трекера, где уже лежит пул работы.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>поле имени и описания;</li>
+      <li>чекбокс <strong>«Добавить в существующую версию или задачу»</strong>. Снят — корневая задача создаётся сама;</li>
+      <li>при включении: поиск и список из трекера — «Релиз 3.7 · версия · #63598 · 12 задач», «Master Ticket Messaging · задача · #63368 · 5 задач»;</li>
+      <li>запасной путь — поле «или вставьте адрес либо номер» с проверкой: «✓ найдено: Релиз 3.7»;</li>
+      <li>внизу — точная команда и строка <strong>«задачи будут созданы внутри: Релиз 3.7 (#63598)»</strong>.</li>
+    </ul>
+    <div class="block-label">Четыре состояния списка (15b)</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Состояние</th><th>Что видно</th></tr></thead>
+      <tbody>
+        <tr><td>загружается</td><td>скелет строк, ручной ввод уже доступен</td></tr>
+        <tr><td>пусто</td><td>«В проекте пока нет версий и корневых задач» — корень создастся сам</td></tr>
+        <tr><td>трекер недоступен</td><td>«список версий недоступен · проверьте ключ» — остаётся ручной ввод, путь не блокируется</td></tr>
+        <tr><td>номер не найден</td><td>«задача или версия #99999 не найдена в проекте 319», кнопка «Создать» заблокирована</td></tr>
+      </tbody>
+    </table></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Создать</td><td>запускает команду создания в сессии; недоступна, пока корень не подтверждён</td></tr>
+        <tr><td class="btn">Отмена</td><td>закрывает диалог</td></tr>
+        <tr><td class="btn">проверить связь</td><td>проверяет введённый номер или ссылку</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="s03">
+  <h2>Передача тестировщику</h2>
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">03</span>
+      <span class="screen-name">Передача — мастер из четырёх шагов</span>
+      <span class="screen-role">разработчик</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/03.png" alt="Макет 03 · Передача" loading="lazy">
+          <figcaption>03 · Передача</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Собрать всё нужное и отдать работу тестировщику одним действием, заранее видя,
+      что именно уйдёт людям и что изменится в задачах.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Шаг</th><th>Что показывает</th></tr></thead>
+      <tbody>
+        <tr><td>1 · Готовность</td><td>«4 из 6 change'ей готовы» и список блокеров причинами: «Подключение биометрии — iOS в статусе На тестировании, ожидается Ожидает тестирования»</td></tr>
+        <tr><td>2 · Сборка</td><td>какая сборка записана по каждому стеку, когда и кем: «3.6.7 (20260817135020) · TestFlight · записана вчера 17:12»</td></tr>
+        <tr><td>3 · Получатели</td><td>тестировщик и менеджер — подбираются скриптом спеки из ролей трекера и участников канала</td></tr>
+        <tr><td>4 · Предпросмотр и отправка</td><td>точный текст сообщения, которое увидят люди — заголовок, спринт, стек, сборка, получатели, <strong>состав группы</strong> (задачи со статусами и отметками) и <strong>порядок проверки</strong> с зависимостями «63575 после 63573». Ниже — «Что произойдёт»: «в 4 задачах сменится исполнитель · в 4 задачи уйдёт комментарий со сборкой · в канал команды уйдёт 1 сообщение»</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      <strong>Шаг имеет четыре состояния:</strong> выполнен · активен · есть блокер ·
+      недоступен с причиной. Последнее — не серая пустота, а объяснение:
+      «нет scripts/*handover*recipient* в спеке — некому адресовать сдачу», и рядом «как включить».
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Записать новую…</td><td>записывает свежую сборку командой спеки</td></tr>
+        <tr><td class="btn">Отправить на тестирование</td><td>показывает подтверждение с точной командой и запускает её в сессии. Недоступна, пока есть блокеры — под кнопкой написано почему: «недоступно: готовность 4 из 6 — устраните блокеры шага 1»</td></tr>
+        <tr><td class="btn">открыть →</td><td>если спека вообще не описывает сдачу — ведёт на экран диагностики</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+<section id="s05">
+  <h2>Агентные сессии — запуск работы</h2>
+  <p>
+    Часть работы нельзя свести к кнопке: написать спеку, реализовать задачи, разобрать
+    дефект. Это делается в диалоге с агентом — приложение запускает настоящий Claude Code
+    в каталоге спеки, со всеми её командами и правами пользователя.
+  </p>
+  <div class="note">
+    <strong>Три способа запустить команду, разнесённые по частоте.</strong> Знаю, что
+    делать → <em>кнопка</em> в блоке «Быстрый запуск». Ищу команду → <em>палитра</em>.
+    Пишу словами → <em>поле ввода</em>. Каждому отведено своё место, чтобы они не мешали
+    друг другу и экран не выглядел перегруженным.
+  </div>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">05</span>
+      <span class="screen-name">Сессия — диалог с агентом</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/05.png" alt="Макет 05 · Агентная сессия" loading="lazy">
+          <figcaption>05 · Агентная сессия</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Показывает, что агент делает, и даёт вмешаться, когда нужно решение человека.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li><strong>слева список сессий</strong>: заголовок, состояние («идёт · ждёт решения»,
+        «завершена вчера») и время;</li>
+      <li><strong>контекст сессии</strong> — под заголовком написано, где она выполняется.
+        Если сессия привязана к изменению, там строка «change mtm-03 · стек backend ·
+        ветка features/mtm-03» (макет 05b); если это свободный разбор — только проект,
+        «в avtoto-platform». Видно, над чем идёт работа, без перехода на другой экран;</li>
+      <li><strong>лента диалога</strong>: реплики человека справа, ответы агента слева;</li>
+      <li><strong>«Выполнено по ходу»</strong> — список действий агента: «прочитал спеку
+        и тест-кейсы», «запустил юнит-тесты — 1 падение», «готовит патч»;</li>
+      <li><strong>блок «Агент ждёт решения»</strong> — когда нужен ответ человека, с вариантами;</li>
+      <li><strong>строка ввода внизу</strong> — во всю ширину контента, над ней лог выполнения.</li>
+    </ul>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Да, завести дефект</td><td>подтверждает предложенное агентом действие и продолжает работу</td></tr>
+        <tr><td class="btn">Обсудить сначала</td><td>оставляет решение открытым, человек пишет уточнение</td></tr>
+        <tr><td class="btn">Остановить</td><td>прерывает работу агента</td></tr>
+        <tr><td class="btn">копировать вывод</td><td>кладёт лог в буфер</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s05b">
+    <div class="screen-head"><span class="screen-num">05b</span>
+      <span class="screen-name">Быстрый запуск и палитра команд</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/05b.png" alt="Макет 05b · Сессии — палитра открыта" loading="lazy">
+          <figcaption>05b · Сессии — палитра открыта</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Даёт запускать работу, не набирая команды руками, — и найти нужную, если её не помнишь.
+    </p>
+
+    <div class="block-label">Быстрый запуск — кнопки в левой колонке</div>
+    <p>
+      Под списком сессий — блок с кнопками. Это <strong>не произвольный набор</strong>:
+      кнопки получают те команды, которым в спеке назначены роли (реализация, новый change,
+      новая группа, передача) — те же четыре роли, что настраиваются в настройках проекта.
+      Роль не назначена — кнопки нет. Под каждой подписана команда моноширинным, чтобы
+      было видно, что именно запустится.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Что подставит</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Реализовать</td><td><code>/opsx:apply mtm-03</code> — для текущего change'а</td></tr>
+        <tr><td class="btn">Новый change</td><td><code>/opsx:propose</code></td></tr>
+        <tr><td class="btn">Новая группа</td><td><code>/opsx:doc</code></td></tr>
+        <tr><td class="btn">Все команды спеки ⌄</td><td>открывает палитру</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      <strong>Кнопка подставляет команду, а не запускает её.</strong> Команда попадает
+      в строку ввода, курсор встаёт после неё — дальше человек дописывает задание словами
+      и жмёт «запустить». Так ничего не выполняется случайно, и сохраняется главное правило:
+      наружу ничего не уходит без подтверждения.
+    </div>
+
+    <div class="block-label">Палитра — поиск среди всех команд</div>
+    <p>
+      Открывается <strong>компактной выпадашкой над строкой ввода</strong>: 4–5 строк
+      со скроллом, шириной в колонку транскрипта. Левая колонка при этом остаётся видимой —
+      список сессий и кнопки не перекрываются.
+    </p>
+    <p>
+      <strong>Своего поля поиска у палитры нет — ищет сама строка ввода.</strong>
+      Набираете в ней <code>/opsx</code> — в списке остаются только команды, которые
+      начинаются с этих букв, а шапка показывает, сколько из скольких:
+      «фильтр /opsx · 6 из 10» — шесть подходящих из десяти команд спеки.
+      Отсюда два входа в палитру, и они дают разное:
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Как открыли</th><th>Что видно</th></tr></thead>
+      <tbody>
+        <tr><td>начали печатать <code>/</code> в строке ввода</td><td>палитра открылась сама и сужается с каждой буквой; в шапке — текущий фильтр и счётчик</td></tr>
+        <tr><td>нажали «Все команды спеки»</td><td>полный список без фильтра — когда не помнишь даже начала команды</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Каждая строка: имя команды, назначение, ожидаемые аргументы и <strong>источник</strong> —
+      «канон схемы», «.claude», «package.json», «Makefile». Источник виден всегда, чтобы было
+      понятно, откуда команда взялась. Зеркала (одна команда, продублированная в пяти
+      каталогах) схлопываются в одну строку.
+    </p>
+    <p>
+      Клавиши подписаны прямо в панели: <code>↑↓</code> выбрать · <code>Tab</code> вставить
+      в строку · <code>Esc</code> закрыть.
+    </p>
+    <div class="note">
+      Отдельно отрисован честный случай: <strong>команда без описания аргументов</strong> —
+      «нет argument-hint и строки Input · аргументы вводятся вручную, автокомплит недоступен».
+    </div>
+  </div>
+
+  <div class="screen" id="s05c">
+    <div class="screen-head"><span class="screen-num">05c</span>
+      <span class="screen-name">Строка ввода — команда и задание словами</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/05c.png" alt="Макет 05c · Терминал — высоты и состояния" loading="lazy">
+          <figcaption>05c · Терминал — высоты и состояния</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Команда почти никогда не запускается «как есть»: к ней дописывают словами, что именно
+      сделать. Поэтому внизу экрана, во всю ширину контента, живёт постоянная строка ввода.
+    </p>
+    <div class="note">
+      <strong>Почему «строка ввода», а не «терминал».</strong> Борд в Penpot пока называется
+      «05c · Терминал», но в тексте мы держим формулировку ТЗ: для менеджера «терминал» —
+      это ровно то, чего он избегает, а блок делает обратное — позволяет работать словами.
+      Борд стоит переименовать при следующей правке макета.
+    </div>
+    <div class="block-label">Как работает</div>
+    <ul>
+      <li>команда — из палитры или кнопки — <strong>подставляется строкой</strong>, курсор
+        встаёт после неё;</li>
+      <li>дальше человек дописывает задание обычным текстом: «сделай только рассылку
+        по контактам заказа, письмо поставщику не трогай»;</li>
+      <li>всё вместе уходит одним запросом;</li>
+      <li>поле работает и без команды — как обычный вопрос агенту: «почему падает тест
+        BiometricPolicyTests?».</li>
+    </ul>
+    <div class="block-label">Три высоты — перетаскиванием верхней границы</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Высота</th><th>Когда</th></tr></thead>
+      <tbody>
+        <tr><td>свёрнут · одна строка</td><td>параметры прячутся в «…», команда видна целиком</td></tr>
+        <tr><td>обычный · 4–5 строк</td><td>состояние по умолчанию, высота запоминается по проекту</td></tr>
+        <tr><td>развёрнут · до половины экрана</td><td>для длинного ТЗ: вставил текст и запустил</td></tr>
+      </tbody>
+    </table></div>
+    <div class="block-label">Пять состояний поля</div>
+    <p>
+      пусто («выберите команду или опишите задачу») · команда подставлена ·
+      команда с текстом · только текст, без команды · выполняется (поле заблокировано,
+      видна кнопка «Остановить»).
+    </p>
+    <div class="block-label">Параметры запуска</div>
+    <p>
+      Под полем — три компактных селектора: <strong>модель</strong> (sonnet),
+      <strong>доступ</strong> (спрашивать / расширенный) и <strong>effort</strong> (high).
+      Они меняются от задачи к задаче — разбор требует минимального доступа, реализация
+      расширенного — поэтому стоят рядом с полем, а не спрятаны в настройки.
+      Значения запоминаются по проекту.
+    </p>
+  </div>
+
+  <div class="screen" id="s05d">
+    <div class="screen-head"><span class="screen-num">05d</span>
+      <span class="screen-name">Завершение и следующие шаги</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/05d.png" alt="Макет 05d · Сессии — завершено, следующие шаги" loading="lazy">
+          <figcaption>05d · Сессии — завершено, следующие шаги</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Работа закончилась — приложение показывает, что сделано, и предлагает продолжение,
+      чтобы человеку не пришлось вспоминать следующую команду.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li><strong>«Выполнено по ходу»</strong> — итог работы агента списком: «прочитал спеку
+        и tasks_backend.md», «реализовал п. 1–3 рассылки», «прогнал тесты модуля — зелёные»,
+        «отметил 14 из 14 задач», «запушил features/mtm-03»;</li>
+      <li><strong>«Следующие шаги»</strong> — кнопки продолжения, у каждой справа пояснение,
+        что за ней стоит;</li>
+      <li><strong>лог завершённого запуска</strong> внизу: команда целиком, отметки задач,
+        состояние ветки, «готово · 4 мин 12 с»;</li>
+      <li>поле ввода уже готово к следующему вопросу.</li>
+    </ul>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th><th>Пояснение на экране</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Создать merge request</td><td>запускает команду сдачи стека</td><td>команда submit спеки</td></tr>
+        <tr><td class="btn">Перевести задачу в «На ревью»</td><td>меняет статус в трекере</td><td>сделает та же команда</td></tr>
+        <tr><td class="btn">Открыть change</td><td>переход в карточку изменения</td><td>посмотреть, что осталось</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Внизу подписано, откуда берутся эти кнопки: <strong>«состав кнопок — из ролей команд
+      спеки и факта состояния git»</strong>. Приложение не хранит зашитого сценария:
+      ветка запушена и задачи закрыты → предлагает MR; не закрыты → предложит другое.
+    </div>
+  </div>
+</section>
+
+<section id="s06">
+  <h2>Документы спеки</h2>
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">06 · 06b</span>
+      <span class="screen-name">Документация</span></div>
+    <details class="shot">
+      <summary>Показать экрана (2)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/06.png" alt="Макет 06 · Документация" loading="lazy">
+          <figcaption>06 · Документация</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/06b.png" alt="Макет 06b · Документы — мастер-спека файлом и архив" loading="lazy">
+          <figcaption>06b · Документы — мастер-спека файлом и архив</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Спеки, задачи и тест-кейсы читаются в приложении — не нужно открывать редактор
+      и искать файлы.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>слева дерево: документы группы и артефакты change'а с признаком заполненности («заполнен», «6 из 14», «объявлен схемой, файла нет»);</li>
+      <li>справа отрендеренный документ с заголовками, списками и блоками кода;</li>
+      <li>вверху — где лежит файл и синхронизирован ли он с веткой;</li>
+      <li>раздел «архив» — завершённые change'и, отсортированные по дате из имени каталога.</li>
+    </ul>
+    <div class="note">
+      Дерево строится <strong>из схемы конкретной спеки</strong>. У одной команды это
+      <code>proposal.md · design.md · tasks_ios.md</code>, у другой —
+      <code>test_case.md · specs/&lt;capability&gt;/spec.md</code>. Приложение не хранит списка.
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Открыть в IDE</td><td>открывает файл в редакторе по умолчанию</td></tr>
+        <tr><td class="btn">строка дерева</td><td>показывает документ справа</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="s04">
+  <h2>Окружение и настройки</h2>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">04</span>
+      <span class="screen-name">Окружение — проверки перед работой</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/04.png" alt="Макет 04 · Окружение" loading="lazy">
+          <figcaption>04 · Окружение</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Ловит проблему до запуска, а не в середине. Половина сбоев начинается здесь:
+      не заполнен ключ, не склонирован репозиторий, не отвечает система.
+    </p>
+    <div class="block-label">Три секции</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Секция</th><th>Что проверяет</th></tr></thead>
+      <tbody>
+        <tr><td>Ключи в .env</td><td>наличие (не значения!) каждого ключа, который объявила спека. Отсутствующий помечен «отсутствует — добавьте в .env»</td></tr>
+        <tr><td>Репозитории роли</td><td>склонированы ли рабочие копии, на какой ветке, отстают ли от origin</td></tr>
+        <tr><td>Внешние системы</td><td>отвечают ли трекер, хостинг кода и мессенджер, за сколько миллисекунд</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Вверху итог: «1 проблема — отправка уведомлений не сработает». Внизу пояснение
+      о хранении секретов: «Секреты — в связке ключей системы. Файл .env в клоне собирается
+      из них при открытии проекта» с пометкой «keyring доступен».
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Перепроверить всё</td><td>заново опрашивает системы и перечитывает состояние репозиториев</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s13">
+    <div class="screen-head"><span class="screen-num">13 · 13b</span>
+      <span class="screen-name">Настройки проекта</span></div>
+    <details class="shot">
+      <summary>Показать экрана (2)</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/13.png" alt="Макет 13 · Настройки проекта" loading="lazy">
+          <figcaption>13 · Настройки проекта</figcaption>
+        </figure>
+        <figure>
+          <img src="console-screens/13b.png" alt="Макет 13b · Настройки — все команды спеки" loading="lazy">
+          <figcaption>13b · Настройки — все команды спеки</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Всё, что приложение распознало в спеке, — и возможность это поправить, если поняло неверно.
+    </p>
+    <div class="block-label">Секции</div>
+    <ul>
+      <li><strong>Проект</strong>: адрес, локальный путь, ветка, когда обновлялся;</li>
+      <li><strong>Распознанное</strong>: стратегия группировки, какие статусы означают «готово»
+        и «в работе», список стеков с возможностью выключить лишние. Пометка: «правки переживают пересканирование»;</li>
+      <li><strong>Роли команд</strong>: какая команда получает выделенную кнопку —
+        реализация, новый change, новая группа, передача. Роль можно не назначать:
+        на макете «передача» стоит в положении «не назначена», и рядом написано, что это
+        значит — «без роли „передача“ кнопка запуска не показывается — действие доступно
+        из палитры команд». Команда не пропадает, пропадает только кнопка;</li>
+      <li><strong>Все команды спеки</strong> (13b) — таблица: команда, сигнатура, где показывается,
+        роль, переключатель «скрыть»;</li>
+      <li><strong>Удалить проект</strong> с отдельной галочкой «удалить клон и ключи из связки».</li>
+    </ul>
+    <div class="note">
+      <strong>Роль и применимость — разные вещи.</strong> Ролей мало намеренно: они решают,
+      у какой команды будет выделенная кнопка. А <em>где команда показывается</em> выводится
+      из её сигнатуры автоматически: <code>[change]</code> → меню карточки change'а,
+      <code>[sprint]</code> → экран группы, без аргументов → общее меню. Поэтому особенные
+      команды платформы попадают в интерфейс сами, без настройки: из десяти команд ни одна
+      не теряется.
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Перечитать спеку</td><td>заново разбирает устройство спеки после изменений в ней</td></tr>
+        <tr><td class="btn">Открыть каталог</td><td>показывает клон в файловом менеджере</td></tr>
+        <tr><td class="btn">Удалить</td><td>убирает проект из реестра; клон и ключи — только если отмечена галочка</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s12">
+    <div class="screen-head"><span class="screen-num">12</span>
+      <span class="screen-name">Диагностика выключенной фичи</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/12.png" alt="Макет 12 · Диагностика выключенной фичи" loading="lazy">
+          <figcaption>12 · Диагностика выключенной фичи</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Если спека чего-то не поддерживает, экран не исчезает и не показывает пустоту —
+      он объясняет, чего не хватает и как это включить.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>название фичи и одна строка «зачем она»;</li>
+      <li>счётчик «выполнено 2 из 5»;</li>
+      <li><strong>обязательные требования</strong> — без них фича не работает: группировка,
+        семантика статусов. У выполненного — где найдено;</li>
+      <li><strong>необязательные</strong> — «без него шаг гаснет»: сборки, скрипт получателей,
+        команда передачи. У каждого — где искали и что не нашли.</li>
+    </ul>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Создать через агента</td><td>открывает сессию с готовым заданием: добавить в спеку недостающий файл по контракту</td></tr>
+        <tr><td class="btn">Скопировать шаблон</td><td>кладёт в буфер заготовку нужного файла</td></tr>
+        <tr><td class="btn">Инструкция</td><td>открывает описание, как включить фичу</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      На этом же экране показаны <strong>два других случая</strong>, которые нельзя путать
+      с первым: «не настроено у меня» (спека фичу поддерживает, но мой ключ пустой — кнопка
+      «Заполнить») и «система не отвечает» (ключ есть, но 401 — «Проверить снова»).
+      Первый ведёт к правке спеки, второй — к своим настройкам, третий — к проверке связи.
+    </div>
+  </div>
+</section>
+<section id="s16">
+  <h2>Экраны менеджера</h2>
+  <p>
+    Менеджер смотрит редко и хочет ответ за пять секунд. Стеки, ветки и чеклисты ему
+    не нужны — он в них не разбирается и не должен. Плюс вторая половина роли: он
+    приносит ТЗ и должен запустить работу, ни разу не открыв терминал.
+  </p>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">16</span>
+      <span class="screen-name">Что происходит</span>
+      <span class="screen-role">менеджер</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/16.png" alt="Макет 16 · Менеджер — что происходит" loading="lazy">
+          <figcaption>16 · Менеджер — что происходит</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Срез по всей работе команды на сегодня — для решения, а не для работы.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li><strong>левое меню короче</strong> — всего три пункта: «Что происходит»,
+        «Мои запуски», «Документы». Change'ей, передачи и окружения у менеджера нет:
+        состав меню собирается под рабочее место, а не прячется галочками;</li>
+      <li><strong>«Новая фича из ТЗ»</strong> — крупный блок сверху: «вставьте текст задания —
+        приложение заведёт спеку и задачи, терминал не нужен»;</li>
+      <li><strong>Группы в работе</strong> — карточки: название, «готово 4 из 6», счётчик блокеров,
+        режим сдачи и когда последний раз что-то менялось;</li>
+      <li><strong>Что мешает</strong> — таблица блокеров: задача, её статус и сколько дней
+        в нём находится, и <strong>кто держит</strong> — имя исполнителя из трекера.</li>
+    </ul>
+    <div class="note">
+      Внизу написано прямо: «Здесь нет стеков, веток и чеклистов — это срез для решения,
+      а не для работы» и «на экране только статусы из трекера спеки и факты из файлов —
+      приложение не добавляет своих категорий и оценок».
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Вставить ТЗ</td><td>открывает поле для текста задания; после запуска ведёт на экран прогресса</td></tr>
+        <tr><td class="btn">карточка группы</td><td>раскрывает подробности по этой группе</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="screen" id="s17">
+    <div class="screen-head"><span class="screen-num">17</span>
+      <span class="screen-name">Прогресс работы</span>
+      <span class="screen-role">менеджер</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/17.png" alt="Макет 17 · Менеджер — прогресс работы" loading="lazy">
+          <figcaption>17 · Менеджер — прогресс работы</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Показывает, что происходит с запущенной задачей, на языке результата, а не команд.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>заголовок задачи и «запущено 12 минут назад из вашего ТЗ»;</li>
+      <li>живая строка «что сейчас делает агент»: «Пишу задачи для стека iOS: экран восстановления, ограничение попыток, тексты ошибок»;</li>
+      <li>«шаг 3 из 5 · спека готова, задачи в трекере заведены»;</li>
+      <li><strong>«Что уже сделано»</strong> — чеклист этапов: прочитано ТЗ · написана спека ·
+        заведены задачи · реализация (сейчас) · передача разработчикам;</li>
+      <li>пометка «Технические подробности скрыты. Нужны — „Показать сессию"».</li>
+    </ul>
+    <div class="block-label">Состояние «работа завершена»</div>
+    <p>
+      «Спека, задачи и ветка готовы. Задачи в трекере — „В работе". Кнопка создаст merge
+      request командой спеки и переведёт их в „На ревью"». После нажатия — ссылка на MR
+      с кнопкой «Скопировать»: её можно скинуть в чат.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Кнопка</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">Отдать разработчикам</td><td>создаёт merge request командой спеки и переводит задачи в «На ревью»</td></tr>
+        <tr><td class="btn">Скопировать</td><td>кладёт ссылку на MR в буфер</td></tr>
+        <tr><td class="btn">Показать сессию</td><td>открывает обычный экран сессии со всеми подробностями</td></tr>
+        <tr><td class="btn">Остановить</td><td>прерывает работу</td></tr>
+      </tbody>
+    </table></div>
+    <p>
+      Ещё два состояния: <strong>«Нужно ваше решение»</strong> (агент задаёт вопрос по существу:
+      «слать всем контактам заказа или только основному?») и <strong>«Работа остановилась»</strong>
+      («Трекер не ответил при заведении задач. Показать подробности →»).
+    </p>
+  </div>
+</section>
+
+<section id="s14">
+  <h2>Экран тестировщика</h2>
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">14</span>
+      <span class="screen-name">Тестирование</span>
+      <span class="screen-role">тестировщик</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/14.png" alt="Макет 14 · Тестирование (QA-тулчейн)" loading="lazy">
+          <figcaption>14 · Тестирование (QA-тулчейн)</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Отвечает на вопросы тестировщика: что проверять, на какой сборке, что уже закрыто
+      автотестами. Раздел появляется, только если у команды подключён QA-тулчейн.
+    </p>
+    <div class="block-label">Что на экране</div>
+    <ul>
+      <li>в шапке рядом с проектом — второй чип <span class="btn">Место: Тестировщик ⌄</span>:
+        рабочее место определяет, какие разделы видны. Тестировщик видит «Тестирование»
+        первым пунктом, разработческие экраны ему не нужны;</li>
+      <li>под заголовком группы вместо ветки — <strong>сборка на проверке</strong>:
+        «iOS 3.6.7 (TestFlight) · Android 3.6.7 (152)». Это первое, что он спрашивает;</li>
+      <li>три показателя: «24 кейса по 6 change'ам», «11 из 24 автоматизировано · 46 % покрытия»,
+        «последний прогон: 21 пройден · 3 упало, 2 ч назад»;</li>
+      <li>таблица кейсов: название, тип (UI · API · E2E), признак автоматизации,
+        связанный change и результат последнего прогона.</li>
+    </ul>
+    <div class="note">
+      Внизу источник данных: «workspace/avtoto-qa-tools · прогоны из Allure, локальный клон
+      не требуется». Покрытие видно даже тем, у кого QA-репозиторий не склонирован.
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Элемент</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td class="btn">строка кейса</td><td>открывает кейс и связанную с ним спеку</td></tr>
+        <tr><td class="btn">колонка «Спека»</td><td>ведёт к change'у, который кейс проверяет</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="s19">
+  <h2>Общее для всех экранов</h2>
+  <p>
+    Два макета — <strong>19 · Состояния данных</strong> и <strong>18 · Компоненты
+    и состояния</strong> — это не экраны, а справочные листы. Они задают, как ведут себя
+    одни и те же элементы везде, чтобы каждый экран не изобретал своё поведение заново
+    и чтобы новый экран собирался из готовых кусков.
+  </p>
+
+  <div class="screen">
+    <div class="screen-head"><span class="screen-num">19</span>
+      <span class="screen-name">Состояния данных</span>
+      <span class="screen-role">справочный лист</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/19.png" alt="Макет 19 · Состояния данных — загрузка, частичная ошибка, устарело" loading="lazy">
+          <figcaption>19 · Состояния данных — загрузка, частичная ошибка, устарело</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Данные приходят из трёх мест — файлов спеки, трекера и git — и приходят вразнобой.
+      Здесь описано, что человек видит, пока их нет, или когда пришла только часть.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Состояние</th><th>Что видит человек</th><th>Правило</th></tr></thead>
+      <tbody>
+        <tr><td>Загрузка</td><td>скелет: блоки той же высоты и в тех же местах, что будут с данными</td><td>при появлении данных ничего не прыгает</td></tr>
+        <tr><td>Частичная ошибка</td><td>«Статусы трекера недоступны — показаны данные файлов спеки», рядом «Redmine не ответил · повторить». Каждая строка помечена «из кэша», у статуса полая точка вместо залитой</td><td>показываем всё, что есть; недоступное помечено, а не скрыто</td></tr>
+        <tr><td>Устарело</td><td>мягкая подсветка «данные устарели — обновлено 47 минут назад» и кнопка «Обновить». Таблица под ней остаётся рабочей</td><td>подсветка не блокирует работу и не требует нажатия</td></tr>
+        <tr><td>Не распознано</td><td>чеклист разбора: ✓ команды спеки (9 найдено) · ✓ ключи окружения · ✕ каталог change'ей («ни один каталог не похож на набор изменений») · ✕ группировка. Ниже «Указать вручную»</td><td>честно перечисляем, что поняли и что нет, и даём указать руками</td></tr>
+        <tr><td>Пусто</td><td>«В этой группе ещё нет change'ей», объяснение почему и кнопка «Создать change»</td><td>пустая рамка без объяснения — дефект, а не состояние</td></tr>
+        <tr><td>Нет доступа</td><td>«Чтобы видеть MR, введите свой токен GitLab» + имя поля <code>GITLAB_TOKEN · .env.example спеки</code> + кнопка «Заполнить»</td><td>компактный блок внутри экрана: одно поле, одна кнопка, полминуты</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Полный перечень состояний как <strong>критериев приёмки</strong> — в разделе 8 ТЗ;
+      здесь показано, как каждое из них выглядит на макете.
+    </div>
+    <div class="note">
+      Разница между «пусто» и «нет доступа» принципиальная: первое — нормальное состояние
+      работы, второе — незаполненный ключ <em>на этой машине</em>. Третий случай, «спека
+      этого не умеет», выглядит иначе и живёт на экране 12.
+    </div>
+  </div>
+
+  <div class="screen" id="s18">
+    <div class="screen-head"><span class="screen-num">18</span>
+      <span class="screen-name">Компоненты и состояния</span>
+      <span class="screen-role">справочный лист</span></div>
+    <details class="shot">
+      <summary>Показать экран</summary>
+      <div class="shot-body">
+        <figure>
+          <img src="console-screens/18.png" alt="Макет 18 · Компоненты и состояния" loading="lazy">
+          <figcaption>18 · Компоненты и состояния</figcaption>
+        </figure>
+      </div>
+    </details>
+    <p class="purpose">
+      Семь элементов, которые встречаются больше чем на одном экране, — со всеми
+      состояниями сразу, чтобы их не приходилось искать по макетам.
+    </p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Элемент</th><th>Состояния</th></tr></thead>
+      <tbody>
+        <tr><td>Навигация</td><td>три состава: полный (сборки, QA-тулчейн и мессенджер подключены) · без «Передачи» и «Тестирования» (спека их не использует) · с выключенной фичей — пункт приглушён, рядом счётчик невыполненных требований; пункт кликабелен и ведёт на диагностику</td></tr>
+        <tr><td>Селектор проекта</td><td>обычный · один проект — чипа нет вовсе · загрузка</td></tr>
+        <tr><td>Поле секрета</td><td>пустое («вставьте токен») · заполнено маской · проверено «✓ ключ принят» · ошибка «✕ 401 — ключ отклонён»</td></tr>
+        <tr><td>Прогресс длинной операции</td><td>процент известен («62 % · 18,4 МБ из 29,6 МБ») · неопределённый («разбираем структуру спеки…») · ошибка («прервано на 31 % · нет доступа по ключу»). Кнопка «Отменить» стоит рядом во всех трёх</td></tr>
+        <tr><td>Меню действий объекта</td><td>свёрнуто («Ещё действия ⌄») · раскрыто — только команды, применимые к объекту · пусто — «Применимых команд нет: ни одна сигнатура не принимает change», и тогда кнопка не показывается вовсе</td></tr>
+        <tr><td>Чеклист требований фичи</td><td>✓ выполнено — с указанием, где найдено (<code>openspec/redmine.yaml → sync.*</code>) · ○ не выполнено — где искали · ✕ блокирует — «ни одна стратегия не подошла»</td></tr>
+        <tr><td>Строка блокера</td><td>обычный и критичный — различаются точкой и подписью срока. Текст строки — <strong>статус трекера и время в нём</strong> («На тестировании · 9 дней в статусе»), справа исполнитель и когда менялось</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">
+      Два правила, ради которых этот лист существует. Первое: <strong>три вида строки
+      чеклиста различимы и на монохромном скриншоте</strong> — знаком, а не только цветом.
+      Второе: <strong>приложение не придумывает своих категорий</strong> — в строке блокера
+      стоит реальный статус трекера и время в нём, а не оценка вроде «долго» или «рискованно».
+    </div>
+  </div>
+</section>
+
+<section id="buttons">
+  <h2>Все действия одним списком</h2>
+  <p>
+    Сводка того, что приложение делает от имени человека. Каждое действие — это запуск
+    команды спеки или обращение к системе, а не собственная логика приложения.
+  </p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Кнопка</th><th>Где</th><th>Что происходит</th></tr></thead>
+    <tbody>
+      <tr><td class="btn">Подключить</td><td>08</td><td>клонирует спеку и разбирает её устройство</td></tr>
+      <tr><td class="btn">Продолжить</td><td>10</td><td>принимает распознанное устройство спеки</td></tr>
+      <tr><td class="btn">Проверить</td><td>11, 12</td><td>пробует подключиться к системе с введённым ключом</td></tr>
+      <tr><td class="btn">Открыть проект</td><td>11</td><td>завершает подключение</td></tr>
+      <tr><td class="btn">⟳ Обновить</td><td>везде</td><td>git pull спеки, перечитывание файлов, опрос трекера</td></tr>
+      <tr><td class="btn">+ Новая группа</td><td>07</td><td>запускает команду создания группы с вашим ТЗ</td></tr>
+      <tr><td class="btn">Создать change</td><td>01e, 15</td><td>запускает команду создания изменения, при необходимости внутри выбранной версии</td></tr>
+      <tr><td class="btn">Реализовать</td><td>02</td><td>запускает команду реализации для change'а и стека</td></tr>
+      <tr><td class="btn">Ещё действия</td><td>02</td><td>остальные команды спеки, применимые к change'у</td></tr>
+      <tr><td class="btn">Записать новую сборку</td><td>03</td><td>фиксирует версию сборки в файлах спеки</td></tr>
+      <tr><td class="btn">Отправить на тестирование</td><td>03</td><td>после подтверждения запускает команду сдачи: назначает исполнителей, пишет комментарии, отправляет сообщение</td></tr>
+      <tr><td class="btn">Отдать разработчикам</td><td>17</td><td>создаёт merge request и переводит задачи в «На ревью»</td></tr>
+      <tr><td class="btn">Создать через агента</td><td>12</td><td>открывает сессию с заданием дописать спеку недостающим файлом</td></tr>
+      <tr><td class="btn">Заполнить</td><td>02, 12</td><td>ведёт в форму ключей к нужному полю</td></tr>
+      <tr><td class="btn">Перечитать спеку</td><td>13</td><td>заново разбирает устройство спеки</td></tr>
+      <tr><td class="btn">копировать команду</td><td>панель запуска</td><td>кладёт строку в буфер для ручного запуска</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="status">
+  <h2>Что уже работает, а что в макетах</h2>
+  <p>
+    Приложение существует не только на бумаге: рабочий прототип запускается на macOS
+    и на реальных данных нашёл семь расхождений, которые человек не видел.
+  </p>
+  <div class="note">
+    <strong>«Работает» в таблице ниже — про прототип, а не про внедрение.</strong>
+    В ежедневной работе приложение пока не используется: рабочего инструмента нет
+    ни у одной из трёх ролей — так же это сформулировано в разделе 5 ТЗ. Колонка
+    «Прототип» отвечает на вопрос «что уже можно показать руками», а не «чем уже пользуются».
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Экран</th><th>Прототип</th><th>Макет</th></tr></thead>
+    <tbody>
+      <tr><td>01 Группа — таблица change'ей</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">4 варианта</span></td></tr>
+      <tr><td>02 Карточка change</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>03 Передача</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>04 Окружение</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>05 Сессии</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>06 Документы</td><td><span class="pill ok">работает</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>08–11 Подключение проекта</td><td><span class="pill warn">частично</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>12 Диагностика фичи</td><td><span class="pill stop">нет</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>13 Настройки проекта</td><td><span class="pill stop">нет</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>14 Тестирование</td><td><span class="pill stop">нет</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>15 Выбор корня в трекере</td><td><span class="pill stop">нет</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>16–17 Менеджер</td><td><span class="pill stop">нет</span></td><td><span class="pill ok">есть</span></td></tr>
+      <tr><td>18–19 Общие состояния и элементы</td><td><span class="pill warn">частично</span></td><td><span class="pill ok">2 листа</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Ближайшие шаги</h3>
+  <ol>
+    <li>Подключение спеки по адресу и хранение ключей в системной связке.</li>
+    <li>Разбор устройства чужой спеки — чтобы работало с любой командой, а не только с одной.</li>
+    <li>Гибкая модель: группы, стеки и сборки становятся необязательными.</li>
+    <li>Несколько проектов в одном окне.</li>
+    <li>Диагностика выключенных фич.</li>
+    <li>Экраны менеджера и тестировщика.</li>
+  </ol>
+  <div class="note">
+    Проверка каждого шага — на двух живых спеках: одна со спринтами, двумя стеками
+    и сборками, вторая без спринтов, с одним стеком и без сборок. Если работают обе,
+    третья почти наверняка попадёт в этот диапазон.
+  </div>
+</section>
+
+<footer>
+  Platform Console · описание интерфейса MVP · 31 макет, страница «Platform Console» в Penpot
+  <br>Парный документ: бизнес-ТЗ «Консоль спеки» — зачем продукт, проблема в цифрах,
+  роли, порядок поставки, ограничения.
+</footer>
+
+<script>
+  (function () {
+    var btn = document.getElementById('shot-all');
+    var all = function () { return Array.prototype.slice.call(document.querySelectorAll('details.shot')); };
+    btn.addEventListener('click', function () {
+      var open = all().some(function (d) { return !d.open; });
+      all().forEach(function (d) { d.open = open; });
+      btn.textContent = open ? 'Свернуть все экраны' : 'Раскрыть все экраны';
+    });
+    document.querySelectorAll('.shot img').forEach(function (img) {
+      img.addEventListener('error', function () { img.closest('figure').classList.add('missing'); });
+    });
+  })();
+</script>
+</main>
+</div>
+
+</body>
+</html>

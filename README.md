@@ -1,4 +1,4 @@
-# Platform Console
+# Spok
 
 Десктопное приложение (Flutter, macOS) — оболочка над спекой разработки
 (openspec-репозиторием команды). Делает состояние работы видимым, а следующий
@@ -7,7 +7,8 @@
 без сборок и MR).
 
 Бриф: `avtoto-platform/docs/platform-console-idea.md`.
-Макеты: Penpot, страница «Platform Console».
+Макеты: Penpot, страница «Platform Console» (имя страницы историческое —
+приложение переименовано в Spok).
 
 ## Что уже работает
 

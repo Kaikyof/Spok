@@ -1,5 +1,5 @@
 name: spok
-description: "A new Flutter project."
+description: "Spok — оболочка над спекой разработки: состояние работы и запуск команд платформы."
 publish_to: 'none'
 version: 0.1.0+1
 

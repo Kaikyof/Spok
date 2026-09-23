@@ -49,3 +49,6 @@ app.*.map.json
 
 # Сборки дистрибутива
 /dist/
+
+# Сборка описания экранов (генерируется docs/build-single.py)
+docs/platform-console-mvp-single.html

@@ -30,10 +30,27 @@ class AppConfigSource {
     return slug.isEmpty ? key : '${key}__$slug';
   }
 
+  static const appDirName = 'Spok';
+
+  /// Каталог конфига до переименования приложения. Конфиг оттуда переносится
+  /// при первом обращении: иначе после обновления пользователь встречает
+  /// пустой мастер настройки и заново ищет путь к спеке.
+  static const legacyAppDirName = 'PlatformConsole';
+
   File _configFile() {
     final home = Platform.environment['HOME'] ?? '';
-    return File(p.join(
-        home, 'Library', 'Application Support', 'Spok', '.env'));
+    final support = p.join(home, 'Library', 'Application Support');
+    final file = File(p.join(support, appDirName, '.env'));
+    if (!file.existsSync()) {
+      final legacy = File(p.join(support, legacyAppDirName, '.env'));
+      // Копируем, а не переносим: откат на прежнюю версию приложения
+      // продолжит читать свой конфиг.
+      if (legacy.existsSync()) {
+        file.parent.createSync(recursive: true);
+        legacy.copySync(file.path);
+      }
+    }
+    return file;
   }
 
   Future<String> configPath() async => _configFile().path;
