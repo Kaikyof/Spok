@@ -9,9 +9,9 @@ class ScreenSelected extends ConsoleEvent {
   ScreenSelected(this.screen);
 }
 
-class SprintSelected extends ConsoleEvent {
-  final String sprintId;
-  SprintSelected(this.sprintId);
+class GroupSelected extends ConsoleEvent {
+  final String groupId;
+  GroupSelected(this.groupId);
 }
 
 class ChangeOpened extends ConsoleEvent {
@@ -19,14 +19,40 @@ class ChangeOpened extends ConsoleEvent {
   ChangeOpened(this.change);
 }
 
+/// Прочитана спека открытого change'а.
+class _ChangeSpecLoaded extends ConsoleEvent {
+  final String? content;
+  _ChangeSpecLoaded(this.content);
+}
+
 class DocOpened extends ConsoleEvent {
   final DocArtifact? doc;
   DocOpened(this.doc);
 }
 
+/// Открыть или закрыть экран смены спеки.
+class SpecSwitchRequested extends ConsoleEvent {
+  final bool open;
+  SpecSwitchRequested(this.open);
+}
+
 class PlatformPathSubmitted extends ConsoleEvent {
   final String path;
   PlatformPathSubmitted(this.path);
+}
+
+/// Открыть форму ключей: значения читаются с диска при каждом открытии.
+class EnvFormRequested extends ConsoleEvent {}
+
+class _EnvFormLoaded extends ConsoleEvent {
+  final EnvForm form;
+  _EnvFormLoaded(this.form);
+}
+
+/// Сохранить значения в .env спеки.
+class EnvSaved extends ConsoleEvent {
+  final Map<String, String> values;
+  EnvSaved(this.values);
 }
 
 class _CommentsLoaded extends ConsoleEvent {
@@ -51,7 +77,8 @@ class _RecipientsLoaded extends ConsoleEvent {
   _RecipientsLoaded(this.stack, this.recipients);
 }
 
+/// Выбран стек; пустая строка — показывать все.
 class StackFilterChanged extends ConsoleEvent {
-  final StackFilter filter;
-  StackFilterChanged(this.filter);
+  final String stack;
+  StackFilterChanged(this.stack);
 }

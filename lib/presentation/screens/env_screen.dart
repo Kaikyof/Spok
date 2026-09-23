@@ -10,6 +10,7 @@ import '../bloc/console_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/check_row.dart';
 import '../ui_kit/section_card.dart';
+import '../widgets/env_editor_dialog.dart';
 
 /// Экран «Окружение»: поймать проблему до запуска, а не в середине.
 class EnvScreen extends StatelessWidget {
@@ -67,6 +68,17 @@ class _EnvHeader extends StatelessWidget {
             ],
           ),
         ),
+        FilledButton.icon(
+          onPressed: () => EnvEditorDialog.show(context),
+          icon: const Icon(Icons.key, size: 15),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            foregroundColor: AppColors.background,
+          ),
+          label: Text(texts.envEditOpen,
+              style: const TextStyle(fontSize: 12)),
+        ),
+        const SizedBox(width: AppDimens.gapS),
         OutlinedButton(
           onPressed: () => context.read<ConsoleBloc>().add(ConsoleRefreshed()),
           style: OutlinedButton.styleFrom(
@@ -103,7 +115,11 @@ class _CheckSection extends StatelessWidget {
             CheckRow(
               level: check.level,
               name: check.name,
-              detail: detailFromHint ? texts.envKeyHint(check.name) : check.subtitle,
+              // Подсказку пишет сама спека в .env.example; своя —
+              // только для ключей, которые она не прокомментировала.
+              detail: detailFromHint && check.subtitle.isEmpty
+                  ? texts.envKeyHint(check.name)
+                  : check.subtitle,
               result: texts.checkResultText(check),
               monospacedName: monospacedNames,
             ),

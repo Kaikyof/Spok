@@ -36,7 +36,11 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     });
     on<SessionStopRequested>(_onStopRequested);
     on<SessionModelChanged>((event, emit) {
-      emit(state.copyWith(model: event.model));
+      // Своё имя модели остаётся в списке: человек ввёл его один раз.
+      final models = state.models.contains(event.model)
+          ? state.models
+          : [...state.models, event.model];
+      emit(state.copyWith(model: event.model, models: models));
       _rememberSettings();
     });
     on<SessionEffortChanged>((event, emit) {
@@ -47,11 +51,24 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
       emit(state.copyWith(permissionMode: event.mode));
       _rememberSettings();
     });
+    on<SessionTerminalHeightChanged>((event, emit) {
+      emit(state.copyWith(terminalHeight: event.height));
+      if (event.remember) _rememberSettings();
+    });
+    on<SessionPaletteToggled>(
+        (event, emit) => emit(state.copyWith(paletteOpen: event.open)));
+    on<SessionDraftSet>((event, emit) => emit(state.copyWith(
+          draft: event.text,
+          revision: state.revision + 1,
+        )));
+    on<SessionsContextChanged>(_onContextChanged);
     on<HandoffRunRequested>(_onHandoffRun);
     on<_SettingsRestored>((event, emit) => emit(state.copyWith(
           model: event.model,
+          models: event.models,
           effort: event.effort,
           permissionMode: event.permissionMode,
+          terminalHeight: event.terminalHeight,
         )));
     on<_SessionEventReceived>(_onEventReceived);
     on<_SessionCliIdReceived>(_onCliIdReceived);
@@ -59,30 +76,77 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     _restoreSettings();
   }
 
-  /// Модель, усилия и режим разрешений переживают перезапуск приложения.
+  /// Настройки сессии живут по проекту: модель, доступ, усилия и высота
+  /// терминала у каждой спеки свои. Ключ без проекта остаётся запасным —
+  /// конфиги, написанные до разделения, не теряются.
+  String _key(String key) =>
+      AppConfigSource.scoped(key, repository.rootPath);
+
   Future<void> _restoreSettings() async {
     final saved = await config.readAll();
-    final model = saved[AppConfigSource.sessionModelKey];
+    String? valueOf(String key) => saved[_key(key)] ?? saved[key];
+    final model = valueOf(AppConfigSource.sessionModelKey);
     final effort = AgentEffort.values
-        .where((value) => value.name == saved[AppConfigSource.sessionEffortKey])
+        .where((value) => value.name == valueOf(AppConfigSource.sessionEffortKey))
         .firstOrNull;
     final permission = AgentPermissionMode.values
         .where((value) =>
-            value.name == saved[AppConfigSource.sessionPermissionKey])
+            value.name == valueOf(AppConfigSource.sessionPermissionKey))
         .firstOrNull;
+    final models = (valueOf(AppConfigSource.sessionModelsKey) ?? '')
+        .split(',')
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
+    final terminal =
+        double.tryParse(valueOf(AppConfigSource.sessionTerminalKey) ?? '');
     if (isClosed) return;
     add(_SettingsRestored(
-      agentModels.contains(model) ? model! : state.model,
+      (model ?? '').isEmpty ? state.model : model!,
+      models.isEmpty ? state.models : models,
       effort ?? state.effort,
       permission ?? state.permissionMode,
+      terminal ?? state.terminalHeight,
     ));
   }
 
   void _rememberSettings() {
-    config.write(AppConfigSource.sessionModelKey, state.model);
-    config.write(AppConfigSource.sessionEffortKey, state.effort.name);
+    config.write(_key(AppConfigSource.sessionModelKey), state.model);
     config.write(
-        AppConfigSource.sessionPermissionKey, state.permissionMode.name);
+        _key(AppConfigSource.sessionModelsKey), state.models.join(','));
+    config.write(_key(AppConfigSource.sessionEffortKey), state.effort.name);
+    config.write(_key(AppConfigSource.sessionPermissionKey),
+        state.permissionMode.name);
+    config.write(_key(AppConfigSource.sessionTerminalKey),
+        state.terminalHeight.round().toString());
+  }
+
+  /// Спека или группа сменились. Команды и значения аргументов читаются
+  /// заново, а при смене спеки сбрасываются сессии: их `--resume` живёт
+  /// в прежнем репозитории и в новом ничего не продолжит.
+  void _onContextChanged(
+      SessionsContextChanged event, Emitter<SessionsState> emit) {
+    final values = repository.argumentValues();
+    final workingDirectory = repository.rootPath ?? '';
+    final projectChanged = workingDirectory != state.workingDirectory;
+    if (projectChanged) {
+      for (final source in _runningSources.values) {
+        source.stop();
+      }
+      _runningSources.clear();
+    }
+    emit(state.copyWith(
+      commands: repository.slashCommands(),
+      changeIds:
+          event.changeIds.isEmpty ? values.changeIds : event.changeIds,
+      groupIds: values.groupIds,
+      workingDirectory: workingDirectory,
+      sessions: projectChanged ? const [] : null,
+      selectedSessionId: projectChanged ? '' : null,
+      revision: state.revision + 1,
+    ));
+    // Модель, доступ, усилия и высота терминала — свои у каждой спеки.
+    if (projectChanged) _restoreSettings();
   }
 
   /// Передача спринта: команда платформы запускается в новой сессии
@@ -102,7 +166,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
       cliAvailable: AgentCliSource.locateBinary() != null,
       commands: repository.slashCommands(),
       changeIds: values.changeIds,
-      sprintIds: values.sprintIds,
+      groupIds: values.groupIds,
       workingDirectory: repository.rootPath ?? '',
     );
   }

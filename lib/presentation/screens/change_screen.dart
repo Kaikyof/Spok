@@ -12,8 +12,12 @@ import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
+import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/slash_command.dart';
+import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -23,8 +27,9 @@ import '../localization/text_formatters.dart';
 import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
-import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
+import '../widgets/env_editor_dialog.dart';
+import '../widgets/stack_filter_bar.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
 class ChangeScreen extends StatelessWidget {
@@ -43,18 +48,16 @@ class ChangeScreen extends StatelessWidget {
           if (state.selectedChange != null) {
             return _ChangeCard(
               change: state.selectedChange!,
-              allChanges: state.sprintChanges,
-              filter: state.stackFilter,
+              allChanges: state.groupChanges,
+              state: state,
               redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
-              sprintBranchIos: state.sprint?.branchIos,
-              sprintBranchAndroid: state.sprint?.branchAndroid,
               comments: state.comments,
               mergeRequests: state.mergeRequests,
             );
           }
           return _ChangeList(
-            changes: state.sprintChanges,
-            filter: state.stackFilter,
+            changes: state.groupChanges,
+            state: state,
             redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
           );
         },
@@ -63,65 +66,47 @@ class ChangeScreen extends StatelessWidget {
 
 class _ChangeList extends StatelessWidget {
   final List<ChangeUnit> changes;
-  final StackFilter filter;
+  final ConsoleState state;
   final String redmineBaseUrl;
 
   const _ChangeList(
       {required this.changes,
-      required this.filter,
+      required this.state,
       required this.redmineBaseUrl});
 
   @override
-  Widget build(BuildContext context) {
-    final texts = AppLocalizations.of(context);
-    return ListView(
-      padding: AppDimens.screenPadding,
-      children: [
-        Row(
-          children: [
-            const Spacer(),
-            StackFilterControl<StackFilter>(
-              options: [
-                (StackFilter.all, texts.stackFilterAll),
-                (StackFilter.ios, texts.stackIos),
-                (StackFilter.android, texts.stackAndroid),
-              ],
-              selected: filter,
-              onChanged: (newFilter) => context
-                  .read<ConsoleBloc>()
-                  .add(StackFilterChanged(newFilter)),
+  Widget build(BuildContext context) => ListView(
+        padding: AppDimens.screenPadding,
+        children: [
+          const Row(children: [Spacer(), StackFilterBar()]),
+          const SizedBox(height: AppDimens.gapM),
+          for (final change in changes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _ChangeListRow(
+                  change: change,
+                  state: state,
+                  redmineBaseUrl: redmineBaseUrl),
             ),
-          ],
-        ),
-        const SizedBox(height: AppDimens.gapM),
-        for (final change in changes)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _ChangeListRow(
-                change: change,
-                filter: filter,
-                redmineBaseUrl: redmineBaseUrl),
-          ),
-      ],
-    );
-  }
+        ],
+      );
 }
 
 class _ChangeListRow extends StatelessWidget {
   final ChangeUnit change;
-  final StackFilter filter;
+  final ConsoleState state;
   final String redmineBaseUrl;
 
   const _ChangeListRow(
       {required this.change,
-      required this.filter,
+      required this.state,
       required this.redmineBaseUrl});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final visibleStacks = change.stacks
-        .where((stack) => filter.allows(stack.stack))
+        .where((stack) => state.allowsStack(stack.stack))
         .toList();
     return InkWell(
       onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(change)),
@@ -184,44 +169,101 @@ class _ChangeListRow extends StatelessWidget {
 class _ChangeCard extends StatelessWidget {
   final ChangeUnit change;
   final List<ChangeUnit> allChanges;
-  final StackFilter filter;
+  final ConsoleState state;
   final String redmineBaseUrl;
-  final String? sprintBranchIos;
-  final String? sprintBranchAndroid;
   final List<IssueComment>? comments;
   final List<MergeRequestInfo>? mergeRequests;
 
   const _ChangeCard({
     required this.change,
     required this.allChanges,
-    required this.filter,
+    required this.state,
     required this.redmineBaseUrl,
-    required this.sprintBranchIos,
-    required this.sprintBranchAndroid,
     required this.comments,
     required this.mergeRequests,
   });
 
-  List<DocArtifact> _artifacts(AppLocalizations texts) {
-    final labelsToFiles = [
-      (texts.artifactSpec, 'proposal.md'),
-      (texts.artifactDesign, 'design.md'),
-      (texts.artifactTasksIos, 'tasks_ios.md'),
-      (texts.artifactTasksAndroid, 'tasks_android.md'),
+  /// Список артефактов объявлен схемой спеки: у каждой команды он свой
+  /// (у avelacom это ещё `test_case.md` и `specs/<capability>/spec.md`).
+  /// `requires` из схемы задаёт порядок и подсказку «чего не хватает»:
+  /// артефакт, у которого предшественники пусты, писать ещё рано.
+  List<_ArtifactState> _artifacts(AppLocalizations texts) {
+    final schema = state.profile.schema;
+    final declared = schema.isEmpty
+        ? const [
+            SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
+            SchemaArtifact(
+                id: 'design', generates: 'design.md', requires: ['proposal']),
+          ]
+        : schema.artifacts;
+    final single = [
+      for (final artifact in declared)
+        if (artifact.isSingleFile) artifact,
     ];
+    final exists = {
+      for (final artifact in single)
+        artifact.id:
+            File(p.join(change.dir, artifact.generates)).existsSync(),
+    };
+    final labels = {
+      for (final artifact in single)
+        artifact.id: _artifactLabel(texts, artifact),
+    };
     return [
-      for (final (label, fileName) in labelsToFiles)
-        DocArtifact(label, fileName, p.join(change.dir, fileName),
-            File(p.join(change.dir, fileName)).existsSync()),
+      for (final artifact in _inRequiredOrder(single))
+        _ArtifactState(
+          doc: DocArtifact(
+            labels[artifact.id]!,
+            artifact.generates,
+            p.join(change.dir, artifact.generates),
+            exists[artifact.id]!,
+          ),
+          // Ждём только тех предшественников, которых схема знает сама.
+          waitingFor: [
+            for (final required in artifact.requires)
+              if (exists[required] == false) labels[required] ?? required,
+          ],
+        ),
     ];
   }
+
+  /// Артефакты по порядку зависимостей: сначала те, от кого зависят.
+  /// Схема обычно уже перечисляет их верно — порядок объявления сохраняем.
+  List<SchemaArtifact> _inRequiredOrder(List<SchemaArtifact> artifacts) {
+    final placed = <String>{};
+    final ordered = <SchemaArtifact>[];
+    final pending = [...artifacts];
+    while (pending.isNotEmpty) {
+      final ready = pending.where((artifact) => artifact.requires.every(
+          (required) =>
+              placed.contains(required) ||
+              !artifacts.any((other) => other.id == required)));
+      // Цикл в схеме не должен ронять экран — выкладываем как объявлено.
+      final next = ready.firstOrNull ?? pending.first;
+      ordered.add(next);
+      placed.add(next.id);
+      pending.remove(next);
+    }
+    return ordered;
+  }
+
+  String _artifactLabel(AppLocalizations texts, SchemaArtifact artifact) =>
+      switch (artifact.id) {
+        'proposal' => texts.artifactSpec,
+        'design' => texts.artifactDesign,
+        _ when artifact.stack.isNotEmpty =>
+          texts.artifactTasksOfStack(texts.stackLabel(artifact.stack)),
+        _ => artifact.description.isEmpty ? artifact.id : artifact.description,
+      };
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final visibleStacks = change.stacks
-        .where((stack) => filter.allows(stack.stack))
+        .where((stack) => state.allowsStack(stack.stack))
         .toList();
+    final artifacts = _artifacts(texts);
+    final filledArtifacts = artifacts.where((a) => a.doc.exists).length;
     return ListView(
       padding: AppDimens.screenPadding,
       children: [
@@ -234,21 +276,16 @@ class _ChangeCard extends StatelessWidget {
                   Text(texts.backToChanges, style: AppTextStyles.captionMuted),
             ),
             const Spacer(),
-            StackFilterControl<StackFilter>(
-              options: [
-                (StackFilter.all, texts.stackFilterAll),
-                (StackFilter.ios, texts.stackIos),
-                (StackFilter.android, texts.stackAndroid),
-              ],
-              selected: filter,
-              onChanged: (newFilter) => context
-                  .read<ConsoleBloc>()
-                  .add(StackFilterChanged(newFilter)),
-            ),
+            const StackFilterBar(),
           ],
         ),
         const SizedBox(height: 10),
         SelectableText(change.title, style: AppTextStyles.screenTitle),
+        if (change.formatWarning.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(texts.changeFormatWarning(change.formatWarning),
+              style: AppTextStyles.caption.copyWith(color: AppColors.warning)),
+        ],
         const SizedBox(height: 6),
         Row(
           children: [
@@ -284,8 +321,21 @@ class _ChangeCard extends StatelessWidget {
               flex: 55,
               child: Column(
                 children: [
+                  // Спека изменения — главный текст карточки: сперва
+                  // «что меняем и зачем», потом «что осталось сделать».
+                  _SpecCard(
+                    artifact: artifacts
+                        .where((a) => a.doc.fileName.contains('proposal'))
+                        .map((a) => a.doc)
+                        .firstOrNull,
+                    content: state.changeSpec,
+                  ),
+                  const SizedBox(height: AppDimens.gapM),
                   for (final stackState in visibleStacks) ...[
-                    _TaskChecklist(stack: stackState, changeId: change.id),
+                    _TaskChecklist(
+                        stack: stackState,
+                        changeId: change.id,
+                        state: state),
                     const SizedBox(height: AppDimens.gapM),
                   ],
                 ],
@@ -300,11 +350,21 @@ class _ChangeCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(texts.artifactsTitle,
-                            style: AppTextStyles.sectionTitle),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(texts.artifactsTitle,
+                                  style: AppTextStyles.sectionTitle),
+                            ),
+                            Text(
+                                texts.artifactsProgress(
+                                    '$filledArtifacts', '${artifacts.length}'),
+                                style: AppTextStyles.captionMuted),
+                          ],
+                        ),
                         const SizedBox(height: AppDimens.gapS),
-                        for (final artifact in _artifacts(texts))
-                          _ArtifactRow(artifact: artifact),
+                        for (final artifact in artifacts)
+                          _ArtifactRow(state: artifact),
                       ],
                     ),
                   ),
@@ -313,8 +373,7 @@ class _ChangeCard extends StatelessWidget {
                   const SizedBox(height: AppDimens.gapM),
                   _CodeCard(
                     stacks: visibleStacks,
-                    branchIos: sprintBranchIos,
-                    branchAndroid: sprintBranchAndroid,
+                    state: state,
                     mergeRequests: mergeRequests,
                     changeId: change.id,
                   ),
@@ -330,25 +389,22 @@ class _ChangeCard extends StatelessWidget {
   }
 }
 
-/// Код: ветка спринта по стекам. Состояние MR подключится вместе
-/// с GitLab API — пока показываем только то, что знаем наверняка.
+/// Код: ветка change'а и цель MR. Блок выключается там, где спека не
+/// работает с MR, — но с объяснением причины, а не пустотой.
 class _CodeCard extends StatelessWidget {
   final List<StackState> stacks;
-  final String? branchIos;
-  final String? branchAndroid;
+  final ConsoleState state;
   final List<MergeRequestInfo>? mergeRequests;
   final String changeId;
 
   const _CodeCard({
     required this.stacks,
-    required this.branchIos,
-    required this.branchAndroid,
+    required this.state,
     required this.mergeRequests,
     required this.changeId,
   });
 
-  String? _branchFor(String stack) =>
-      stack == 'ios' ? branchIos : branchAndroid;
+  String? _branchFor(String stack) => state.group?.branchFor(stack);
 
   MergeRequestInfo? _mrFor(String stack) =>
       mergeRequests?.where((mr) => mr.stack == stack).firstOrNull;
@@ -356,6 +412,10 @@ class _CodeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    // Имя ветки объявлено схемой спеки (apply.instruction).
+    final sourceBranch = state.profile.schema.branchFor(changeId);
+    final mrEnabled = state.profile.enabled(SpecFeature.mergeRequests);
+
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,21 +429,30 @@ class _CodeCard extends StatelessWidget {
             Text(texts.codeSectionTitle(texts.stackLabel(stackState.stack)),
                 style: AppTextStyles.sectionTitle),
             const SizedBox(height: 8),
-            _CodeRow(
-              label: texts.codeChangeBranch,
-              value: 'features/$changeId',
-            ),
-            _CodeRow(
-              label: texts.codeSprintBranch,
-              value: _branchFor(stackState.stack) ?? texts.codeNoBranch,
-              muted: _branchFor(stackState.stack) == null,
-            ),
+            _CodeRow(label: texts.codeChangeBranch, value: sourceBranch),
+            if (_branchFor(stackState.stack) case final branch?)
+              _CodeRow(label: texts.codeSprintBranch, value: branch),
             const SizedBox(height: 8),
-            _MergeRequestRow(
-              mergeRequest: _mrFor(stackState.stack),
-              loading: mergeRequests == null,
-              targetBranch: _branchFor(stackState.stack) ?? '',
-            ),
+            if (mrEnabled)
+              _MergeRequestRow(
+                mergeRequest: _mrFor(stackState.stack),
+                loading: mergeRequests == null,
+                targetBranch: _branchFor(stackState.stack) ?? '',
+              )
+            else
+              _CodeDisabledRow(
+                  gate: state.profile.gate(SpecFeature.mergeRequests)),
+            // Даже без токена человек может сходить в GitLab руками.
+            if (state.profile.branchUrl(stackState.stack, sourceBranch)
+                case final gitlabUrl?) ...[
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: () => launchUrl(Uri.parse(gitlabUrl)),
+                child: Text(texts.codeOpenInGitlab,
+                    style: const TextStyle(
+                        fontSize: 11.5, color: AppColors.accent)),
+              ),
+            ],
           ],
         ],
       ),
@@ -391,14 +460,87 @@ class _CodeCard extends StatelessWidget {
   }
 }
 
+/// Блок «Код» выключен — объясняем природу нехватки, а не молчим.
+/// Своими руками правится только личный ключ, поэтому кнопка — там.
+class _CodeDisabledRow extends StatelessWidget {
+  final FeatureGate gate;
+
+  const _CodeDisabledRow({required this.gate});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final blocker = gate.blocker;
+    if (blocker == null) return const SizedBox.shrink();
+    // Одна и та же выключённая фича означает три разные вещи, и путать их
+    // нельзя: иначе человек пойдёт править общий файл спеки там, где ему
+    // надо ввести свой ключ (сводный документ, 4.8).
+    final reason = switch (blocker.scope) {
+      RequirementScope.spec => texts.codeOffSpec,
+      RequirementScope.personal => texts.codeOffPersonal,
+      RequirementScope.runtime => texts.codeOffRuntime,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(reason, style: AppTextStyles.body),
+        const SizedBox(height: 2),
+        Text(
+            blocker.detail.isEmpty
+                ? blocker.lookedIn
+                : '${blocker.lookedIn} · ${blocker.detail}',
+            style: AppTextStyles.monospace(10.5, color: AppColors.textMuted)),
+        if (blocker.scope == RequirementScope.personal) ...[
+          const SizedBox(height: 6),
+          _CodeGateButton(
+              label: texts.gatePersonalFill,
+              onTap: () => EnvEditorDialog.show(context)),
+        ],
+        if (blocker.scope == RequirementScope.runtime) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _CodeGateButton(
+                  label: texts.gateRuntimeRetry,
+                  onTap: () =>
+                      context.read<ConsoleBloc>().add(ConsoleRefreshed())),
+              const SizedBox(width: AppDimens.gapS),
+              _CodeGateButton(
+                  label: texts.gateRuntimeChangeKey,
+                  onTap: () => EnvEditorDialog.show(context)),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _CodeGateButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _CodeGateButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.border),
+          backgroundColor: AppColors.cardHighlight,
+          foregroundColor: AppColors.textPrimary,
+          minimumSize: const Size(0, 32),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 12)),
+      );
+}
+
 /// Строка «подпись — значение» с копируемым моноширинным значением.
 class _CodeRow extends StatelessWidget {
   final String label;
   final String value;
-  final bool muted;
 
-  const _CodeRow(
-      {required this.label, required this.value, this.muted = false});
+  const _CodeRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -410,7 +552,7 @@ class _CodeRow extends StatelessWidget {
             SelectableText(
               value,
               style: AppTextStyles.monospace(12,
-                  color: muted ? AppColors.textMuted : AppColors.monospaceText),
+                  color: AppColors.monospaceText),
             ),
           ],
         ),
@@ -673,10 +815,103 @@ class _DependencyRow extends StatelessWidget {
       );
 }
 
-class _ArtifactRow extends StatelessWidget {
-  final DocArtifact artifact;
+/// Артефакт и чего ему не хватает: пустой список — писать можно хоть сейчас.
+class _ArtifactState {
+  final DocArtifact doc;
+  final List<String> waitingFor;
 
-  const _ArtifactRow({required this.artifact});
+  const _ArtifactState({required this.doc, required this.waitingFor});
+}
+
+/// Спека изменения — главный текст карточки. Не написана — говорим об этом
+/// прямо и показываем, какой файл ждёт схема.
+class _SpecCard extends StatelessWidget {
+  final DocArtifact? artifact;
+  final String? content;
+
+  const _SpecCard({required this.artifact, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final doc = artifact;
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(texts.changeSpecTitle,
+                    style: AppTextStyles.sectionTitle),
+              ),
+              if (doc != null && doc.exists)
+                InkWell(
+                  onTap: () =>
+                      context.read<ConsoleBloc>().add(DocOpened(doc)),
+                  child: Text(texts.changeSpecOpen,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.accent)),
+                ),
+            ],
+          ),
+          if (doc != null) ...[
+            const SizedBox(height: 2),
+            Text(doc.fileName,
+                style: AppTextStyles.monospace(10.5,
+                    color: AppColors.textMuted)),
+          ],
+          const SizedBox(height: AppDimens.gapS),
+          if (doc == null || !doc.exists)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(texts.changeSpecMissing, style: AppTextStyles.body),
+                const SizedBox(height: 4),
+                Text(
+                    texts.changeSpecMissingHint(
+                        doc?.fileName ?? 'proposal.md'),
+                    style: AppTextStyles.captionMuted),
+              ],
+            )
+          else if (content == null)
+            Text(texts.changeSpecLoading, style: AppTextStyles.captionMuted)
+          else
+            ConstrainedBox(
+              // Спека бывает длинной: карточка не должна выталкивать
+              // задачи и код за пределы экрана.
+              constraints: const BoxConstraints(maxHeight: 420),
+              child: Markdown(
+                data: content!,
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(
+                      fontSize: 12.5, height: 1.5,
+                      color: AppColors.textSecondary),
+                  h1: AppTextStyles.sectionTitle,
+                  h2: AppTextStyles.sectionTitle,
+                  h3: AppTextStyles.rowTitle,
+                  code: AppTextStyles.monospace(11.5,
+                      color: AppColors.monospaceText),
+                  listBullet: const TextStyle(
+                      fontSize: 12.5, color: AppColors.textSecondary),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArtifactRow extends StatelessWidget {
+  final _ArtifactState state;
+
+  const _ArtifactRow({required this.state});
+
+  DocArtifact get artifact => state.doc;
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -714,18 +949,41 @@ class _ArtifactRow extends StatelessWidget {
               ),
               if (artifact.exists)
                 const Icon(Icons.chevron_right,
-                    size: 16, color: AppColors.textMuted),
+                    size: 16, color: AppColors.textMuted)
+              else
+                _ArtifactHint(state: state),
             ],
           ),
         ),
       );
 }
 
+/// Почему артефакта нет: ждёт предшественника или его просто не написали.
+class _ArtifactHint extends StatelessWidget {
+  final _ArtifactState state;
+
+  const _ArtifactHint({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final waiting = state.waitingFor;
+    return Text(
+      waiting.isEmpty
+          ? texts.artifactMissing
+          : texts.artifactWaits(waiting.join(', ')),
+      style: AppTextStyles.hint,
+    );
+  }
+}
+
 class _TaskChecklist extends StatelessWidget {
   final StackState stack;
   final String changeId;
+  final ConsoleState state;
 
-  const _TaskChecklist({required this.stack, required this.changeId});
+  const _TaskChecklist(
+      {required this.stack, required this.changeId, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -752,7 +1010,16 @@ class _TaskChecklist extends StatelessWidget {
           const SizedBox(height: 10),
           for (final task in stack.tasks) _TaskRow(task: task),
           const SizedBox(height: AppDimens.gapS),
-          _ApplyButton(stack: stack, changeId: changeId, allDone: allDone),
+          Row(
+            children: [
+              Flexible(
+                child: _ApplyButton(
+                    stack: stack, changeId: changeId, allDone: allDone),
+              ),
+              const SizedBox(width: AppDimens.gapS),
+              _MoreActionsMenu(changeId: changeId, stack: stack.stack),
+            ],
+          ),
         ],
       ),
     );
@@ -789,8 +1056,13 @@ class _ApplyButton extends StatelessWidget {
       children: [
         OutlinedButton.icon(
           onPressed: () {
-            context.read<SessionsBloc>().add(HandoffRunRequested(
-                '/opsx-apply $changeId --stack ${stack.stack}'));
+            // Стека может не быть вовсе — тогда и флага не нужно.
+            final stackFlag = stack.stack == StackState.singleWorkStack
+                ? ''
+                : ' --stack ${stack.stack}';
+            context
+                .read<SessionsBloc>()
+                .add(HandoffRunRequested('/opsx-apply $changeId$stackFlag'));
             context
                 .read<ConsoleBloc>()
                 .add(ScreenSelected(ConsoleScreen.sessions));
@@ -807,6 +1079,83 @@ class _ApplyButton extends StatelessWidget {
         const SizedBox(width: 12),
         Flexible(child: Text(texts.applyHint, style: AppTextStyles.hint)),
       ],
+    );
+  }
+}
+
+/// Меню действий карточки. Состав выводится из сигнатур команд спеки:
+/// принимает `[change]` — попадает сюда. Роль «реализовать» уже вынесена
+/// отдельной кнопкой, а применимых команд нет вовсе — нет и меню.
+class _MoreActionsMenu extends StatelessWidget {
+  final String changeId;
+  final String stack;
+
+  const _MoreActionsMenu({required this.changeId, required this.stack});
+
+  /// Известное подставляем из контекста, остальное человек допишет словами.
+  String _promptFor(SlashCommand command) {
+    final wantsStack = command.slots.any((slot) => slot.contains('stack'));
+    final stackFlag = wantsStack && stack != StackState.singleWorkStack
+        ? ' --stack $stack'
+        : '';
+    return '${command.invocation} $changeId$stackFlag ';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final sessions = context.watch<SessionsBloc>().state;
+    final applyId = sessions.roles[CommandRole.apply]?.id;
+    final actions = [
+      for (final command in sessions.commands)
+        if (command.scope == CommandScope.change && command.id != applyId)
+          command,
+    ];
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return PopupMenuButton<SlashCommand>(
+      tooltip: texts.changeActionsHint,
+      color: AppColors.cardHighlight,
+      onSelected: (command) {
+        context.read<SessionsBloc>().add(SessionDraftSet(_promptFor(command)));
+        context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));
+      },
+      itemBuilder: (_) => [
+        for (final command in actions)
+          PopupMenuItem(
+            value: command,
+            child: Row(
+              children: [
+                Text(command.invocation,
+                    style: AppTextStyles.monospace(11.5,
+                        color: AppColors.monospaceText)),
+                const SizedBox(width: AppDimens.gapM),
+                Flexible(
+                  child: Text(command.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption),
+                ),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.cardHighlight,
+          borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(texts.changeMoreActions,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textPrimary)),
+            const Icon(Icons.expand_more, size: 15, color: AppColors.textMuted),
+          ],
+        ),
+      ),
     );
   }
 }

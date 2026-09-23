@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,8 +9,8 @@ import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../ui_kit/section_card.dart';
 
-/// Первичная настройка: путь к репозиторию платформы.
-/// Показывается, когда платформа не найдена ни по одному из путей.
+/// Настройка спеки: путь к её репозиторию. Показывается, когда спека не
+/// найдена, и когда человек меняет её сам из шапки.
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
 
@@ -35,6 +36,14 @@ class _SetupScreenState extends State<SetupScreen> {
   void dispose() {
     _pathController.dispose();
     super.dispose();
+  }
+
+  /// Путь проще выбрать, чем набрать: каталог спеки лежит глубоко.
+  Future<void> _pickDirectory() async {
+    final directory = await getDirectoryPath();
+    if (directory == null || !mounted) return;
+    _pathController.text = directory;
+    _submit();
   }
 
   void _submit() {
@@ -70,7 +79,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   decoration: InputDecoration(
                     labelText: texts.setupFieldLabel,
                     labelStyle: AppTextStyles.caption,
-                    hintText: '/Users/…/avtoto-platform',
+                    hintText: texts.setupHintPath,
                     hintStyle: AppTextStyles.monospace(13,
                         color: AppColors.textMuted),
                     filled: true,
@@ -100,15 +109,48 @@ class _SetupScreenState extends State<SetupScreen> {
                       : const SizedBox.shrink(),
                 ),
                 const SizedBox(height: AppDimens.gapL),
-                FilledButton(
-                  onPressed: _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.background,
-                  ),
-                  child: Text(texts.setupSave),
+                // Кнопки переносятся: в узком окне строка не влезала.
+                Wrap(
+                  spacing: AppDimens.gapM,
+                  runSpacing: AppDimens.gapS,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    FilledButton(
+                      onPressed: _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.background,
+                      ),
+                      child: Text(texts.setupSave),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _pickDirectory,
+                      icon: const Icon(Icons.folder_open,
+                          size: 15, color: AppColors.accent),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.border),
+                        backgroundColor: AppColors.card,
+                        foregroundColor: AppColors.textPrimary,
+                      ),
+                      label: Text(texts.setupBrowse,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+                    // Отменить можно только когда есть куда вернуться.
+                    if (!context.read<ConsoleBloc>().state.specMissing)
+                      TextButton(
+                        onPressed: () => context
+                            .read<ConsoleBloc>()
+                            .add(SpecSwitchRequested(false)),
+                        child: Text(texts.setupCancel,
+                            style: const TextStyle(
+                                color: AppColors.textSecondary)),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: AppDimens.gapM),
+                Text(texts.setupCloneHint,
+                    style: AppTextStyles.hint.copyWith(height: 1.4)),
+                const SizedBox(height: AppDimens.gapXs),
                 if (_configPath.isNotEmpty)
                   Text(texts.setupConfigHint(_configPath),
                       style: AppTextStyles.hint.copyWith(height: 1.4)),

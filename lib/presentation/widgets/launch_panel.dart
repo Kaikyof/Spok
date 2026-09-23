@@ -14,7 +14,12 @@ import '../../l10n/gen/app_localizations.dart';
 class LaunchPanel extends StatefulWidget {
   final CommandLog commandLog;
 
-  const LaunchPanel({super.key, required this.commandLog});
+  /// Проект, в котором выполняется команда: спек у человека несколько,
+  /// и по строке запуска должно быть видно, куда она ушла.
+  final String project;
+
+  const LaunchPanel(
+      {super.key, required this.commandLog, this.project = ''});
 
   @override
   State<LaunchPanel> createState() => _LaunchPanelState();
@@ -29,6 +34,7 @@ class _LaunchPanelState extends State<LaunchPanel> {
         initialData: widget.commandLog.last,
         builder: (context, snapshot) => _PanelBody(
           run: snapshot.data,
+          project: widget.project,
           expanded: _expanded,
           onToggle: () => setState(() => _expanded = !_expanded),
         ),
@@ -37,11 +43,15 @@ class _LaunchPanelState extends State<LaunchPanel> {
 
 class _PanelBody extends StatelessWidget {
   final CommandRun? run;
+  final String project;
   final bool expanded;
   final VoidCallback onToggle;
 
   const _PanelBody(
-      {required this.run, required this.expanded, required this.onToggle});
+      {required this.run,
+      required this.project,
+      required this.expanded,
+      required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +64,11 @@ class _PanelBody extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Header(run: currentRun, expanded: expanded, onToggle: onToggle),
+          _Header(
+              run: currentRun,
+              project: project,
+              expanded: expanded,
+              onToggle: onToggle),
           if (expanded && currentRun != null) _Output(run: currentRun),
         ],
       ),
@@ -64,11 +78,15 @@ class _PanelBody extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   final CommandRun? run;
+  final String project;
   final bool expanded;
   final VoidCallback onToggle;
 
   const _Header(
-      {required this.run, required this.expanded, required this.onToggle});
+      {required this.run,
+      required this.project,
+      required this.expanded,
+      required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +113,12 @@ class _Header extends StatelessWidget {
                         : AppColors.monospaceText),
               ),
             ),
+            if (project.isNotEmpty) ...[
+              const SizedBox(width: AppDimens.gapM),
+              Text(project,
+                  style: AppTextStyles.monospace(11,
+                      color: AppColors.textMuted)),
+            ],
             if (currentRun != null) ...[
               const SizedBox(width: AppDimens.gapM),
               _StatusLabel(run: currentRun),

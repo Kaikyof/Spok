@@ -7,9 +7,28 @@ import 'package:path/path.dart' as p;
 /// CLI-инструментов (tool/smoke.dart), а не только из Flutter-рантайма.
 class AppConfigSource {
   static const platformDirKey = 'AVTOTO_PLATFORM_DIR';
+
+  /// Подключённые спеки — пути через «:», как в PATH.
+  static const knownSpecsKey = 'SPEC_DIRS';
   static const sessionModelKey = 'SESSION_MODEL';
   static const sessionEffortKey = 'SESSION_EFFORT';
   static const sessionPermissionKey = 'SESSION_PERMISSION_MODE';
+  static const sessionTerminalKey = 'SESSION_TERMINAL';
+
+  /// Список моделей для селектора — через запятую. Ключ правится руками:
+  /// новая модель не должна ждать релиза приложения.
+  static const sessionModelsKey = 'SESSION_MODELS';
+
+  /// Настройка, привязанная к проекту: модель, доступ, усилия и высота
+  /// терминала у каждой спеки свои — иначе резюме и режим уходят в чужой
+  /// репозиторий (сводный документ, 4.6).
+  static String scoped(String key, String? projectPath) {
+    final slug = p
+        .basename(projectPath ?? '')
+        .toUpperCase()
+        .replaceAll(RegExp('[^A-Z0-9]'), '_');
+    return slug.isEmpty ? key : '${key}__$slug';
+  }
 
   File _configFile() {
     final home = Platform.environment['HOME'] ?? '';
@@ -22,6 +41,22 @@ class AppConfigSource {
   Future<String?> readPlatformDir() => read(platformDirKey);
 
   Future<void> writePlatformDir(String dir) => write(platformDirKey, dir);
+
+  /// Пути подключённых спек: между ними переключаются из шапки.
+  Future<List<String>> readKnownSpecs() async {
+    final value = await read(knownSpecsKey) ?? '';
+    return [
+      for (final path in value.split(':'))
+        if (path.trim().isNotEmpty) path.trim(),
+    ];
+  }
+
+  /// Добавляет спеку в реестр, сохраняя порядок подключения.
+  Future<void> rememberSpec(String dir) async {
+    final known = await readKnownSpecs();
+    if (known.contains(dir)) return;
+    await write(knownSpecsKey, [...known, dir].join(':'));
+  }
 
   /// Значение ключа конфига; null — ключа нет.
   Future<String?> read(String key) async {
@@ -47,13 +82,29 @@ class AppConfigSource {
     };
   }
 
+  /// Записи идут по очереди: настройки сессии сохраняются одновременно,
+  /// и параллельная перезапись оставляла в конфиге обрывки чужих строк.
+  static Future<void> _queue = Future.value();
+
   /// Перезаписывает ключ, сохраняя остальные строки файла.
-  Future<void> write(String key, String value) async {
+  Future<void> write(String key, String value) {
+    final result = _queue.then((_) => _writeNow(key, value));
+    _queue = result.catchError((_) {});
+    return result;
+  }
+
+  Future<void> _writeNow(String key, String value) async {
     final file = _configFile();
     final lines = file.existsSync() ? await file.readAsLines() : <String>[];
-    lines.removeWhere((line) => line.startsWith('$key='));
+    // Заодно выметаем обрывки строк от прежних параллельных записей.
+    lines.removeWhere((line) =>
+        line.startsWith('$key=') ||
+        !RegExp(r'^[A-Z0-9_]+=').hasMatch(line.trim()));
     lines.add('$key=$value');
-    await file.create(recursive: true);
-    await file.writeAsString('${lines.join('\n')}\n');
+    await file.parent.create(recursive: true);
+    // Пишем во временный файл и подменяем: оборванная запись не портит конфиг.
+    final temporary = File('${file.path}.tmp');
+    await temporary.writeAsString('${lines.join('\n')}\n', flush: true);
+    await temporary.rename(file.path);
   }
 }

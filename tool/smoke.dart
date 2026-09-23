@@ -1,25 +1,56 @@
 // ignore_for_file: avoid_print
-// Смоук: читает реальные файлы платформы и печатает слепок без UI.
+// Смоук: читает реальные файлы спеки и печатает слепок без UI.
+// Путь к спеке — SPEC_PLATFORM_DIR, конфиг приложения или типовые пути.
 import 'package:platform_console/data/repositories/platform_repository_impl.dart';
 import 'package:platform_console/data/sources/platform_files_source.dart';
+import 'package:platform_console/domain/entities/project_profile.dart';
 
 Future<void> main() async {
   final source = PlatformFilesSource.locate();
   print('repo: ${source?.path}');
   final repository = PlatformRepositoryImpl(source);
   final snapshot = await repository.load();
-  print('sprints: ${snapshot.sprints.map((s) => '${s.id} · ${s.title} · ios=${s.buildIos?.versionName} android=${s.buildAndroid?.versionName}').join('; ')}');
-  print('role: ${repository.role}');
-  print('redmineProblem: ${snapshot.redmineProblem.name} ${snapshot.redmineProblemDetail}');
+  final profile = snapshot.profile;
+
+  print('schema: ${profile.schema.name} · стеки: ${profile.stacks} · '
+      'ветка change: ${profile.schema.branchFor('<change>')}');
+  print('группировка: ${profile.grouping.name}');
+  for (final feature in SpecFeature.values) {
+    final gate = profile.gate(feature);
+    print('фича ${feature.name}: '
+        '${gate.available ? 'доступна' : 'недоступна'} '
+        '(${gate.satisfiedCount}/${gate.requirements.length})');
+    for (final requirement in gate.requirements) {
+      print('    ${requirement.satisfied ? '✓' : '○'} '
+          '${requirement.id.name} [${requirement.scope.name}'
+          '${requirement.optional ? ', необязательное' : ''}] '
+          '${requirement.lookedIn}');
+    }
+  }
+  print('статусы: работа=${profile.statuses.workingStatuses} · '
+      'передача=${profile.statuses.handoffStatus}');
+  for (final group in snapshot.groups) {
+    print('группа ${group.id.isEmpty ? '(вне групп)' : group.id} '
+        '[${group.kind.name}] «${group.title}» '
+        'changes=${group.changeIds.length} ветки=${group.branches} '
+        'сборки=${group.builds.keys.toList()}');
+  }
+  print('role: ${repository.role} (${repository.roleKey})');
+  print('redmineProblem: ${snapshot.redmineProblem.name} '
+      '${snapshot.redmineProblemDetail}');
   for (final change in snapshot.changes) {
-    print('  ${change.id}: «${change.title}» '
-        'ios=${change.ios?.doneCount}/${change.ios?.tasks.length}(#${change.ios?.issueId},${change.ios?.redmineStatus}) '
-        'android=${change.android?.doneCount}/${change.android?.tasks.length}(#${change.android?.issueId},${change.android?.redmineStatus}) '
-        'deps=${change.dependsOn}');
+    final stacks = change.stacks
+        .map((stack) => '${stack.stack}=${stack.doneCount}/${stack.tasks.length}'
+            '(#${stack.issueId},${stack.redmineStatus}'
+            '${stack.statusFromCache ? ',из файла' : ''})')
+        .join(' ');
+    print('  ${change.id}: «${change.title}» $stacks deps=${change.dependsOn}');
   }
   print('divergences: ${snapshot.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.kind.name} open=${d.openTaskNumbers}').join(' | ')}');
+  print('commands: ${repository.slashCommands().length}');
   print('env problems: ${snapshot.env.problemCount}');
   for (final check in snapshot.env.all) {
-    print('  [${check.level.name}] ${check.name} · ${check.subtitle} · ${check.outcome.name}(${check.count}${check.param})');
+    print('  [${check.level.name}] ${check.name} · ${check.subtitle} · '
+        '${check.outcome.name}(${check.count}${check.param})');
   }
 }

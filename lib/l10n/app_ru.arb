@@ -162,6 +162,27 @@
   "blocksHandover": "блокирует передачу",
   "artifactsTitle": "Артефакты",
   "artifactSpec": "Спека",
+  "changeSpecTitle": "Спека изменения",
+  "changeSpecLoading": "читаем спеку…",
+  "changeSpecMissing": "Спека ещё не написана",
+  "changeSpecMissingHint": "схема ждёт файл {file} в каталоге change'а",
+  "@changeSpecMissingHint": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "changeSpecOpen": "Открыть целиком",
+  "changeMoreActions": "Ещё действия",
+  "changeActionsHint": "команда подставится в строку ввода сессии",
+  "artifactWaits": "ждёт: {what}",
+  "@artifactWaits": {
+    "placeholders": { "what": { "type": "String" } }
+  },
+  "artifactReady": "можно писать",
+  "artifactMissing": "объявлен схемой, файла нет",
+  "codeOffSpec": "Эта спека не настроена на работу с MR",
+  "codeOffPersonal": "Чтобы видеть MR, введите свой токен GitLab",
+  "codeOffRuntime": "Хостинг кода не ответил или отклонил ключ",
+  "gateRuntimeRetry": "Проверить снова",
+  "gateRuntimeChangeKey": "Изменить ключ",
   "artifactDesign": "Дизайн-решения",
   "artifactTasksIos": "Задачи iOS",
   "artifactTasksAndroid": "Задачи Android",
@@ -241,12 +262,12 @@
   "sessionsTitle": "Агентные сессии",
   "sessionsNote": "Диалоги Claude Code в headless-режиме появятся после экранов состояния.",
   "loaderMessage": "Читаю состояние платформы…",
-  "setupTitle": "Где репозиторий платформы?",
-  "setupNote": "Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.",
-  "setupFieldLabel": "Путь к avtoto-platform",
+  "setupTitle": "Какая спека?",
+  "setupNote": "Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.",
+  "setupFieldLabel": "Путь к репозиторию спеки",
   "setupSave": "Сохранить и продолжить",
-  "setupError": "По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform",
-  "setupConfigHint": "Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.",
+  "setupError": "По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки",
+  "setupConfigHint": "Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменные окружения SPEC_PLATFORM_DIR и AVTOTO_PLATFORM_DIR имеют приоритет.",
   "@setupConfigHint": {
     "placeholders": {
       "path": {
@@ -658,5 +679,193 @@
     }
   },
   "applyHint": "запустит /opsx-apply в агентной сессии",
-  "applyDone": "все задачи закрыты"
+  "applyDone": "все задачи закрыты",
+  "appBadgeGeneric": "КОНСОЛЬ СПЕК",
+  "navGroup": "Группа",
+  "groupTitleSprint": "Спринт: {title}",
+  "@groupTitleSprint": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "groupTitleMasterDoc": "Мастер-спека: {title}",
+  "@groupTitleMasterDoc": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "groupTitleFlat": "Change'и",
+  "groupSwitcherTooltip": "Переключить группу · openspec/doc",
+  "groupNone": "Группировки нет — показаны все change’и",
+  "groupEmptyAll": "В спеке нет change'ей.\nСоздайте первый командой /opsx:propose.",
+  "stackWork": "Работа",
+  "stackBackend": "Backend",
+  "stackMobile": "Mobile",
+  "stackDesign": "Дизайн",
+  "stackFilterAllShort": "Все",
+  "statusFromCache": "из файла",
+  "statusFromCacheHint": "Статус взят из redmine.yaml change’а — трекер не опрошен",
+  "changeFormatWarning": "Формат файла не распознан: {detail}",
+  "@changeFormatWarning": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactMissing": "файла нет",
+  "artifactsProgress": "{done} из {total} артефактов заполнены",
+  "@artifactsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "artifactTasksOfStack": "Задачи {stack}",
+  "@artifactTasksOfStack": {
+    "placeholders": {
+      "stack": {
+        "type": "String"
+      }
+    }
+  },
+  "handoffUnavailableTitle": "Передача недоступна для этой спеки",
+  "handoffRequirementsTitle": "Чего не хватает",
+  "featureReasonNoGrouping": "спека не группирует change’и: нет спринтов (openspec/doc/<id>/sprint.yaml) и мастер-спек",
+  "featureReasonNoBuildsFile": "спека не ведёт сборки — нет builds.yaml у группы",
+  "featureReasonNoStatusSemantics": "нет openspec/redmine.yaml — неизвестно, какой статус означает готовность",
+  "featureReasonNoHandoverCommand": "нет команды с ролью handover",
+  "featureReasonNoRecipientsScript": "нет скрипта подбора получателей",
+  "featureReasonKeyNotInExample": "эта спека не настроена на работу с MR — GITLAB_TOKEN нет в .env.example",
+  "featureReasonKeyEmpty": "токен GitLab не заполнен на этой машине",
+  "featureReasonNoServices": "в workspace.yaml нет сервисов",
+  "featureReasonSingleStack": "у спеки один стек",
+  "codeOpenInGitlab": "Открыть ветку в GitLab",
+  "codeTargetBranch": "Целевая ветка",
+  "buildsNotTracked": "Спека не ведёт сборки — шаг недоступен",
+  "specSwitchTooltip": "Сменить спеку — указать другой репозиторий",
+  "setupCancel": "Отмена",
+  "setupHintPath": "/Users/…/avelacom-platform",
+  "setupBrowse": "Выбрать каталог…",
+  "setupCloneHint": "Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>",
+  "groupTitleUngrouped": "Вне мастер-спек",
+  "specSwitcherTooltip": "Сменить спеку",
+  "specAdd": "Подключить другую спеку…",
+  "envEditOpen": "Заполнить ключи",
+  "envEditTitle": "Ключи спеки",
+  "envEditSave": "Сохранить в .env",
+  "envEditOptional": "необязательный",
+  "envEditSecretNote": "Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.",
+  "envEditGitWarning": ".env не закрыт .gitignore — секреты могут уехать в репозиторий",
+  "envEditPath": "Файл: {path}",
+  "@envEditPath": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "envEditShow": "Показать значение",
+  "envEditHide": "Скрыть значение",
+  "envEditEmptyHint": "Пустое поле убирает ключ из файла",
+  "featureHandoffTitle": "Передача тестировщику",
+  "featureHandoffWhy": "Собирает сборку, получателей и текст сообщения, показывает предпросмотр и запускает команду сдачи спеки.",
+  "featureBuildsTitle": "Сборки",
+  "featureBuildsWhy": "Показывает последнюю сборку каждого стека и предупреждает, когда её забыли записать.",
+  "featureMergeRequestsTitle": "Код и merge request’ы",
+  "featureMergeRequestsWhy": "Показывает MR change’а рядом с фактом влития коммита в целевую ветку.",
+  "featureChatTitle": "Сообщения команде",
+  "featureChatWhy": "Отправляет уведомление о передаче в канал команды после предпросмотра.",
+  "featureMultiStackTitle": "Несколько стеков",
+  "featureMultiStackWhy": "Разделяет задачи change’а по стекам и даёт переключатель стеков.",
+  "gateProgress": "выполнено {done} из {total}",
+  "@gateProgress": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "gateMandatory": "ОБЯЗАТЕЛЬНОЕ",
+  "gateOptional": "НЕОБЯЗАТЕЛЬНОЕ · БЕЗ НЕГО ШАГ ГАСНЕТ",
+  "gateFound": "найдено",
+  "gateMissing": "не найдено",
+  "reqGrouping": "Группировка работы",
+  "reqStatusSemantics": "Семантика статусов трекера",
+  "reqBuildsFile": "Сборки",
+  "reqHandoverCommand": "Команда передачи",
+  "reqRecipientsScript": "Скрипт получателей",
+  "reqGitlabTokenDeclared": "Спека работает с MR",
+  "reqGitlabTokenFilled": "Токен GitLab на этой машине",
+  "reqGitlabReachable": "GitLab отвечает",
+  "reqServices": "Сервисы workspace",
+  "reqChatKeysDeclared": "Спека работает с мессенджером",
+  "reqChatKeysFilled": "Ключи мессенджера на этой машине",
+  "gatePersonalTitle": "Не настроено на этой машине",
+  "gatePersonalNote": "Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.",
+  "gatePersonalFill": "Заполнить",
+  "gateRuntimeTitle": "Настроено, но система не отвечает",
+  "gateRuntimeRetry": "Проверить снова",
+  "gateRuntimeEditKey": "Изменить ключ",
+  "gateCopyTemplate": "Скопировать шаблон",
+  "gateAskAgent": "Создать через агента",
+  "gateTemplateCopied": "Шаблон скопирован в буфер",
+  "reqStacks": "Два стека и больше",
+  "sessionQuickLaunch": "БЫСТРЫЙ ЗАПУСК",
+  "sessionMoreActions": "Ещё",
+  "sessionAllCommands": "Все команды спеки",
+  "sessionModelLabel": "модель",
+  "sessionRunHint": "⏎ запустить",
+  "sessionParamsShort": "⋯ параметры",
+  "sessionInputEmptyHint": "выберите команду или опишите задачу",
+  "sessionInputCommandHint": "добавьте словами, что сделать",
+  "sessionPaletteTitle": "КОМАНДЫ СПЕКИ",
+  "sessionPaletteFooter": "↑↓ выбрать · Tab вставить в строку · Esc закрыть",
+  "sessionPaletteFilter": "фильтр {filter} · {shown} из {total}",
+  "@sessionPaletteFilter": {
+    "placeholders": {
+      "filter": { "type": "String" },
+      "shown": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "sessionPaletteAll": "{total} команд · зеркала скрыты",
+  "@sessionPaletteAll": {
+    "placeholders": { "total": { "type": "int" } }
+  },
+  "sessionNoArguments": "аргументы не описаны",
+  "sessionNextSteps": "СЛЕДУЮЩИЕ ШАГИ",
+  "sessionNextStepCommand": "команда {command} спеки",
+  "@sessionNextStepCommand": {
+    "placeholders": { "command": { "type": "String" } }
+  },
+  "sessionNextStepOpenChange": "Открыть change",
+  "sessionNextStepOpenChangeHint": "посмотреть, что осталось",
+  "sessionTerminalHeightTooltip": "высота терминала — тяните границу",
+  "sessionCustomModel": "Указать модель…",
+  "sessionCustomModelTitle": "Модель для сессии",
+  "sessionCustomModelHint": "имя модели или псевдоним — уйдёт в --model как есть",
+  "sessionDoneChecklist": "ВЫПОЛНЕНО ПО ХОДУ",
+  "commandSourceSchema": "канон схемы",
+  "commandSourceClaude": ".claude",
+  "commandSourceMirror": "зеркало",
+  "commandSourcePackage": "package.json",
+  "commandSourceMake": "Makefile",
+  "roleApply": "Реализовать",
+  "roleNewChange": "Новый change",
+  "roleNewGroup": "Новая группа",
+  "roleHandover": "Передача",
+  "cancel": "Отмена",
+  "confirm": "Готово"
 }

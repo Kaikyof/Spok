@@ -9,7 +9,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 
-/// Новый change в спринте: описание уходит в /opsx-propose вместе
+/// Новый change в группе: описание уходит в /opsx-propose вместе
 /// с мастер-спекой спринта — агент создаёт спеку, задачи и тест-кейсы.
 class CreateChangeDialog extends StatefulWidget {
   const CreateChangeDialog({super.key, required this.sprintId});
@@ -70,8 +70,11 @@ class _CreateChangeDialogState extends State<CreateChangeDialog> {
       return;
     }
     final source = _attachedName.isEmpty ? 'текст' : 'файл $_attachedName';
+    // Группы может не быть вовсе — тогда и флага мастер-спеки нет.
+    final docFlag =
+        widget.sprintId.isEmpty ? '' : ' --doc ${widget.sprintId}';
     context.read<SessionsBloc>().add(HandoffRunRequested(
-          '/opsx-propose $name --doc ${widget.sprintId}\n\n'
+          '/opsx-propose $name$docFlag\n\n'
           'Что нужно сделать ($source):\n\n$brief',
         ));
     context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));

@@ -1,28 +1,37 @@
 part of 'console_bloc.dart';
 
-enum ConsoleScreen { sprint, changes, handoff, env, sessions }
+enum ConsoleScreen { group, changes, handoff, env, sessions }
 
 enum LoadStatus { initial, loading, ready }
-
-/// Фильтр стеков: искать только iOS- или только Android-задачи.
-enum StackFilter {
-  all,
-  ios,
-  android;
-
-  bool allows(String stack) => this == all || name == stack;
-}
 
 class ConsoleState {
   final LoadStatus status;
   final ConsoleScreen screen;
   final ConsoleSnapshot? snapshot;
-  final String selectedSprintId;
+  final String selectedGroupId;
   final ChangeUnit? selectedChange;
   final DocArtifact? selectedDoc;
   final String? docContent;
+
+  /// Спека открытого change'а (`proposal.md`) — главный текст карточки.
+  /// null — ещё читается или файла нет.
+  final String? changeSpec;
   final bool pathRejected;
-  final StackFilter stackFilter;
+
+  /// Человек открыл подключение спеки из шапки — показываем экран настройки.
+  final bool switchingSpec;
+
+  /// Подключённые спеки: между ними переключаются из шапки.
+  final List<String> knownSpecs;
+
+  /// Форма ключей; null — не открыта или ещё читается с диска.
+  final EnvForm? envForm;
+
+  final bool envSaving;
+
+  /// Выбранный стек; пусто — показываются все стеки спеки.
+  final String stackFilter;
+
   final List<IssueComment>? comments; // null — ещё грузятся
   final List<MergeRequestInfo>? mergeRequests;
   final HandoffRecipients? recipients; // null — ещё не подбирали
@@ -31,14 +40,19 @@ class ConsoleState {
 
   const ConsoleState({
     this.status = LoadStatus.initial,
-    this.screen = ConsoleScreen.sprint,
+    this.screen = ConsoleScreen.group,
     this.snapshot,
-    this.selectedSprintId = '',
+    this.selectedGroupId = '',
     this.selectedChange,
     this.selectedDoc,
     this.docContent,
+    this.changeSpec,
     this.pathRejected = false,
-    this.stackFilter = StackFilter.all,
+    this.switchingSpec = false,
+    this.knownSpecs = const [],
+    this.envForm,
+    this.envSaving = false,
+    this.stackFilter = '',
     this.comments,
     this.mergeRequests,
     this.recipients,
@@ -46,40 +60,64 @@ class ConsoleState {
     this.recipientsLoading = false,
   });
 
-  /// Change'и выбранного спринта: переключение спринта меняет и список.
-  /// Change без привязки показываем только когда спринт не выбран.
-  List<ChangeUnit> get sprintChanges {
+  ProjectProfile get profile => snapshot?.profile ?? const ProjectProfile();
+
+  /// Стеки спеки; пусто — работа без разделения на стеки.
+  List<String> get stacks => profile.stacks;
+
+  bool allowsStack(String stack) =>
+      stackFilter.isEmpty || stackFilter == stack;
+
+  /// Change'и выбранной группы: переключение группы меняет и список.
+  List<ChangeUnit> get groupChanges {
     final all = snapshot?.changes ?? const <ChangeUnit>[];
-    final current = sprint;
+    final current = group;
     if (current == null) return all;
-    return all.where((change) => change.sprintId == current.id).toList();
+    return [
+      for (final id in current.changeIds)
+        ...all.where((change) => change.id == id),
+    ];
   }
 
-  /// Платформа не найдена — нужен экран первичной настройки.
+  /// Нужен экран настройки: спека не найдена либо человек меняет её сам.
   bool get needsSetup =>
+      snapshot?.redmineProblem == RedmineProblem.platformNotFound ||
+      switchingSpec;
+
+  /// Спека не найдена вовсе — отменить настройку некуда.
+  bool get specMissing =>
       snapshot?.redmineProblem == RedmineProblem.platformNotFound;
 
   /// Первая загрузка ещё идёт — показываем полноэкранный лоадер.
   bool get isFirstLoad => snapshot == null;
 
-  Sprint? get sprint {
+  Group? get group {
     final current = snapshot;
-    if (current == null || current.sprints.isEmpty) return null;
-    return current.sprints.firstWhere(
-        (candidate) => candidate.id == selectedSprintId,
-        orElse: () => current.sprints.first);
+    if (current == null || current.groups.isEmpty) return null;
+    return current.groups.firstWhere(
+        (candidate) => candidate.id == selectedGroupId,
+        orElse: () => current.groups.first);
   }
+
+  /// Стек, для которого собирается передача: выбранный либо первый.
+  String get handoffStack =>
+      stackFilter.isNotEmpty ? stackFilter : (stacks.firstOrNull ?? '');
 
   ConsoleState copyWith({
     LoadStatus? status,
     ConsoleScreen? screen,
     ConsoleSnapshot? snapshot,
-    String? selectedSprintId,
+    String? selectedGroupId,
     ChangeUnit? Function()? selectedChange,
     DocArtifact? Function()? selectedDoc,
     String? Function()? docContent,
+    String? Function()? changeSpec,
     bool? pathRejected,
-    StackFilter? stackFilter,
+    bool? switchingSpec,
+    List<String>? knownSpecs,
+    EnvForm? Function()? envForm,
+    bool? envSaving,
+    String? stackFilter,
     List<IssueComment>? Function()? comments,
     List<MergeRequestInfo>? Function()? mergeRequests,
     HandoffRecipients? Function()? recipients,
@@ -90,12 +128,17 @@ class ConsoleState {
         status: status ?? this.status,
         screen: screen ?? this.screen,
         snapshot: snapshot ?? this.snapshot,
-        selectedSprintId: selectedSprintId ?? this.selectedSprintId,
+        selectedGroupId: selectedGroupId ?? this.selectedGroupId,
         selectedChange:
             selectedChange != null ? selectedChange() : this.selectedChange,
         selectedDoc: selectedDoc != null ? selectedDoc() : this.selectedDoc,
         docContent: docContent != null ? docContent() : this.docContent,
+        changeSpec: changeSpec != null ? changeSpec() : this.changeSpec,
         pathRejected: pathRejected ?? this.pathRejected,
+        switchingSpec: switchingSpec ?? this.switchingSpec,
+        knownSpecs: knownSpecs ?? this.knownSpecs,
+        envForm: envForm != null ? envForm() : this.envForm,
+        envSaving: envSaving ?? this.envSaving,
         stackFilter: stackFilter ?? this.stackFilter,
         comments: comments != null ? comments() : this.comments,
         mergeRequests:

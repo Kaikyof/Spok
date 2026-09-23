@@ -187,6 +187,55 @@ class AppLocalizationsRu extends AppLocalizations {
   String get artifactSpec => 'Спека';
 
   @override
+  String get changeSpecTitle => 'Спека изменения';
+
+  @override
+  String get changeSpecLoading => 'читаем спеку…';
+
+  @override
+  String get changeSpecMissing => 'Спека ещё не написана';
+
+  @override
+  String changeSpecMissingHint(String file) {
+    return 'схема ждёт файл $file в каталоге change\'а';
+  }
+
+  @override
+  String get changeSpecOpen => 'Открыть целиком';
+
+  @override
+  String get changeMoreActions => 'Ещё действия';
+
+  @override
+  String get changeActionsHint => 'команда подставится в строку ввода сессии';
+
+  @override
+  String artifactWaits(String what) {
+    return 'ждёт: $what';
+  }
+
+  @override
+  String get artifactReady => 'можно писать';
+
+  @override
+  String get artifactMissing => 'файла нет';
+
+  @override
+  String get codeOffSpec => 'Эта спека не настроена на работу с MR';
+
+  @override
+  String get codeOffPersonal => 'Чтобы видеть MR, введите свой токен GitLab';
+
+  @override
+  String get codeOffRuntime => 'Хостинг кода не ответил или отклонил ключ';
+
+  @override
+  String get gateRuntimeRetry => 'Проверить снова';
+
+  @override
+  String get gateRuntimeChangeKey => 'Изменить ключ';
+
+  @override
   String get artifactDesign => 'Дизайн-решения';
 
   @override
@@ -321,25 +370,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get loaderMessage => 'Читаю состояние платформы…';
 
   @override
-  String get setupTitle => 'Где репозиторий платформы?';
+  String get setupTitle => 'Какая спека?';
 
   @override
   String get setupNote =>
-      'Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.';
+      'Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.';
 
   @override
-  String get setupFieldLabel => 'Путь к avtoto-platform';
+  String get setupFieldLabel => 'Путь к репозиторию спеки';
 
   @override
   String get setupSave => 'Сохранить и продолжить';
 
   @override
   String get setupError =>
-      'По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform';
+      'По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки';
 
   @override
   String setupConfigHint(String path) {
-    return 'Хранится в $path (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.';
+    return 'Хранится в $path (ключ AVTOTO_PLATFORM_DIR); переменные окружения SPEC_PLATFORM_DIR и AVTOTO_PLATFORM_DIR имеют приоритет.';
   }
 
   @override
@@ -843,4 +892,397 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get applyDone => 'все задачи закрыты';
+
+  @override
+  String get appBadgeGeneric => 'КОНСОЛЬ СПЕК';
+
+  @override
+  String get navGroup => 'Группа';
+
+  @override
+  String groupTitleSprint(String title) {
+    return 'Спринт: $title';
+  }
+
+  @override
+  String groupTitleMasterDoc(String title) {
+    return 'Мастер-спека: $title';
+  }
+
+  @override
+  String get groupTitleFlat => 'Change\'и';
+
+  @override
+  String get groupSwitcherTooltip => 'Переключить группу · openspec/doc';
+
+  @override
+  String get groupNone => 'Группировки нет — показаны все change’и';
+
+  @override
+  String get groupEmptyAll =>
+      'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.';
+
+  @override
+  String get stackWork => 'Работа';
+
+  @override
+  String get stackBackend => 'Backend';
+
+  @override
+  String get stackMobile => 'Mobile';
+
+  @override
+  String get stackDesign => 'Дизайн';
+
+  @override
+  String get stackFilterAllShort => 'Все';
+
+  @override
+  String get statusFromCache => 'из файла';
+
+  @override
+  String get statusFromCacheHint =>
+      'Статус взят из redmine.yaml change’а — трекер не опрошен';
+
+  @override
+  String changeFormatWarning(String detail) {
+    return 'Формат файла не распознан: $detail';
+  }
+
+  @override
+  String artifactsProgress(String done, String total) {
+    return '$done из $total артефактов заполнены';
+  }
+
+  @override
+  String artifactTasksOfStack(String stack) {
+    return 'Задачи $stack';
+  }
+
+  @override
+  String get handoffUnavailableTitle => 'Передача недоступна для этой спеки';
+
+  @override
+  String get handoffRequirementsTitle => 'Чего не хватает';
+
+  @override
+  String get featureReasonNoGrouping =>
+      'спека не группирует change’и: нет спринтов (openspec/doc/<id>/sprint.yaml) и мастер-спек';
+
+  @override
+  String get featureReasonNoBuildsFile =>
+      'спека не ведёт сборки — нет builds.yaml у группы';
+
+  @override
+  String get featureReasonNoStatusSemantics =>
+      'нет openspec/redmine.yaml — неизвестно, какой статус означает готовность';
+
+  @override
+  String get featureReasonNoHandoverCommand => 'нет команды с ролью handover';
+
+  @override
+  String get featureReasonNoRecipientsScript =>
+      'нет скрипта подбора получателей';
+
+  @override
+  String get featureReasonKeyNotInExample =>
+      'эта спека не настроена на работу с MR — GITLAB_TOKEN нет в .env.example';
+
+  @override
+  String get featureReasonKeyEmpty => 'токен GitLab не заполнен на этой машине';
+
+  @override
+  String get featureReasonNoServices => 'в workspace.yaml нет сервисов';
+
+  @override
+  String get featureReasonSingleStack => 'у спеки один стек';
+
+  @override
+  String get codeOpenInGitlab => 'Открыть ветку в GitLab';
+
+  @override
+  String get codeTargetBranch => 'Целевая ветка';
+
+  @override
+  String get buildsNotTracked => 'Спека не ведёт сборки — шаг недоступен';
+
+  @override
+  String get specSwitchTooltip => 'Сменить спеку — указать другой репозиторий';
+
+  @override
+  String get setupCancel => 'Отмена';
+
+  @override
+  String get setupHintPath => '/Users/…/avelacom-platform';
+
+  @override
+  String get setupBrowse => 'Выбрать каталог…';
+
+  @override
+  String get setupCloneHint =>
+      'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>';
+
+  @override
+  String get groupTitleUngrouped => 'Вне мастер-спек';
+
+  @override
+  String get specSwitcherTooltip => 'Сменить спеку';
+
+  @override
+  String get specAdd => 'Подключить другую спеку…';
+
+  @override
+  String get envEditOpen => 'Заполнить ключи';
+
+  @override
+  String get envEditTitle => 'Ключи спеки';
+
+  @override
+  String get envEditSave => 'Сохранить в .env';
+
+  @override
+  String get envEditOptional => 'необязательный';
+
+  @override
+  String get envEditSecretNote =>
+      'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.';
+
+  @override
+  String get envEditGitWarning =>
+      '.env не закрыт .gitignore — секреты могут уехать в репозиторий';
+
+  @override
+  String envEditPath(String path) {
+    return 'Файл: $path';
+  }
+
+  @override
+  String get envEditShow => 'Показать значение';
+
+  @override
+  String get envEditHide => 'Скрыть значение';
+
+  @override
+  String get envEditEmptyHint => 'Пустое поле убирает ключ из файла';
+
+  @override
+  String get featureHandoffTitle => 'Передача тестировщику';
+
+  @override
+  String get featureHandoffWhy =>
+      'Собирает сборку, получателей и текст сообщения, показывает предпросмотр и запускает команду сдачи спеки.';
+
+  @override
+  String get featureBuildsTitle => 'Сборки';
+
+  @override
+  String get featureBuildsWhy =>
+      'Показывает последнюю сборку каждого стека и предупреждает, когда её забыли записать.';
+
+  @override
+  String get featureMergeRequestsTitle => 'Код и merge request’ы';
+
+  @override
+  String get featureMergeRequestsWhy =>
+      'Показывает MR change’а рядом с фактом влития коммита в целевую ветку.';
+
+  @override
+  String get featureChatTitle => 'Сообщения команде';
+
+  @override
+  String get featureChatWhy =>
+      'Отправляет уведомление о передаче в канал команды после предпросмотра.';
+
+  @override
+  String get featureMultiStackTitle => 'Несколько стеков';
+
+  @override
+  String get featureMultiStackWhy =>
+      'Разделяет задачи change’а по стекам и даёт переключатель стеков.';
+
+  @override
+  String gateProgress(String done, String total) {
+    return 'выполнено $done из $total';
+  }
+
+  @override
+  String get gateMandatory => 'ОБЯЗАТЕЛЬНОЕ';
+
+  @override
+  String get gateOptional => 'НЕОБЯЗАТЕЛЬНОЕ · БЕЗ НЕГО ШАГ ГАСНЕТ';
+
+  @override
+  String get gateFound => 'найдено';
+
+  @override
+  String get gateMissing => 'не найдено';
+
+  @override
+  String get reqGrouping => 'Группировка работы';
+
+  @override
+  String get reqStatusSemantics => 'Семантика статусов трекера';
+
+  @override
+  String get reqBuildsFile => 'Сборки';
+
+  @override
+  String get reqHandoverCommand => 'Команда передачи';
+
+  @override
+  String get reqRecipientsScript => 'Скрипт получателей';
+
+  @override
+  String get reqGitlabTokenDeclared => 'Спека работает с MR';
+
+  @override
+  String get reqGitlabTokenFilled => 'Токен GitLab на этой машине';
+
+  @override
+  String get reqGitlabReachable => 'GitLab отвечает';
+
+  @override
+  String get reqServices => 'Сервисы workspace';
+
+  @override
+  String get reqChatKeysDeclared => 'Спека работает с мессенджером';
+
+  @override
+  String get reqChatKeysFilled => 'Ключи мессенджера на этой машине';
+
+  @override
+  String get gatePersonalTitle => 'Не настроено на этой машине';
+
+  @override
+  String get gatePersonalNote =>
+      'Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.';
+
+  @override
+  String get gatePersonalFill => 'Заполнить';
+
+  @override
+  String get gateRuntimeTitle => 'Настроено, но система не отвечает';
+
+  @override
+  String get gateRuntimeEditKey => 'Изменить ключ';
+
+  @override
+  String get gateCopyTemplate => 'Скопировать шаблон';
+
+  @override
+  String get gateAskAgent => 'Создать через агента';
+
+  @override
+  String get gateTemplateCopied => 'Шаблон скопирован в буфер';
+
+  @override
+  String get reqStacks => 'Два стека и больше';
+
+  @override
+  String get sessionQuickLaunch => 'БЫСТРЫЙ ЗАПУСК';
+
+  @override
+  String get sessionMoreActions => 'Ещё';
+
+  @override
+  String get sessionAllCommands => 'Все команды спеки';
+
+  @override
+  String get sessionModelLabel => 'модель';
+
+  @override
+  String get sessionRunHint => '⏎ запустить';
+
+  @override
+  String get sessionParamsShort => '⋯ параметры';
+
+  @override
+  String get sessionInputEmptyHint => 'выберите команду или опишите задачу';
+
+  @override
+  String get sessionInputCommandHint => 'добавьте словами, что сделать';
+
+  @override
+  String get sessionPaletteTitle => 'КОМАНДЫ СПЕКИ';
+
+  @override
+  String get sessionPaletteFooter =>
+      '↑↓ выбрать · Tab вставить в строку · Esc закрыть';
+
+  @override
+  String sessionPaletteFilter(String filter, int shown, int total) {
+    return 'фильтр $filter · $shown из $total';
+  }
+
+  @override
+  String sessionPaletteAll(int total) {
+    return '$total команд · зеркала скрыты';
+  }
+
+  @override
+  String get sessionNoArguments => 'аргументы не описаны';
+
+  @override
+  String get sessionNextSteps => 'СЛЕДУЮЩИЕ ШАГИ';
+
+  @override
+  String sessionNextStepCommand(String command) {
+    return 'команда $command спеки';
+  }
+
+  @override
+  String get sessionNextStepOpenChange => 'Открыть change';
+
+  @override
+  String get sessionNextStepOpenChangeHint => 'посмотреть, что осталось';
+
+  @override
+  String get sessionTerminalHeightTooltip =>
+      'высота терминала — тяните границу';
+
+  @override
+  String get sessionCustomModel => 'Указать модель…';
+
+  @override
+  String get sessionCustomModelTitle => 'Модель для сессии';
+
+  @override
+  String get sessionCustomModelHint =>
+      'имя модели или псевдоним — уйдёт в --model как есть';
+
+  @override
+  String get sessionDoneChecklist => 'ВЫПОЛНЕНО ПО ХОДУ';
+
+  @override
+  String get commandSourceSchema => 'канон схемы';
+
+  @override
+  String get commandSourceClaude => '.claude';
+
+  @override
+  String get commandSourceMirror => 'зеркало';
+
+  @override
+  String get commandSourcePackage => 'package.json';
+
+  @override
+  String get commandSourceMake => 'Makefile';
+
+  @override
+  String get roleApply => 'Реализовать';
+
+  @override
+  String get roleNewChange => 'Новый change';
+
+  @override
+  String get roleNewGroup => 'Новая группа';
+
+  @override
+  String get roleHandover => 'Передача';
+
+  @override
+  String get cancel => 'Отмена';
+
+  @override
+  String get confirm => 'Готово';
 }

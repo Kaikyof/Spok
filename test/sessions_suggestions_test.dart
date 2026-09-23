@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:platform_console/core/resources/app_dimens.dart';
 import 'package:platform_console/domain/entities/console_snapshot.dart';
+import 'package:platform_console/domain/entities/env_field.dart';
 import 'package:platform_console/domain/entities/env_report.dart';
 import 'package:platform_console/domain/entities/handoff_recipient.dart';
 import 'package:platform_console/domain/entities/issue_comment.dart';
@@ -22,6 +24,9 @@ class _FakePlatformRepository implements PlatformRepository {
   String get role => 'ios';
 
   @override
+  String get roleKey => 'AVTOTO_ROLE';
+
+  @override
   List<SlashCommand> slashCommands() => const [
         SlashCommand(
             id: 'opsx-apply',
@@ -34,14 +39,14 @@ class _FakePlatformRepository implements PlatformRepository {
       ];
 
   @override
-  ({List<String> changeIds, List<String> sprintIds}) argumentValues() => (
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (
         changeIds: ['biometric-opt-in', 'pin-setup-flow'],
-        sprintIds: ['pin-biometric-auth'],
+        groupIds: ['pin-biometric-auth'],
       );
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
-        sprints: const [],
+        groups: const [],
         changes: const [],
         divergences: const [],
         env: const EnvReport(keys: [], repos: [], systems: []),
@@ -56,7 +61,9 @@ class _FakePlatformRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId) async => const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
+          {String groupId = ''}) async =>
+      const [];
 
   @override
   Future<HandoffRecipients> handoffRecipients(String stack) async =>
@@ -67,6 +74,15 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   Future<bool> setPlatformDir(String path) async => true;
+
+  @override
+  Future<List<String>> knownSpecs() async => const ['/tmp/fake-platform'];
+
+  @override
+  Future<EnvForm> envForm() async => EnvForm.empty;
+
+  @override
+  Future<void> saveEnv(Map<String, String> values) async {}
 }
 
 Widget _wrap(SessionsBloc bloc) => MaterialApp(
@@ -87,7 +103,7 @@ void main() {
   group('SuggestCommandArguments', () {
     const suggester = SuggestCommandArguments(
       changeIds: ['biometric-opt-in', 'pin-setup-flow'],
-      sprintIds: ['pin-biometric-auth'],
+      groupIds: ['pin-biometric-auth'],
     );
 
     test('первый аргумент [change] — список change\'ей', () {
@@ -127,12 +143,13 @@ void main() {
   group('Экран сессий', () {
     late SessionsBloc bloc;
 
-    setUp(() => bloc = SessionsBloc(_FakePlatformRepository()));
-    tearDown(() => bloc.close());
-
     /// Приложение десктопное: минимальное окно ~1100×700 (бриф §9),
     /// тестовые 800×600 не отражают реальную раскладку.
+    /// Bloc создаётся внутри теста: созданный в setUp, он живёт вне
+    /// фейкового времени, и его события не доходят до перерисовки.
     Future<void> pumpScreen(WidgetTester tester) async {
+      bloc = SessionsBloc(_FakePlatformRepository());
+      addTearDown(bloc.close);
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -166,11 +183,80 @@ void main() {
       expect(field.controller?.text, '/opsx-apply biometric-opt-in ');
     });
 
-    testWidgets('палитра команд помещается без переполнения', (tester) async {
+    testWidgets('палитра открывается кнопкой и показывает источник',
+        (tester) async {
       await pumpScreen(tester);
 
+      // Палитра — состояние строки ввода, а не постоянный список:
+      // до нажатия её нет.
+      expect(find.text('КОМАНДЫ СПЕКИ'), findsNothing);
+      await tester.tap(find.text('Все команды спеки'));
+      await tester.pumpAndSettle();
+
       expect(tester.takeException(), isNull);
-      expect(find.textContaining('/opsx-apply'), findsWidgets);
+      expect(find.text('КОМАНДЫ СПЕКИ'), findsOneWidget);
+      expect(find.text('/opsx-apply'), findsWidgets);
+      expect(find.text('[change]'), findsOneWidget);
+      expect(find.text('.claude'), findsWidgets);
+    });
+
+    testWidgets('набранное «/» отбирает команды и показывает счётчик',
+        (tester) async {
+      await pumpScreen(tester);
+
+      await tester.enterText(find.byType(TextField), '/opsx-sp');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('фильтр /opsx-sp · 1 из 2'), findsOneWidget);
+      expect(find.text('/opsx-sprint'), findsWidgets);
+    });
+
+    testWidgets('выбор команды подставляет её в ту же строку ввода',
+        (tester) async {
+      await pumpScreen(tester);
+
+      await tester.tap(find.text('Все команды спеки'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('/opsx-sprint').first);
+      await tester.pumpAndSettle();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller?.text, '/opsx-sprint ');
+      expect(find.text('КОМАНДЫ СПЕКИ'), findsNothing);
+    });
+
+    testWidgets('минимальное окно: развёрнутый терминал с палитрой влезает',
+        (tester) async {
+      await pumpScreen(tester);
+      tester.view.physicalSize = AppDimens.minWindowSize;
+      await tester.pumpAndSettle();
+
+      bloc.add(SessionTerminalHeightChanged(360));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Все команды спеки'));
+      await tester.pumpAndSettle();
+
+      // Переполнение раскладки роняет кадр исключением — его и ловим.
+      expect(tester.takeException(), isNull);
+      expect(find.text('КОМАНДЫ СПЕКИ'), findsOneWidget);
+    });
+
+    testWidgets('быстрый запуск показывает команды ролей', (tester) async {
+      await pumpScreen(tester);
+
+      // Выделенная кнопка одна — роль «реализовать».
+      expect(find.text('Реализовать'), findsOneWidget);
+      expect(find.text('/opsx-apply'), findsOneWidget);
+      // Вторая роль спеки — передача (её берёт /opsx-sprint) — живёт
+      // в «Ещё», а не спорит за ширину строки заголовка.
+      expect(find.text('Ещё'), findsOneWidget);
+      await tester.tap(find.text('Ещё'));
+      await tester.pumpAndSettle();
+      expect(find.text('Передача'), findsOneWidget);
+      expect(find.text('/opsx-sprint'), findsOneWidget);
+      // Ролей «новый change» и «новая группа» у этой спеки нет.
+      expect(find.text('Новый change'), findsNothing);
     });
   });
 }

@@ -14,10 +14,10 @@ class ArgumentSuggestion {
 /// человек в терминале.
 class SuggestCommandArguments {
   final List<String> changeIds;
-  final List<String> sprintIds;
+  final List<String> groupIds;
 
   const SuggestCommandArguments(
-      {required this.changeIds, required this.sprintIds});
+      {required this.changeIds, required this.groupIds});
 
   /// [typedArguments] — уже набранные аргументы после имени команды.
   List<ArgumentSuggestion> call(
@@ -54,8 +54,9 @@ class SuggestCommandArguments {
     if (slot == 'change') {
       return [for (final id in changeIds) ArgumentSuggestion(id)];
     }
-    if (slot == 'sprint') {
-      return [for (final id in sprintIds) ArgumentSuggestion(id)];
+    // Спека зовёт группу по-своему: спринт, группа, мастер-спека.
+    if (const ['sprint', 'group', 'doc'].contains(slot)) {
+      return [for (final id in groupIds) ArgumentSuggestion(id)];
     }
     // Смешанный слот «change|описание» — подставляем change'и,
     // произвольный текст человек допишет сам.

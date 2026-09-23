@@ -10,15 +10,20 @@ import '../../domain/repositories/command_log.dart';
 /// (роли Redmine × членство в канале Mattermost). Приложение не повторяет
 /// эту логику, а запускает скрипт и показывает результат до отправки.
 class HandoverRecipientsSource {
-  static const scriptPath = 'scripts/sprint-handover-recipients.mjs';
-
   final Directory platformRoot;
+
+  /// Путь скрипта относительно корня спеки; null — спека его не держит.
+  final String? scriptPath;
+
   final CommandLog? commandLog;
 
-  HandoverRecipientsSource(this.platformRoot, {this.commandLog});
+  HandoverRecipientsSource(this.platformRoot,
+      {this.scriptPath, this.commandLog});
 
   Future<HandoffRecipients> forStack(String stack) async {
-    if (!File(p.join(platformRoot.path, scriptPath)).existsSync()) {
+    final scriptPath = this.scriptPath;
+    if (scriptPath == null ||
+        !File(p.join(platformRoot.path, scriptPath)).existsSync()) {
       return const HandoffRecipients(error: 'script-missing');
     }
     final command = 'node $scriptPath --stack $stack';

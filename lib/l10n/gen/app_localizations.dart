@@ -388,6 +388,96 @@ abstract class AppLocalizations {
   /// **'Спека'**
   String get artifactSpec;
 
+  /// No description provided for @changeSpecTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека изменения'**
+  String get changeSpecTitle;
+
+  /// No description provided for @changeSpecLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'читаем спеку…'**
+  String get changeSpecLoading;
+
+  /// No description provided for @changeSpecMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека ещё не написана'**
+  String get changeSpecMissing;
+
+  /// No description provided for @changeSpecMissingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'схема ждёт файл {file} в каталоге change\'а'**
+  String changeSpecMissingHint(String file);
+
+  /// No description provided for @changeSpecOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть целиком'**
+  String get changeSpecOpen;
+
+  /// No description provided for @changeMoreActions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё действия'**
+  String get changeMoreActions;
+
+  /// No description provided for @changeActionsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'команда подставится в строку ввода сессии'**
+  String get changeActionsHint;
+
+  /// No description provided for @artifactWaits.
+  ///
+  /// In ru, this message translates to:
+  /// **'ждёт: {what}'**
+  String artifactWaits(String what);
+
+  /// No description provided for @artifactReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'можно писать'**
+  String get artifactReady;
+
+  /// No description provided for @artifactMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'файла нет'**
+  String get artifactMissing;
+
+  /// No description provided for @codeOffSpec.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эта спека не настроена на работу с MR'**
+  String get codeOffSpec;
+
+  /// No description provided for @codeOffPersonal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы видеть MR, введите свой токен GitLab'**
+  String get codeOffPersonal;
+
+  /// No description provided for @codeOffRuntime.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хостинг кода не ответил или отклонил ключ'**
+  String get codeOffRuntime;
+
+  /// No description provided for @gateRuntimeRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверить снова'**
+  String get gateRuntimeRetry;
+
+  /// No description provided for @gateRuntimeChangeKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить ключ'**
+  String get gateRuntimeChangeKey;
+
   /// No description provided for @artifactDesign.
   ///
   /// In ru, this message translates to:
@@ -613,19 +703,19 @@ abstract class AppLocalizations {
   /// No description provided for @setupTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Где репозиторий платформы?'**
+  /// **'Какая спека?'**
   String get setupTitle;
 
   /// No description provided for @setupNote.
   ///
   /// In ru, this message translates to:
-  /// **'Консоль читает файлы avtoto-platform (workspace.yaml, .env, openspec). Укажите путь к локальной копии репозитория — он сохранится в конфиге приложения.'**
+  /// **'Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.'**
   String get setupNote;
 
   /// No description provided for @setupFieldLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Путь к avtoto-platform'**
+  /// **'Путь к репозиторию спеки'**
   String get setupFieldLabel;
 
   /// No description provided for @setupSave.
@@ -637,13 +727,13 @@ abstract class AppLocalizations {
   /// No description provided for @setupError.
   ///
   /// In ru, this message translates to:
-  /// **'По этому пути нет workspace.yaml — проверьте, что это корень avtoto-platform'**
+  /// **'По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки'**
   String get setupError;
 
   /// No description provided for @setupConfigHint.
   ///
   /// In ru, this message translates to:
-  /// **'Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменная окружения с тем же именем имеет приоритет.'**
+  /// **'Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменные окружения SPEC_PLATFORM_DIR и AVTOTO_PLATFORM_DIR имеют приоритет.'**
   String setupConfigHint(String path);
 
   /// No description provided for @stackFilterAll.
@@ -1454,6 +1544,714 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'все задачи закрыты'**
   String get applyDone;
+
+  /// No description provided for @appBadgeGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'КОНСОЛЬ СПЕК'**
+  String get appBadgeGeneric;
+
+  /// No description provided for @navGroup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Группа'**
+  String get navGroup;
+
+  /// No description provided for @groupTitleSprint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спринт: {title}'**
+  String groupTitleSprint(String title);
+
+  /// No description provided for @groupTitleMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мастер-спека: {title}'**
+  String groupTitleMasterDoc(String title);
+
+  /// No description provided for @groupTitleFlat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Change\'и'**
+  String get groupTitleFlat;
+
+  /// No description provided for @groupSwitcherTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переключить группу · openspec/doc'**
+  String get groupSwitcherTooltip;
+
+  /// No description provided for @groupNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Группировки нет — показаны все change’и'**
+  String get groupNone;
+
+  /// No description provided for @groupEmptyAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.'**
+  String get groupEmptyAll;
+
+  /// No description provided for @stackWork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Работа'**
+  String get stackWork;
+
+  /// No description provided for @stackBackend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Backend'**
+  String get stackBackend;
+
+  /// No description provided for @stackMobile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Mobile'**
+  String get stackMobile;
+
+  /// No description provided for @stackDesign.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизайн'**
+  String get stackDesign;
+
+  /// No description provided for @stackFilterAllShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get stackFilterAllShort;
+
+  /// No description provided for @statusFromCache.
+  ///
+  /// In ru, this message translates to:
+  /// **'из файла'**
+  String get statusFromCache;
+
+  /// No description provided for @statusFromCacheHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статус взят из redmine.yaml change’а — трекер не опрошен'**
+  String get statusFromCacheHint;
+
+  /// No description provided for @changeFormatWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Формат файла не распознан: {detail}'**
+  String changeFormatWarning(String detail);
+
+  /// No description provided for @artifactsProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'{done} из {total} артефактов заполнены'**
+  String artifactsProgress(String done, String total);
+
+  /// No description provided for @artifactTasksOfStack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задачи {stack}'**
+  String artifactTasksOfStack(String stack);
+
+  /// No description provided for @handoffUnavailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передача недоступна для этой спеки'**
+  String get handoffUnavailableTitle;
+
+  /// No description provided for @handoffRequirementsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чего не хватает'**
+  String get handoffRequirementsTitle;
+
+  /// No description provided for @featureReasonNoGrouping.
+  ///
+  /// In ru, this message translates to:
+  /// **'спека не группирует change’и: нет спринтов (openspec/doc/<id>/sprint.yaml) и мастер-спек'**
+  String get featureReasonNoGrouping;
+
+  /// No description provided for @featureReasonNoBuildsFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'спека не ведёт сборки — нет builds.yaml у группы'**
+  String get featureReasonNoBuildsFile;
+
+  /// No description provided for @featureReasonNoStatusSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'нет openspec/redmine.yaml — неизвестно, какой статус означает готовность'**
+  String get featureReasonNoStatusSemantics;
+
+  /// No description provided for @featureReasonNoHandoverCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'нет команды с ролью handover'**
+  String get featureReasonNoHandoverCommand;
+
+  /// No description provided for @featureReasonNoRecipientsScript.
+  ///
+  /// In ru, this message translates to:
+  /// **'нет скрипта подбора получателей'**
+  String get featureReasonNoRecipientsScript;
+
+  /// No description provided for @featureReasonKeyNotInExample.
+  ///
+  /// In ru, this message translates to:
+  /// **'эта спека не настроена на работу с MR — GITLAB_TOKEN нет в .env.example'**
+  String get featureReasonKeyNotInExample;
+
+  /// No description provided for @featureReasonKeyEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'токен GitLab не заполнен на этой машине'**
+  String get featureReasonKeyEmpty;
+
+  /// No description provided for @featureReasonNoServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'в workspace.yaml нет сервисов'**
+  String get featureReasonNoServices;
+
+  /// No description provided for @featureReasonSingleStack.
+  ///
+  /// In ru, this message translates to:
+  /// **'у спеки один стек'**
+  String get featureReasonSingleStack;
+
+  /// No description provided for @codeOpenInGitlab.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть ветку в GitLab'**
+  String get codeOpenInGitlab;
+
+  /// No description provided for @codeTargetBranch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Целевая ветка'**
+  String get codeTargetBranch;
+
+  /// No description provided for @buildsNotTracked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека не ведёт сборки — шаг недоступен'**
+  String get buildsNotTracked;
+
+  /// No description provided for @specSwitchTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить спеку — указать другой репозиторий'**
+  String get specSwitchTooltip;
+
+  /// No description provided for @setupCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get setupCancel;
+
+  /// No description provided for @setupHintPath.
+  ///
+  /// In ru, this message translates to:
+  /// **'/Users/…/avelacom-platform'**
+  String get setupHintPath;
+
+  /// No description provided for @setupBrowse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать каталог…'**
+  String get setupBrowse;
+
+  /// No description provided for @setupCloneHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>'**
+  String get setupCloneHint;
+
+  /// No description provided for @groupTitleUngrouped.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вне мастер-спек'**
+  String get groupTitleUngrouped;
+
+  /// No description provided for @specSwitcherTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить спеку'**
+  String get specSwitcherTooltip;
+
+  /// No description provided for @specAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключить другую спеку…'**
+  String get specAdd;
+
+  /// No description provided for @envEditOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнить ключи'**
+  String get envEditOpen;
+
+  /// No description provided for @envEditTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключи спеки'**
+  String get envEditTitle;
+
+  /// No description provided for @envEditSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить в .env'**
+  String get envEditSave;
+
+  /// No description provided for @envEditOptional.
+  ///
+  /// In ru, this message translates to:
+  /// **'необязательный'**
+  String get envEditOptional;
+
+  /// No description provided for @envEditSecretNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.'**
+  String get envEditSecretNote;
+
+  /// No description provided for @envEditGitWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'.env не закрыт .gitignore — секреты могут уехать в репозиторий'**
+  String get envEditGitWarning;
+
+  /// No description provided for @envEditPath.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл: {path}'**
+  String envEditPath(String path);
+
+  /// No description provided for @envEditShow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать значение'**
+  String get envEditShow;
+
+  /// No description provided for @envEditHide.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрыть значение'**
+  String get envEditHide;
+
+  /// No description provided for @envEditEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пустое поле убирает ключ из файла'**
+  String get envEditEmptyHint;
+
+  /// No description provided for @featureHandoffTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передача тестировщику'**
+  String get featureHandoffTitle;
+
+  /// No description provided for @featureHandoffWhy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собирает сборку, получателей и текст сообщения, показывает предпросмотр и запускает команду сдачи спеки.'**
+  String get featureHandoffWhy;
+
+  /// No description provided for @featureBuildsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сборки'**
+  String get featureBuildsTitle;
+
+  /// No description provided for @featureBuildsWhy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показывает последнюю сборку каждого стека и предупреждает, когда её забыли записать.'**
+  String get featureBuildsWhy;
+
+  /// No description provided for @featureMergeRequestsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код и merge request’ы'**
+  String get featureMergeRequestsTitle;
+
+  /// No description provided for @featureMergeRequestsWhy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показывает MR change’а рядом с фактом влития коммита в целевую ветку.'**
+  String get featureMergeRequestsWhy;
+
+  /// No description provided for @featureChatTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сообщения команде'**
+  String get featureChatTitle;
+
+  /// No description provided for @featureChatWhy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправляет уведомление о передаче в канал команды после предпросмотра.'**
+  String get featureChatWhy;
+
+  /// No description provided for @featureMultiStackTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Несколько стеков'**
+  String get featureMultiStackTitle;
+
+  /// No description provided for @featureMultiStackWhy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разделяет задачи change’а по стекам и даёт переключатель стеков.'**
+  String get featureMultiStackWhy;
+
+  /// No description provided for @gateProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'выполнено {done} из {total}'**
+  String gateProgress(String done, String total);
+
+  /// No description provided for @gateMandatory.
+  ///
+  /// In ru, this message translates to:
+  /// **'ОБЯЗАТЕЛЬНОЕ'**
+  String get gateMandatory;
+
+  /// No description provided for @gateOptional.
+  ///
+  /// In ru, this message translates to:
+  /// **'НЕОБЯЗАТЕЛЬНОЕ · БЕЗ НЕГО ШАГ ГАСНЕТ'**
+  String get gateOptional;
+
+  /// No description provided for @gateFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'найдено'**
+  String get gateFound;
+
+  /// No description provided for @gateMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'не найдено'**
+  String get gateMissing;
+
+  /// No description provided for @reqGrouping.
+  ///
+  /// In ru, this message translates to:
+  /// **'Группировка работы'**
+  String get reqGrouping;
+
+  /// No description provided for @reqStatusSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Семантика статусов трекера'**
+  String get reqStatusSemantics;
+
+  /// No description provided for @reqBuildsFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сборки'**
+  String get reqBuildsFile;
+
+  /// No description provided for @reqHandoverCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команда передачи'**
+  String get reqHandoverCommand;
+
+  /// No description provided for @reqRecipientsScript.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрипт получателей'**
+  String get reqRecipientsScript;
+
+  /// No description provided for @reqGitlabTokenDeclared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека работает с MR'**
+  String get reqGitlabTokenDeclared;
+
+  /// No description provided for @reqGitlabTokenFilled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Токен GitLab на этой машине'**
+  String get reqGitlabTokenFilled;
+
+  /// No description provided for @reqGitlabReachable.
+  ///
+  /// In ru, this message translates to:
+  /// **'GitLab отвечает'**
+  String get reqGitlabReachable;
+
+  /// No description provided for @reqServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сервисы workspace'**
+  String get reqServices;
+
+  /// No description provided for @reqChatKeysDeclared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека работает с мессенджером'**
+  String get reqChatKeysDeclared;
+
+  /// No description provided for @reqChatKeysFilled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключи мессенджера на этой машине'**
+  String get reqChatKeysFilled;
+
+  /// No description provided for @gatePersonalTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не настроено на этой машине'**
+  String get gatePersonalTitle;
+
+  /// No description provided for @gatePersonalNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.'**
+  String get gatePersonalNote;
+
+  /// No description provided for @gatePersonalFill.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнить'**
+  String get gatePersonalFill;
+
+  /// No description provided for @gateRuntimeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настроено, но система не отвечает'**
+  String get gateRuntimeTitle;
+
+  /// No description provided for @gateRuntimeEditKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить ключ'**
+  String get gateRuntimeEditKey;
+
+  /// No description provided for @gateCopyTemplate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать шаблон'**
+  String get gateCopyTemplate;
+
+  /// No description provided for @gateAskAgent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать через агента'**
+  String get gateAskAgent;
+
+  /// No description provided for @gateTemplateCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Шаблон скопирован в буфер'**
+  String get gateTemplateCopied;
+
+  /// No description provided for @reqStacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Два стека и больше'**
+  String get reqStacks;
+
+  /// No description provided for @sessionQuickLaunch.
+  ///
+  /// In ru, this message translates to:
+  /// **'БЫСТРЫЙ ЗАПУСК'**
+  String get sessionQuickLaunch;
+
+  /// No description provided for @sessionMoreActions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё'**
+  String get sessionMoreActions;
+
+  /// No description provided for @sessionAllCommands.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все команды спеки'**
+  String get sessionAllCommands;
+
+  /// No description provided for @sessionModelLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'модель'**
+  String get sessionModelLabel;
+
+  /// No description provided for @sessionRunHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'⏎ запустить'**
+  String get sessionRunHint;
+
+  /// No description provided for @sessionParamsShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'⋯ параметры'**
+  String get sessionParamsShort;
+
+  /// No description provided for @sessionInputEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'выберите команду или опишите задачу'**
+  String get sessionInputEmptyHint;
+
+  /// No description provided for @sessionInputCommandHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'добавьте словами, что сделать'**
+  String get sessionInputCommandHint;
+
+  /// No description provided for @sessionPaletteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'КОМАНДЫ СПЕКИ'**
+  String get sessionPaletteTitle;
+
+  /// No description provided for @sessionPaletteFooter.
+  ///
+  /// In ru, this message translates to:
+  /// **'↑↓ выбрать · Tab вставить в строку · Esc закрыть'**
+  String get sessionPaletteFooter;
+
+  /// No description provided for @sessionPaletteFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'фильтр {filter} · {shown} из {total}'**
+  String sessionPaletteFilter(String filter, int shown, int total);
+
+  /// No description provided for @sessionPaletteAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'{total} команд · зеркала скрыты'**
+  String sessionPaletteAll(int total);
+
+  /// No description provided for @sessionNoArguments.
+  ///
+  /// In ru, this message translates to:
+  /// **'аргументы не описаны'**
+  String get sessionNoArguments;
+
+  /// No description provided for @sessionNextSteps.
+  ///
+  /// In ru, this message translates to:
+  /// **'СЛЕДУЮЩИЕ ШАГИ'**
+  String get sessionNextSteps;
+
+  /// No description provided for @sessionNextStepCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'команда {command} спеки'**
+  String sessionNextStepCommand(String command);
+
+  /// No description provided for @sessionNextStepOpenChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть change'**
+  String get sessionNextStepOpenChange;
+
+  /// No description provided for @sessionNextStepOpenChangeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'посмотреть, что осталось'**
+  String get sessionNextStepOpenChangeHint;
+
+  /// No description provided for @sessionTerminalHeightTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'высота терминала — тяните границу'**
+  String get sessionTerminalHeightTooltip;
+
+  /// No description provided for @sessionCustomModel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать модель…'**
+  String get sessionCustomModel;
+
+  /// No description provided for @sessionCustomModelTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель для сессии'**
+  String get sessionCustomModelTitle;
+
+  /// No description provided for @sessionCustomModelHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'имя модели или псевдоним — уйдёт в --model как есть'**
+  String get sessionCustomModelHint;
+
+  /// No description provided for @sessionDoneChecklist.
+  ///
+  /// In ru, this message translates to:
+  /// **'ВЫПОЛНЕНО ПО ХОДУ'**
+  String get sessionDoneChecklist;
+
+  /// No description provided for @commandSourceSchema.
+  ///
+  /// In ru, this message translates to:
+  /// **'канон схемы'**
+  String get commandSourceSchema;
+
+  /// No description provided for @commandSourceClaude.
+  ///
+  /// In ru, this message translates to:
+  /// **'.claude'**
+  String get commandSourceClaude;
+
+  /// No description provided for @commandSourceMirror.
+  ///
+  /// In ru, this message translates to:
+  /// **'зеркало'**
+  String get commandSourceMirror;
+
+  /// No description provided for @commandSourcePackage.
+  ///
+  /// In ru, this message translates to:
+  /// **'package.json'**
+  String get commandSourcePackage;
+
+  /// No description provided for @commandSourceMake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Makefile'**
+  String get commandSourceMake;
+
+  /// No description provided for @roleApply.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реализовать'**
+  String get roleApply;
+
+  /// No description provided for @roleNewChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый change'**
+  String get roleNewChange;
+
+  /// No description provided for @roleNewGroup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новая группа'**
+  String get roleNewGroup;
+
+  /// No description provided for @roleHandover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передача'**
+  String get roleHandover;
+
+  /// No description provided for @cancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get cancel;
+
+  /// No description provided for @confirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get confirm;
 }
 
 class _AppLocalizationsDelegate

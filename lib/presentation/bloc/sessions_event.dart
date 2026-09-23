@@ -41,9 +41,43 @@ class HandoffRunRequested extends SessionsEvent {
 
 class _SettingsRestored extends SessionsEvent {
   final String model;
+  final List<String> models;
   final AgentEffort effort;
   final AgentPermissionMode permissionMode;
-  _SettingsRestored(this.model, this.effort, this.permissionMode);
+  final double terminalHeight;
+  _SettingsRestored(this.model, this.models, this.effort, this.permissionMode,
+      this.terminalHeight);
+}
+
+/// Подставить команду в строку ввода: с карточки change'а и из меню
+/// действий. Запуск не начинается — человек дописывает задание словами.
+class SessionDraftSet extends SessionsEvent {
+  final String text;
+  SessionDraftSet(this.text);
+}
+
+/// Сменилась спека или группа: команды, значения аргументов и настройки
+/// перечитываются. Иначе подсказки остаются от прежнего проекта, а
+/// `--resume` уводит диалог в чужой репозиторий.
+class SessionsContextChanged extends SessionsEvent {
+  /// Change'и выбранной группы; пусто — подсказываем все change'и спеки.
+  final List<String> changeIds;
+
+  SessionsContextChanged({this.changeIds = const []});
+}
+
+/// Тянут границу терминала. Пока тянут — только перерисовка; [remember]
+/// ставится в конце жеста, чтобы не писать конфиг на каждый пиксель.
+class SessionTerminalHeightChanged extends SessionsEvent {
+  final double height;
+  final bool remember;
+  SessionTerminalHeightChanged(this.height, {this.remember = false});
+}
+
+/// Палитра «все команды спеки»: открыта кнопкой, а не набором «/».
+class SessionPaletteToggled extends SessionsEvent {
+  final bool open;
+  SessionPaletteToggled(this.open);
 }
 
 class SessionEffortChanged extends SessionsEvent {

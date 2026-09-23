@@ -16,14 +16,15 @@ import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/next_step_banner.dart';
 import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
-import '../ui_kit/stack_filter_control.dart';
 import '../ui_kit/status_badge.dart';
 import '../widgets/create_change_dialog.dart';
 import '../widgets/create_sprint_dialog.dart';
+import '../widgets/stack_filter_bar.dart';
 
-/// Главный экран: за пять секунд показать, где спринт и что мешает.
-class SprintScreen extends StatelessWidget {
-  const SprintScreen({super.key});
+/// Главный экран: за пять секунд показать, где работа и что мешает.
+/// Группа — спринт, мастер-спека или просто все change'и спеки.
+class GroupScreen extends StatelessWidget {
+  const GroupScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,19 +35,24 @@ class SprintScreen extends StatelessWidget {
         if (snapshot == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        final sprintChanges = state.sprintChanges;
-        if (snapshot.sprints.isEmpty) {
+        final changes = state.groupChanges;
+        if (snapshot.changes.isEmpty) {
           return Center(
-            child: Text(texts.sprintEmpty,
+            child: Text(texts.groupEmptyAll,
                 textAlign: TextAlign.center, style: AppTextStyles.body),
           );
         }
-        if (sprintChanges.isEmpty) {
-          return _EmptySprint(sprintTitle: state.sprint?.title ?? '');
+        if (changes.isEmpty) {
+          return _EmptyGroup(groupTitle: state.group?.title ?? '');
         }
-        final filter = state.stackFilter;
+        // Колонки таблицы: стеки спеки, а при их отсутствии — одна колонка
+        // работы на уровне change'а.
+        final columns = [
+          for (final stack in state.stacks)
+            if (state.allowsStack(stack)) stack,
+        ];
         final visibleDivergences = snapshot.divergences
-            .where((divergence) => filter.allows(divergence.stack))
+            .where((divergence) => state.allowsStack(divergence.stack))
             .toList();
         return ListView(
           padding: AppDimens.screenPadding,
@@ -62,13 +68,13 @@ class SprintScreen extends StatelessWidget {
               const SizedBox(height: AppDimens.gapL),
             ],
             _ChangesTable(
-              changes: sprintChanges,
+              changes: changes,
+              columns: columns,
               divergences: snapshot.divergences,
-              filter: filter,
               redmineBaseUrl: snapshot.redmineBaseUrl,
             ),
             const SizedBox(height: AppDimens.gapL),
-            _NextStepSection(changes: sprintChanges, filter: filter),
+            _NextStepSection(changes: changes),
           ],
         );
       },
@@ -82,45 +88,32 @@ class _FilterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return BlocBuilder<ConsoleBloc, ConsoleState>(
-      buildWhen: (previous, current) =>
-          previous.stackFilter != current.stackFilter,
-      builder: (context, state) => Row(
-        children: [
-          OutlinedButton.icon(
-            onPressed: () => CreateSprintDialog.show(context),
-            icon: const Icon(Icons.add, size: 15, color: AppColors.accent),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.border),
-              backgroundColor: AppColors.card,
-              foregroundColor: AppColors.textPrimary,
-            ),
-            label: Text(texts.sprintCreateTitle,
-                style: const TextStyle(fontSize: 12)),
+    return Row(
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => CreateSprintDialog.show(context),
+          icon: const Icon(Icons.add, size: 15, color: AppColors.accent),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: AppColors.border),
+            backgroundColor: AppColors.card,
+            foregroundColor: AppColors.textPrimary,
           ),
-          const Spacer(),
-          StackFilterControl<StackFilter>(
-            options: [
-              (StackFilter.all, texts.stackFilterAll),
-              (StackFilter.ios, texts.stackIos),
-              (StackFilter.android, texts.stackAndroid),
-            ],
-            selected: state.stackFilter,
-            onChanged: (filter) =>
-                context.read<ConsoleBloc>().add(StackFilterChanged(filter)),
-          ),
-        ],
-      ),
+          label:
+              Text(texts.sprintCreateTitle, style: const TextStyle(fontSize: 12)),
+        ),
+        const Spacer(),
+        const StackFilterBar(),
+      ],
     );
   }
 }
 
-/// Спринт создан, но change'ей ещё нет: объясняем и даём первый шаг,
-/// а не показываем пустую таблицу (бриф §8, состояние «Пусто»).
-class _EmptySprint extends StatelessWidget {
-  final String sprintTitle;
+/// Группа есть, а change'ей в ней нет: объясняем и даём первый шаг,
+/// а не показываем пустую таблицу.
+class _EmptyGroup extends StatelessWidget {
+  final String groupTitle;
 
-  const _EmptySprint({required this.sprintTitle});
+  const _EmptyGroup({required this.groupTitle});
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +124,7 @@ class _EmptySprint extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(texts.sprintNoChanges(sprintTitle),
+            Text(texts.sprintNoChanges(groupTitle),
                 textAlign: TextAlign.center,
                 style: AppTextStyles.sectionTitle),
             const SizedBox(height: AppDimens.gapS),
@@ -141,7 +134,7 @@ class _EmptySprint extends StatelessWidget {
             const SizedBox(height: AppDimens.gapL),
             FilledButton.icon(
               onPressed: () => CreateChangeDialog.show(
-                  context, context.read<ConsoleBloc>().state.sprint?.id ?? ''),
+                  context, context.read<ConsoleBloc>().state.group?.id ?? ''),
               icon: const Icon(Icons.add, size: 16),
               style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
@@ -230,14 +223,14 @@ class _DivergenceBlock extends StatelessWidget {
 
 class _ChangesTable extends StatelessWidget {
   final List<ChangeUnit> changes;
+  final List<String> columns;
   final List<Divergence> divergences;
-  final StackFilter filter;
   final String redmineBaseUrl;
 
   const _ChangesTable({
     required this.changes,
+    required this.columns,
     required this.divergences,
-    required this.filter,
     required this.redmineBaseUrl,
   });
 
@@ -246,29 +239,44 @@ class _ChangesTable extends StatelessWidget {
           divergence.changeId == change.id && divergence.stack == stack);
 
   @override
-  Widget build(BuildContext context) => SectionCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            _TableHeader(filter: filter),
-            for (final (index, change) in changes.indexed)
-              _ChangeRow(
-                change: change,
-                filter: filter,
-                redmineBaseUrl: redmineBaseUrl,
-                showTopDivider: index > 0,
-                iosDiverged: _hasDivergence(change, 'ios'),
-                androidDiverged: _hasDivergence(change, 'android'),
-              ),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    // Колонок нет (у спеки нет стеков) — показываем одну колонку работы.
+    final columnStacks = columns.isEmpty ? [''] : columns;
+    final stackFlex = (58 / columnStacks.length).round();
+    return SectionCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          _TableHeader(
+            columns: [
+              for (final stack in columnStacks) texts.stackLabel(stack),
+            ],
+            stackFlex: stackFlex,
+          ),
+          for (final (index, change) in changes.indexed)
+            _ChangeRow(
+              change: change,
+              columns: columnStacks,
+              stackFlex: stackFlex,
+              redmineBaseUrl: redmineBaseUrl,
+              showTopDivider: index > 0,
+              divergedStacks: {
+                for (final stack in columnStacks)
+                  if (_hasDivergence(change, stack)) stack,
+              },
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _TableHeader extends StatelessWidget {
-  final StackFilter filter;
+  final List<String> columns;
+  final int stackFlex;
 
-  const _TableHeader({required this.filter});
+  const _TableHeader({required this.columns, required this.stackFlex});
 
   @override
   Widget build(BuildContext context) {
@@ -284,20 +292,13 @@ class _TableHeader extends StatelessWidget {
               flex: 42,
               child: Text(texts.tableHeaderChange,
                   style: AppTextStyles.sectionLabel)),
-          if (filter.allows('ios'))
+          for (final label in columns)
             Expanded(
-                flex: filter == StackFilter.all ? 29 : 58,
-                child: Text(texts.tableHeaderIos,
-                    style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary))),
-          if (filter.allows('android'))
-            Expanded(
-                flex: filter == StackFilter.all ? 29 : 58,
-                child: Text(texts.tableHeaderAndroid,
-                    style: AppTextStyles.sectionLabel
-                        .copyWith(color: AppColors.textSecondary))),
+              flex: stackFlex,
+              child: Text(label,
+                  style: AppTextStyles.sectionLabel
+                      .copyWith(color: AppColors.textSecondary)),
+            ),
         ],
       ),
     );
@@ -306,20 +307,24 @@ class _TableHeader extends StatelessWidget {
 
 class _ChangeRow extends StatelessWidget {
   final ChangeUnit change;
-  final StackFilter filter;
+  final List<String> columns;
+  final int stackFlex;
   final String redmineBaseUrl;
   final bool showTopDivider;
-  final bool iosDiverged;
-  final bool androidDiverged;
+  final Set<String> divergedStacks;
 
   const _ChangeRow({
     required this.change,
-    required this.filter,
+    required this.columns,
+    required this.stackFlex,
     required this.redmineBaseUrl,
     required this.showTopDivider,
-    required this.iosDiverged,
-    required this.androidDiverged,
+    required this.divergedStacks,
   });
+
+  /// Колонка без имени стека — единственный «стек работы» change'а.
+  StackState? _stackFor(String stack) =>
+      stack.isEmpty ? change.stacks.firstOrNull : change.stack(stack);
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -349,20 +354,12 @@ class _ChangeRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (filter.allows('ios'))
+              for (final stack in columns)
                 Expanded(
-                  flex: filter == StackFilter.all ? 29 : 58,
+                  flex: stackFlex,
                   child: _StackCell(
-                      stack: change.ios,
-                      diverged: iosDiverged,
-                      redmineBaseUrl: redmineBaseUrl),
-                ),
-              if (filter.allows('android'))
-                Expanded(
-                  flex: filter == StackFilter.all ? 29 : 58,
-                  child: _StackCell(
-                      stack: change.android,
-                      diverged: androidDiverged,
+                      stack: _stackFor(stack),
+                      diverged: divergedStacks.contains(stack),
                       redmineBaseUrl: redmineBaseUrl),
                 ),
             ],
@@ -397,12 +394,23 @@ class _StackCell extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StatusBadge(
-                text: status ?? texts.statusUnavailable,
-                dotColor: status == null
-                    ? AppColors.textMuted
-                    : AppColors.forRedmineStatus(status),
-                muted: status == null,
+              // Статус из файла показывается приглушённо: человек не должен
+              // принять вчерашние данные за живые.
+              Tooltip(
+                message: stackState.statusFromCache
+                    ? texts.statusFromCacheHint
+                    : '',
+                child: StatusBadge(
+                  text: status == null
+                      ? texts.statusUnavailable
+                      : stackState.statusFromCache
+                          ? '$status · ${texts.statusFromCache}'
+                          : status,
+                  dotColor: status == null || stackState.statusFromCache
+                      ? AppColors.textMuted
+                      : AppColors.forRedmineStatus(status),
+                  muted: status == null || stackState.statusFromCache,
+                ),
               ),
               const SizedBox(height: 3),
               RedmineIssueLink(
@@ -413,17 +421,18 @@ class _StackCell extends StatelessWidget {
             ],
           ),
         ),
-        MarksIndicator(
-          doneCount: stackState.doneCount,
-          totalCount: stackState.tasks.length,
-          diverged: diverged,
-          openTaskLabel: openTasks.isEmpty
-              ? null
-              : texts.marksOpenTask(openTasks.first.number),
-          tooltip: openTasks.isEmpty
-              ? (diverged ? texts.marksTooltipDiverged : null)
-              : texts.marksTooltipNotClosed(_openTasksSummary(openTasks)),
-        ),
+        if (stackState.tasks.isNotEmpty)
+          MarksIndicator(
+            doneCount: stackState.doneCount,
+            totalCount: stackState.tasks.length,
+            diverged: diverged,
+            openTaskLabel: openTasks.isEmpty
+                ? null
+                : texts.marksOpenTask(openTasks.first.number),
+            tooltip: openTasks.isEmpty
+                ? (diverged ? texts.marksTooltipDiverged : null)
+                : texts.marksTooltipNotClosed(_openTasksSummary(openTasks)),
+          ),
         const SizedBox(width: AppDimens.gapS),
       ],
     );
@@ -435,15 +444,14 @@ class _StackCell extends StatelessWidget {
 
 class _NextStepSection extends StatelessWidget {
   final List<ChangeUnit> changes;
-  final StackFilter filter;
 
-  const _NextStepSection({required this.changes, required this.filter});
+  const _NextStepSection({required this.changes});
 
-  /// Самая частая незакрытая задача по видимым стекам спринта.
-  (TaskItem, int)? _mostFrequentOpenTask() {
+  /// Самая частая незакрытая задача по видимым стекам группы.
+  (TaskItem, int)? _mostFrequentOpenTask(ConsoleState state) {
     final openTasks = changes
         .expand((change) => change.stacks)
-        .where((stack) => filter.allows(stack.stack))
+        .where((stack) => state.allowsStack(stack.stack))
         .expand((stack) => stack.openTasks);
     final countsByNumber = <String, (TaskItem, int)>{};
     for (final task in openTasks) {
@@ -457,13 +465,17 @@ class _NextStepSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    final topOpenTask = _mostFrequentOpenTask();
-    if (topOpenTask == null) return const SizedBox.shrink();
-    final (task, occurrences) = topOpenTask;
-    return NextStepBanner(
-      title: texts.nextStepTitle(task.number, task.title, occurrences),
-      reason: texts.nextStepReason,
-      command: texts.nextStepCommand,
+    return BlocBuilder<ConsoleBloc, ConsoleState>(
+      builder: (context, state) {
+        final topOpenTask = _mostFrequentOpenTask(state);
+        if (topOpenTask == null) return const SizedBox.shrink();
+        final (task, occurrences) = topOpenTask;
+        return NextStepBanner(
+          title: texts.nextStepTitle(task.number, task.title, occurrences),
+          reason: texts.nextStepReason,
+          command: texts.nextStepCommand,
+        );
+      },
     );
   }
 }

@@ -9,17 +9,20 @@ import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/handoff_blocker.dart';
 import '../../domain/entities/handoff_recipient.dart';
-import '../../domain/entities/sprint.dart';
+import '../../domain/entities/group.dart';
+import '../../domain/entities/project_profile.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
-import '../ui_kit/stack_filter_control.dart';
+import '../widgets/feature_unavailable_view.dart';
+import '../widgets/stack_filter_bar.dart';
 
-/// Передача спринта: мастер из четырёх шагов, все видны сразу,
-/// недоступные приглушены (бриф §5.3).
+/// Передача группы: мастер из четырёх шагов, все видны сразу.
+/// Шаг, для которого у спеки нет данных, не исчезает — он объясняет,
+/// чего не хватает.
 class HandoffScreen extends StatefulWidget {
   const HandoffScreen({super.key});
 
@@ -35,15 +38,21 @@ class _HandoffScreenState extends State<HandoffScreen> {
   Widget build(BuildContext context) => BlocBuilder<ConsoleBloc, ConsoleState>(
         builder: (context, state) {
           final snapshot = state.snapshot;
-          final sprint = state.sprint;
-          if (snapshot == null || sprint == null) {
+          if (snapshot == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final sprintChanges = state.sprintChanges;
+          final group = state.group;
+          if (!state.profile.enabled(SpecFeature.handoff) || group == null) {
+            return FeatureUnavailableView(
+                feature: SpecFeature.handoff,
+                gate: state.profile.gate(SpecFeature.handoff));
+          }
+          final groupChanges = state.groupChanges;
           final readiness = AssessHandoffReadiness()(
-            sprint: sprint,
-            changes: sprintChanges,
-            stackVisible: state.stackFilter.allows,
+            group: group,
+            changes: groupChanges,
+            semantics: state.profile.statuses,
+            stackVisible: state.allowsStack,
           );
           return ListView(
             padding: AppDimens.screenPadding,
@@ -59,12 +68,10 @@ class _HandoffScreenState extends State<HandoffScreen> {
                       children: [
                         _ReadinessStep(readiness: readiness),
                         const SizedBox(height: AppDimens.gapL),
-                        _BuildStep(sprint: sprint),
+                        _BuildStep(group: group, stacks: state.stacks),
                         const SizedBox(height: AppDimens.gapL),
                         _RecipientsStep(
-                          stack: state.stackFilter == StackFilter.android
-                              ? 'android'
-                              : 'ios',
+                          stack: state.handoffStack,
                           selectedTester: _tester,
                           selectedManager: _manager,
                           onTesterSelected: (person) =>
@@ -79,14 +86,11 @@ class _HandoffScreenState extends State<HandoffScreen> {
                   Expanded(
                     flex: 50,
                     child: _PreviewStep(
-                      sprint: sprint,
-                      changes: sprintChanges,
+                      group: group,
+                      changes: groupChanges,
                       readiness: readiness,
-                      stackFilter: state.stackFilter,
-                      recipients: state.recipientsStack ==
-                              (state.stackFilter == StackFilter.android
-                                  ? 'android'
-                                  : 'ios')
+                      stack: state.handoffStack,
+                      recipients: state.recipientsStack == state.handoffStack
                           ? state.recipients
                           : null,
                       chosenTester: _tester,
@@ -105,28 +109,8 @@ class _FilterRow extends StatelessWidget {
   const _FilterRow();
 
   @override
-  Widget build(BuildContext context) {
-    final texts = AppLocalizations.of(context);
-    return BlocBuilder<ConsoleBloc, ConsoleState>(
-      buildWhen: (previous, current) =>
-          previous.stackFilter != current.stackFilter,
-      builder: (context, state) => Row(
-        children: [
-          const Spacer(),
-          StackFilterControl<StackFilter>(
-            options: [
-              (StackFilter.all, texts.stackFilterAll),
-              (StackFilter.ios, texts.stackIos),
-              (StackFilter.android, texts.stackAndroid),
-            ],
-            selected: state.stackFilter,
-            onChanged: (filter) =>
-                context.read<ConsoleBloc>().add(StackFilterChanged(filter)),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      const Row(children: [Spacer(), StackFilterBar()]);
 }
 
 class _StepHeader extends StatelessWidget {
@@ -255,32 +239,45 @@ class _BlockerRow extends StatelessWidget {
   }
 }
 
+/// Сборки ведёт не каждая спека: нет builds.yaml — шаг показывается
+/// недоступным с причиной, а не пустыми строками «не записана».
 class _BuildStep extends StatelessWidget {
-  final Sprint sprint;
+  final Group group;
+  final List<String> stacks;
 
-  const _BuildStep({required this.sprint});
+  const _BuildStep({required this.group, required this.stacks});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    final recorded = sprint.buildIos != null || sprint.buildAndroid != null;
+    final tracked = group.builds.isNotEmpty;
+    final rows = stacks.isEmpty ? group.builds.keys.toList() : stacks;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _StepHeader(
           number: 2,
           title: texts.handoffStepBuild,
-          color: recorded ? AppColors.success : AppColors.warning,
+          color: tracked ? AppColors.success : AppColors.textMuted,
+          dimmed: !tracked,
         ),
         SectionCard(
-          child: Column(
-            children: [
-              _BuildRow(label: texts.stackIos, buildInfo: sprint.buildIos),
-              const SizedBox(height: 10),
-              _BuildRow(
-                  label: texts.stackAndroid, buildInfo: sprint.buildAndroid),
-            ],
-          ),
+          child: tracked
+              ? Column(
+                  children: [
+                    for (final (index, stack) in rows.indexed) ...[
+                      if (index > 0) const SizedBox(height: 10),
+                      _BuildRow(
+                          label: texts.stackLabel(stack),
+                          buildInfo: group.buildFor(stack)),
+                    ],
+                  ],
+                )
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(texts.buildsNotTracked,
+                      style: AppTextStyles.captionMuted),
+                ),
         ),
       ],
     );
@@ -559,19 +556,19 @@ class _RecipientOption extends StatelessWidget {
 }
 
 class _PreviewStep extends StatelessWidget {
-  final Sprint sprint;
+  final Group group;
   final List<ChangeUnit> changes;
   final HandoffReadiness readiness;
-  final StackFilter stackFilter;
+  final String stack;
   final HandoffRecipients? recipients;
   final HandoffRecipient? chosenTester;
   final HandoffRecipient? chosenManager;
 
   const _PreviewStep({
-    required this.sprint,
+    required this.group,
     required this.changes,
     required this.readiness,
-    required this.stackFilter,
+    required this.stack,
     required this.recipients,
     required this.chosenTester,
     required this.chosenManager,
@@ -584,12 +581,13 @@ class _PreviewStep extends StatelessWidget {
       chosenManager ?? recipients?.managers.firstOrNull;
 
   /// Стек сообщения: передача идёт по одному стеку за раз.
-  String get _messageStack =>
-      stackFilter == StackFilter.android ? 'android' : 'ios';
+  String get _messageStack => stack;
 
   /// Точная команда платформы — она же уйдёт в агентную сессию.
+  /// Стека может не быть вовсе — тогда и флага в команде нет.
   String get _handoffCommand =>
-      '/opsx-sprint ${sprint.id} handover --stack $_messageStack';
+      '/opsx-sprint ${group.id} handover'
+      '${_messageStack.isEmpty ? '' : ' --stack $_messageStack'}';
 
   /// Команда с уточнением получателей: скрипт подбирает список, а кого
   /// именно назначить — решает человек здесь.
@@ -649,8 +647,7 @@ class _PreviewStep extends StatelessWidget {
 
   String _buildMessage(AppLocalizations texts) {
     final stack = _messageStack;
-    final build =
-        stack == 'ios' ? sprint.buildIos : sprint.buildAndroid;
+    final build = group.buildFor(stack);
     final stackChanges = changes
         .where((change) =>
             change.stacks.any((candidate) => candidate.stack == stack))
@@ -662,7 +659,7 @@ class _PreviewStep extends StatelessWidget {
     };
     final lines = [
       texts.handoverMsgTitle,
-      texts.handoverMsgSprint(sprint.title),
+      texts.handoverMsgSprint(group.title),
       texts.handoverMsgStack(texts.stackLabel(stack)),
       texts.handoverMsgRecipients(
           _tester?.mention ?? '@—', _manager?.mention ?? '@—'),
