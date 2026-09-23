@@ -6,6 +6,9 @@ import 'package:yaml/yaml.dart';
 
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/doc_node.dart';
+import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/status_semantics.dart';
@@ -282,6 +285,129 @@ class PlatformFilesSource {
     ];
     _sortByDeliveryOrder(changes);
     return changes;
+  }
+
+  /// Архивные change'и: `openspec/changes/archive/<YYYY-MM-DD>-<change>`.
+  /// Дата берётся из имени каталога, а id — очищенным от неё: иначе
+  /// связь с задачей трекера и группой рвётся.
+  List<ChangeUnit> loadArchivedChanges() {
+    final archiveDir =
+        Directory(p.join(root.path, 'openspec', 'changes', 'archive'));
+    if (!archiveDir.existsSync()) return [];
+    final datePrefix = RegExp(r'^(\d{4}-\d{2}-\d{2})[-_](.+)$');
+    final changes = [
+      for (final entry in archiveDir.listSync().whereType<Directory>())
+        () {
+          final name = p.basename(entry.path);
+          final match = datePrefix.firstMatch(name);
+          final changeId = match?.group(2) ?? name;
+          final archivedAt = DateTime.tryParse(match?.group(1) ?? '');
+          final change = _loadChange(changeId, entry);
+          return ChangeUnit(
+            id: change.id,
+            title: change.title,
+            dir: change.dir,
+            groupId: change.groupId,
+            stackStates: change.stackStates,
+            dependsOn: change.dependsOn,
+            formatWarning: change.formatWarning,
+            archivedAt: archivedAt,
+          );
+        }(),
+    ];
+    // Свежий архив сверху: без даты — в конец, туда же и одноимённые.
+    changes.sort((a, b) =>
+        (b.archivedAt ?? DateTime(0)).compareTo(a.archivedAt ?? DateTime(0)));
+    return changes;
+  }
+
+  // ─── Документы ─────────────────────────────────────────────────────────────
+
+  /// Дерево документов: группа → её change'и → файлы артефактов схемы.
+  /// Мастер-спека, лежащая одним файлом, — это документ самой группы,
+  /// у неё нет каталога. Архив идёт отдельным узлом в конце.
+  List<DocNode> loadDocTree(List<Group> groups, List<ChangeUnit> changes,
+      {List<ChangeUnit> archived = const []}) {
+    final nodes = [
+      for (final group in groups)
+        DocNode(
+          id: group.id,
+          title: group.title,
+          kind: DocNodeKind.group,
+          branch: group.branches.values.firstOrNull ?? '',
+          docs: [
+            if (group.docPath case final path?)
+              DocArtifact(
+                p.basename(path),
+                p.basename(path),
+                path,
+                File(path).existsSync(),
+                id: group.kind == GroupingKind.masterDoc
+                    ? DocArtifact.masterDocId
+                    : DocArtifact.groupDocId,
+              ),
+          ],
+          children: [
+            for (final id in group.changeIds)
+              ...changes
+                  .where((change) => change.id == id)
+                  .map((change) => _changeDocNode(change)),
+          ],
+        ),
+    ];
+    if (archived.isNotEmpty) {
+      nodes.add(DocNode(
+        id: archiveNodeId,
+        title: '',
+        kind: DocNodeKind.archivedChange,
+        children: [for (final change in archived) _changeDocNode(change)],
+      ));
+    }
+    return nodes;
+  }
+
+  /// Идентификатор узла архива — заголовок ему даёт слой представления.
+  static const archiveNodeId = '::archive';
+
+  DocNode _changeDocNode(ChangeUnit change) => DocNode(
+        id: change.id,
+        title: change.title,
+        kind: change.archived ? DocNodeKind.archivedChange : DocNodeKind.change,
+        branch: change.archived ? '' : loadSchema().branchFor(change.id),
+        archivedAt: change.archivedAt,
+        docs: _changeDocs(change),
+      );
+
+  /// Файлы change'а: одиночные артефакты схемы в объявленном ею порядке,
+  /// плюс markdown, которого схема не знает, — он всё равно документ.
+  /// У архивного change'а ненаписанных артефактов не показываем: работа
+  /// сдана, и «чего в ней не хватает» — уже не вопрос.
+  List<DocArtifact> _changeDocs(ChangeUnit change) {
+    final schema = loadSchema();
+    final declared = [
+      for (final artifact in schema.artifacts)
+        if (artifact.isSingleFile &&
+            (!change.archived ||
+                File(p.join(change.dir, artifact.generates)).existsSync()))
+          DocArtifact(
+            artifact.description.isEmpty ? artifact.id : artifact.description,
+            artifact.generates,
+            p.join(change.dir, artifact.generates),
+            File(p.join(change.dir, artifact.generates)).existsSync(),
+            id: artifact.id,
+          ),
+    ];
+    final known = {for (final doc in declared) doc.fileName};
+    final dir = Directory(change.dir);
+    final extra = [
+      for (final entry in dir.existsSync()
+          ? dir.listSync().whereType<File>()
+          : <File>[])
+        if (entry.path.endsWith('.md') && !known.contains(p.basename(entry.path)))
+          DocArtifact(p.basenameWithoutExtension(p.basename(entry.path)),
+              p.basename(entry.path), entry.path, true),
+    ]..sort((a, b) => a.fileName.compareTo(b.fileName));
+    return [...declared, ...extra];
   }
 
   /// Порядок сдачи задан списком group.members — он общий у всех change'ей.
@@ -814,6 +940,26 @@ class PlatformFilesSource {
         commandLog?.complete(run, output: '$error', exitCode: 1);
       }
     }
+  }
+
+  /// Ветка спеки и состояние файла документа в ней: документы правит
+  /// и агент, и человек, поэтому «что именно я читаю» — часть экрана.
+  Future<DocState> docState(String absolutePath) async {
+    final branch = await _git(root.path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (branch == null) return DocState.unknown;
+    final relative = p.relative(absolutePath, from: root.path);
+    final status = await _git(root.path, ['status', '--porcelain', '--', relative]);
+    if (status == null) {
+      return DocState(branch: branch, file: DocFileState.unknown);
+    }
+    return DocState(
+      branch: branch,
+      file: switch (status.trim()) {
+        '' => DocFileState.clean,
+        final line when line.startsWith('??') => DocFileState.untracked,
+        _ => DocFileState.modified,
+      },
+    );
   }
 
   Future<({String branch, int behind})?> workspaceGitInfo(String repoDirName) =>

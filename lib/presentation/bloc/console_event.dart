@@ -30,6 +30,25 @@ class DocOpened extends ConsoleEvent {
   DocOpened(this.doc);
 }
 
+/// Открыть документ на экране «Документы».
+class DocsFileOpened extends ConsoleEvent {
+  final DocArtifact doc;
+  DocsFileOpened(this.doc);
+}
+
+class _DocsFileLoaded extends ConsoleEvent {
+  final String path;
+  final String? content;
+  final DocState state;
+  _DocsFileLoaded(this.path, this.content, this.state);
+}
+
+/// Свернуть или развернуть узел дерева документов.
+class DocsNodeToggled extends ConsoleEvent {
+  final String nodeId;
+  DocsNodeToggled(this.nodeId);
+}
+
 /// Открыть или закрыть экран смены спеки.
 class SpecSwitchRequested extends ConsoleEvent {
   final bool open;

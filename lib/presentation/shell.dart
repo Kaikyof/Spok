@@ -16,6 +16,7 @@ import 'bloc/console_bloc.dart';
 import 'bloc/sessions_bloc.dart';
 import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
+import 'screens/docs_screen.dart';
 import 'screens/env_screen.dart';
 import 'screens/handoff_screen.dart';
 import 'screens/group_screen.dart';
@@ -98,6 +99,7 @@ class _ScreenSwitcher extends StatelessWidget {
         ConsoleScreen.changes => const ChangeScreen(),
         ConsoleScreen.env => const EnvScreen(),
         ConsoleScreen.handoff => const HandoffScreen(),
+        ConsoleScreen.docs => const DocsScreen(),
         ConsoleScreen.sessions => const SessionsScreen(),
       },
     );
@@ -118,6 +120,7 @@ class _Sidebar extends StatelessWidget {
       (ConsoleScreen.handoff, texts.navHandoff, SpecFeature.handoff),
       (ConsoleScreen.env, texts.navEnv, null),
       (ConsoleScreen.sessions, texts.navSessions, null),
+      (ConsoleScreen.docs, texts.navDocs, null),
     ];
     return Container(
       width: AppDimens.sidebarWidth,

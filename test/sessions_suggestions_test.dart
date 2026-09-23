@@ -2,19 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:platform_console/core/resources/app_dimens.dart';
-import 'package:platform_console/domain/entities/console_snapshot.dart';
-import 'package:platform_console/domain/entities/env_field.dart';
-import 'package:platform_console/domain/entities/env_report.dart';
-import 'package:platform_console/domain/entities/handoff_recipient.dart';
-import 'package:platform_console/domain/entities/issue_comment.dart';
-import 'package:platform_console/domain/entities/merge_request_info.dart';
-import 'package:platform_console/domain/entities/slash_command.dart';
-import 'package:platform_console/domain/repositories/platform_repository.dart';
-import 'package:platform_console/domain/usecases/suggest_command_arguments.dart';
-import 'package:platform_console/l10n/gen/app_localizations.dart';
-import 'package:platform_console/presentation/bloc/sessions_bloc.dart';
-import 'package:platform_console/presentation/screens/sessions_screen.dart';
+import 'package:spok/core/resources/app_dimens.dart';
+import 'package:spok/domain/entities/console_snapshot.dart';
+import 'package:spok/domain/entities/doc_state.dart';
+import 'package:spok/domain/entities/env_field.dart';
+import 'package:spok/domain/entities/env_report.dart';
+import 'package:spok/domain/entities/handoff_recipient.dart';
+import 'package:spok/domain/entities/issue_comment.dart';
+import 'package:spok/domain/entities/merge_request_info.dart';
+import 'package:spok/domain/entities/slash_command.dart';
+import 'package:spok/domain/repositories/platform_repository.dart';
+import 'package:spok/domain/usecases/suggest_command_arguments.dart';
+import 'package:spok/l10n/gen/app_localizations.dart';
+import 'package:spok/presentation/bloc/sessions_bloc.dart';
+import 'package:spok/presentation/screens/sessions_screen.dart';
 
 class _FakePlatformRepository implements PlatformRepository {
   @override
@@ -56,6 +57,12 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   Future<String> readDoc(String absolutePath) async => '';
+
+  @override
+  Future<DocState> docState(String absolutePath) async => DocState.unknown;
+
+  @override
+  Future<bool> openInEditor(String absolutePath) async => false;
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];

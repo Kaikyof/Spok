@@ -1,9 +1,10 @@
 // ignore_for_file: avoid_print
 // Смоук: читает реальные файлы спеки и печатает слепок без UI.
 // Путь к спеке — SPEC_PLATFORM_DIR, конфиг приложения или типовые пути.
-import 'package:platform_console/data/repositories/platform_repository_impl.dart';
-import 'package:platform_console/data/sources/platform_files_source.dart';
-import 'package:platform_console/domain/entities/project_profile.dart';
+import 'package:spok/data/repositories/platform_repository_impl.dart';
+import 'package:spok/data/sources/platform_files_source.dart';
+import 'package:spok/domain/entities/doc_node.dart';
+import 'package:spok/domain/entities/project_profile.dart';
 
 Future<void> main() async {
   final source = PlatformFilesSource.locate();
@@ -47,6 +48,23 @@ Future<void> main() async {
     print('  ${change.id}: «${change.title}» $stacks deps=${change.dependsOn}');
   }
   print('divergences: ${snapshot.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.kind.name} open=${d.openTaskNumbers}').join(' | ')}');
+  print('документы:');
+  void printDocs(DocNode node, String indent) {
+    print('$indent${node.id.isEmpty ? '(вне групп)' : node.id} '
+        '[${node.kind.name}] «${node.title}» '
+        '${node.presentCount}/${node.declaredCount}'
+        '${node.archivedAt == null ? '' : ' архив ${node.archivedAt}'}');
+    for (final doc in node.docs) {
+      print('$indent  ${doc.exists ? '✓' : '○'} ${doc.fileName} [${doc.id}]');
+    }
+    for (final child in node.children) {
+      printDocs(child, '$indent  ');
+    }
+  }
+
+  for (final node in snapshot.docs) {
+    printDocs(node, '  ');
+  }
   print('commands: ${repository.slashCommands().length}');
   print('env problems: ${snapshot.env.problemCount}');
   for (final check in snapshot.env.all) {

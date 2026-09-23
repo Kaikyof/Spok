@@ -1,4 +1,5 @@
 import '../entities/console_snapshot.dart';
+import '../entities/doc_state.dart';
 import '../entities/env_field.dart';
 import '../entities/handoff_recipient.dart';
 import '../entities/issue_comment.dart';
@@ -33,6 +34,12 @@ abstract class PlatformRepository {
 
   /// Читает markdown-файл документации (внутри репозитория платформы).
   Future<String> readDoc(String absolutePath);
+
+  /// Ветка спеки и состояние файла документа в ней.
+  Future<DocState> docState(String absolutePath);
+
+  /// Открывает файл в установленном редакторе; false — открыть нечем.
+  Future<bool> openInEditor(String absolutePath);
 
   /// Лента комментариев задач change'а; пустая, если Redmine недоступен.
   Future<List<IssueComment>> issueComments(List<int> issueIds);

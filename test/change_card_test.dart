@@ -4,24 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:platform_console/domain/entities/change_unit.dart';
-import 'package:platform_console/domain/entities/console_snapshot.dart';
-import 'package:platform_console/domain/entities/env_field.dart';
-import 'package:platform_console/domain/entities/group.dart';
-import 'package:platform_console/domain/entities/env_report.dart';
-import 'package:platform_console/domain/entities/handoff_recipient.dart';
-import 'package:platform_console/domain/entities/issue_comment.dart';
-import 'package:platform_console/domain/entities/merge_request_info.dart';
-import 'package:platform_console/domain/entities/project_profile.dart';
-import 'package:platform_console/domain/entities/slash_command.dart';
-import 'package:platform_console/domain/entities/spec_schema.dart';
-import 'package:platform_console/domain/entities/stack_state.dart';
-import 'package:platform_console/domain/entities/task_item.dart';
-import 'package:platform_console/domain/repositories/platform_repository.dart';
-import 'package:platform_console/l10n/gen/app_localizations.dart';
-import 'package:platform_console/presentation/bloc/console_bloc.dart';
-import 'package:platform_console/presentation/bloc/sessions_bloc.dart';
-import 'package:platform_console/presentation/screens/change_screen.dart';
+import 'package:spok/domain/entities/change_unit.dart';
+import 'package:spok/domain/entities/console_snapshot.dart';
+import 'package:spok/domain/entities/doc_state.dart';
+import 'package:spok/domain/entities/env_field.dart';
+import 'package:spok/domain/entities/group.dart';
+import 'package:spok/domain/entities/env_report.dart';
+import 'package:spok/domain/entities/handoff_recipient.dart';
+import 'package:spok/domain/entities/issue_comment.dart';
+import 'package:spok/domain/entities/merge_request_info.dart';
+import 'package:spok/domain/entities/project_profile.dart';
+import 'package:spok/domain/entities/slash_command.dart';
+import 'package:spok/domain/entities/spec_schema.dart';
+import 'package:spok/domain/entities/stack_state.dart';
+import 'package:spok/domain/entities/task_item.dart';
+import 'package:spok/domain/repositories/platform_repository.dart';
+import 'package:spok/l10n/gen/app_localizations.dart';
+import 'package:spok/presentation/bloc/console_bloc.dart';
+import 'package:spok/presentation/bloc/sessions_bloc.dart';
+import 'package:spok/presentation/screens/change_screen.dart';
 
 /// Схема спеки: спека изменения, дизайн после неё, задачи стека.
 const _schema = SpecSchema(
@@ -127,6 +128,12 @@ class _FakeRepository implements PlatformRepository {
   // не успевает завершиться до проверок.
   Future<String> readDoc(String absolutePath) async =>
       File(absolutePath).readAsStringSync();
+
+  @override
+  Future<DocState> docState(String absolutePath) async => DocState.unknown;
+
+  @override
+  Future<bool> openInEditor(String absolutePath) async => false;
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];

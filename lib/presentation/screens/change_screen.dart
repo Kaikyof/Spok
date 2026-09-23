@@ -24,6 +24,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
+import '../ui_kit/doc_markdown.dart';
 import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
@@ -1249,43 +1250,10 @@ class _DocViewer extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimens.cardRadius),
               border: Border.all(color: AppColors.borderSoft),
             ),
-            child: Markdown(
-              data: content ?? texts.docReadError(doc.path),
-              padding: const EdgeInsets.all(AppDimens.gapXl),
-              styleSheet: _markdownStyle(),
-            ),
+            child: DocMarkdown(data: content ?? texts.docReadError(doc.path)),
           ),
         ),
       ],
     );
   }
-
-  MarkdownStyleSheet _markdownStyle() => MarkdownStyleSheet(
-        p: AppTextStyles.body.copyWith(height: 1.5),
-        h1: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary),
-        h2: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary),
-        h3: const TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary),
-        code: AppTextStyles.monospace(12),
-        codeblockDecoration: BoxDecoration(
-            color: AppColors.logBackground,
-            borderRadius: BorderRadius.circular(AppDimens.controlRadius)),
-        listBullet: AppTextStyles.body,
-        blockquoteDecoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-          border:
-              const Border(left: BorderSide(color: AppColors.accent, width: 3)),
-        ),
-        tableBorder: TableBorder.all(color: AppColors.borderSoft),
-        tableBody: AppTextStyles.caption,
-      );
 }

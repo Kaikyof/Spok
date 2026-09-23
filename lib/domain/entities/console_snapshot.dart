@@ -1,5 +1,6 @@
 import 'change_unit.dart';
 import 'divergence.dart';
+import 'doc_node.dart';
 import 'env_report.dart';
 import 'group.dart';
 import 'project_profile.dart';
@@ -15,6 +16,9 @@ class ConsoleSnapshot {
   final List<Divergence> divergences;
   final EnvReport env;
 
+  /// Дерево документов спеки: группы, их change'и и архив.
+  final List<DocNode> docs;
+
   /// Что распознано в спеке: схема, статусы, стеки, доступные фичи.
   final ProjectProfile profile;
 
@@ -28,6 +32,7 @@ class ConsoleSnapshot {
     required this.changes,
     required this.divergences,
     required this.env,
+    this.docs = const [],
     this.profile = const ProjectProfile(),
     required this.redmineProblem,
     this.redmineProblemDetail = '',

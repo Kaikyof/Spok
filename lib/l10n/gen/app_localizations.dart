@@ -445,7 +445,7 @@ abstract class AppLocalizations {
   /// No description provided for @artifactMissing.
   ///
   /// In ru, this message translates to:
-  /// **'файла нет'**
+  /// **'объявлен схемой, файла нет'**
   String get artifactMissing;
 
   /// No description provided for @codeOffSpec.
@@ -2240,6 +2240,144 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Передача'**
   String get roleHandover;
+
+  /// No description provided for @navDocs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Документы'**
+  String get navDocs;
+
+  /// No description provided for @docsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'ДОКУМЕНТЫ СПЕКИ'**
+  String get docsTitle;
+
+  /// No description provided for @docsTreeCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{present} из {declared}'**
+  String docsTreeCount(int present, int declared);
+
+  /// No description provided for @docsArchiveTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Архив'**
+  String get docsArchiveTitle;
+
+  /// No description provided for @docsArchivedAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'в архиве с {date}'**
+  String docsArchivedAt(String date);
+
+  /// No description provided for @docsArchivedNoDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'в архиве, дата не указана'**
+  String get docsArchivedNoDate;
+
+  /// No description provided for @docsUngrouped.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вне групп'**
+  String get docsUngrouped;
+
+  /// No description provided for @docsMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мастер-спека'**
+  String get docsMasterDoc;
+
+  /// No description provided for @docsGroupDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Документ группы'**
+  String get docsGroupDoc;
+
+  /// No description provided for @docsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В спеке нет ни одного документа'**
+  String get docsEmpty;
+
+  /// No description provided for @docsEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Документы появляются вместе с change\'ами: спека изменения, дизайн-решения и задачи лежат в его каталоге.'**
+  String get docsEmptyHint;
+
+  /// No description provided for @docsNothingOpened.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите документ слева'**
+  String get docsNothingOpened;
+
+  /// No description provided for @docsNothingOpenedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дерево повторяет устройство спеки: группа, её change\'и и файлы артефактов схемы.'**
+  String get docsNothingOpenedHint;
+
+  /// No description provided for @docsMissingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файла нет'**
+  String get docsMissingTitle;
+
+  /// No description provided for @docsMissingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Артефакт {file} объявлен схемой, но ещё не написан.'**
+  String docsMissingHint(String file);
+
+  /// No description provided for @docsLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Читаем файл…'**
+  String get docsLoading;
+
+  /// No description provided for @docsOpenInIde.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть в IDE'**
+  String get docsOpenInIde;
+
+  /// No description provided for @docsOpenInIdeFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не нашли, чем открыть файл: установите редактор или откройте его вручную'**
+  String get docsOpenInIdeFailed;
+
+  /// No description provided for @docsBranchClean.
+  ///
+  /// In ru, this message translates to:
+  /// **'в ветке {branch}'**
+  String docsBranchClean(String branch);
+
+  /// No description provided for @docsBranchModified.
+  ///
+  /// In ru, this message translates to:
+  /// **'изменён локально · {branch}'**
+  String docsBranchModified(String branch);
+
+  /// No description provided for @docsBranchUntracked.
+  ///
+  /// In ru, this message translates to:
+  /// **'ещё не в git · {branch}'**
+  String docsBranchUntracked(String branch);
+
+  /// No description provided for @docsBranchUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'git не ответил о состоянии файла'**
+  String get docsBranchUnknown;
+
+  /// No description provided for @docsOpenChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть change'**
+  String get docsOpenChange;
 
   /// No description provided for @cancel.
   ///

@@ -1,4 +1,6 @@
 import '../../domain/entities/divergence.dart';
+import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/group.dart';
@@ -32,6 +34,27 @@ extension DomainTextFormatters on AppLocalizations {
         GroupingKind.masterDoc => groupTitleMasterDoc(group!.title),
         GroupingKind.none =>
           amongNamed ? groupTitleUngrouped : groupTitleFlat,
+      };
+
+  /// Подпись документа: известные артефакты схемы — человеческим названием,
+  /// остальные — описанием из схемы или именем файла. Список артефактов
+  /// открытый: спека вправе объявить свои.
+  String docLabel(DocArtifact doc) => switch (doc.id) {
+        DocArtifact.masterDocId => docsMasterDoc,
+        DocArtifact.groupDocId => docsGroupDoc,
+        'proposal' => artifactSpec,
+        'design' => artifactDesign,
+        final id when id.startsWith('tasks-') =>
+          artifactTasksOfStack(stackLabel(id.substring(6))),
+        _ => doc.label.isEmpty ? doc.fileName : doc.label,
+      };
+
+  /// Состояние файла документа в ветке спеки.
+  String docStateLabel(DocState state) => switch (state.file) {
+        DocFileState.clean => docsBranchClean(state.branch),
+        DocFileState.modified => docsBranchModified(state.branch),
+        DocFileState.untracked => docsBranchUntracked(state.branch),
+        DocFileState.unknown => docsBranchUnknown,
       };
 
   /// Название фичи и одно предложение «зачем она».

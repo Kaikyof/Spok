@@ -218,7 +218,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get artifactReady => 'можно писать';
 
   @override
-  String get artifactMissing => 'файла нет';
+  String get artifactMissing => 'объявлен схемой, файла нет';
 
   @override
   String get codeOffSpec => 'Эта спека не настроена на работу с MR';
@@ -1279,6 +1279,90 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roleHandover => 'Передача';
+
+  @override
+  String get navDocs => 'Документы';
+
+  @override
+  String get docsTitle => 'ДОКУМЕНТЫ СПЕКИ';
+
+  @override
+  String docsTreeCount(int present, int declared) {
+    return '$present из $declared';
+  }
+
+  @override
+  String get docsArchiveTitle => 'Архив';
+
+  @override
+  String docsArchivedAt(String date) {
+    return 'в архиве с $date';
+  }
+
+  @override
+  String get docsArchivedNoDate => 'в архиве, дата не указана';
+
+  @override
+  String get docsUngrouped => 'Вне групп';
+
+  @override
+  String get docsMasterDoc => 'Мастер-спека';
+
+  @override
+  String get docsGroupDoc => 'Документ группы';
+
+  @override
+  String get docsEmpty => 'В спеке нет ни одного документа';
+
+  @override
+  String get docsEmptyHint =>
+      'Документы появляются вместе с change\'ами: спека изменения, дизайн-решения и задачи лежат в его каталоге.';
+
+  @override
+  String get docsNothingOpened => 'Выберите документ слева';
+
+  @override
+  String get docsNothingOpenedHint =>
+      'Дерево повторяет устройство спеки: группа, её change\'и и файлы артефактов схемы.';
+
+  @override
+  String get docsMissingTitle => 'Файла нет';
+
+  @override
+  String docsMissingHint(String file) {
+    return 'Артефакт $file объявлен схемой, но ещё не написан.';
+  }
+
+  @override
+  String get docsLoading => 'Читаем файл…';
+
+  @override
+  String get docsOpenInIde => 'Открыть в IDE';
+
+  @override
+  String get docsOpenInIdeFailed =>
+      'Не нашли, чем открыть файл: установите редактор или откройте его вручную';
+
+  @override
+  String docsBranchClean(String branch) {
+    return 'в ветке $branch';
+  }
+
+  @override
+  String docsBranchModified(String branch) {
+    return 'изменён локально · $branch';
+  }
+
+  @override
+  String docsBranchUntracked(String branch) {
+    return 'ещё не в git · $branch';
+  }
+
+  @override
+  String get docsBranchUnknown => 'git не ответил о состоянии файла';
+
+  @override
+  String get docsOpenChange => 'Открыть change';
 
   @override
   String get cancel => 'Отмена';

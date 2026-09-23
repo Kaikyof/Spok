@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
+import '../../domain/entities/doc_node.dart';
+import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/env_field.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
@@ -56,6 +58,15 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
         (event, emit) => emit(state.copyWith(envForm: () => event.form)));
     on<EnvSaved>(_onEnvSaved);
     on<DocOpened>(_onDocOpened);
+    on<DocsFileOpened>(_onDocsFileOpened);
+    on<_DocsFileLoaded>(_onDocsFileLoaded);
+    on<DocsNodeToggled>((event, emit) => emit(state.copyWith(
+          collapsedDocNodes: {
+            for (final id in state.collapsedDocNodes)
+              if (id != event.nodeId) id,
+            if (!state.collapsedDocNodes.contains(event.nodeId)) event.nodeId,
+          },
+        )));
     on<PlatformPathSubmitted>(_onPathSubmitted);
     on<SpecSwitchRequested>((event, emit) => emit(
         state.copyWith(switchingSpec: event.open, pathRejected: false)));
@@ -158,6 +169,37 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     emit(state.copyWith(envSaving: false, envForm: () => null));
     // Проверки окружения и статусы Redmine зависят от ключей — пересобираем.
     add(ConsoleRefreshed());
+  }
+
+  /// Экран «Документы» читает файл и спрашивает git о его состоянии:
+  /// человек должен видеть, какую версию документа он читает.
+  Future<void> _onDocsFileOpened(
+      DocsFileOpened event, Emitter<ConsoleState> emit) async {
+    emit(state.copyWith(
+      openedDoc: () => event.doc,
+      openedDocContent: () => null,
+      openedDocState: () => null,
+    ));
+    if (!event.doc.exists) return;
+    final doc = event.doc;
+    String? content;
+    try {
+      content = await repository.readDoc(doc.path);
+    } catch (_) {
+      content = null; // экран покажет локализованную ошибку
+    }
+    final docState = await repository.docState(doc.path);
+    if (isClosed) return;
+    add(_DocsFileLoaded(doc.path, content, docState));
+  }
+
+  void _onDocsFileLoaded(_DocsFileLoaded event, Emitter<ConsoleState> emit) {
+    // Пока читали файл, человек мог открыть другой — не подменяем ему текст.
+    if (state.openedDoc?.path != event.path) return;
+    emit(state.copyWith(
+      openedDocContent: () => event.content,
+      openedDocState: () => event.state,
+    ));
   }
 
   Future<void> _onDocOpened(

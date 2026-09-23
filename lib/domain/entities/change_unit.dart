@@ -14,6 +14,10 @@ class ChangeUnit {
   /// Формат `redmine.yaml` не распознан — показываем это, а не пустоту.
   final String formatWarning;
 
+  /// Дата сдачи в архив из имени каталога (`2026-07-31-<change>`);
+  /// null — change в работе. Сам id при этом хранится очищенным.
+  final DateTime? archivedAt;
+
   const ChangeUnit({
     required this.id,
     required this.title,
@@ -22,7 +26,10 @@ class ChangeUnit {
     this.stackStates = const {},
     this.dependsOn = const [],
     this.formatWarning = '',
+    this.archivedAt,
   });
+
+  bool get archived => archivedAt != null;
 
   List<StackState> get stacks => stackStates.values.toList();
 

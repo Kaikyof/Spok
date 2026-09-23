@@ -717,7 +717,6 @@
       }
     }
   },
-  "artifactMissing": "файла нет",
   "artifactsProgress": "{done} из {total} артефактов заполнены",
   "@artifactsProgress": {
     "placeholders": {
@@ -816,7 +815,6 @@
   "gatePersonalNote": "Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.",
   "gatePersonalFill": "Заполнить",
   "gateRuntimeTitle": "Настроено, но система не отвечает",
-  "gateRuntimeRetry": "Проверить снова",
   "gateRuntimeEditKey": "Изменить ключ",
   "gateCopyTemplate": "Скопировать шаблон",
   "gateAskAgent": "Создать через агента",
@@ -866,6 +864,50 @@
   "roleNewChange": "Новый change",
   "roleNewGroup": "Новая группа",
   "roleHandover": "Передача",
+  "navDocs": "Документы",
+  "docsTitle": "ДОКУМЕНТЫ СПЕКИ",
+  "docsTreeCount": "{present} из {declared}",
+  "@docsTreeCount": {
+    "placeholders": {
+      "present": { "type": "int" },
+      "declared": { "type": "int" }
+    }
+  },
+  "docsArchiveTitle": "Архив",
+  "docsArchivedAt": "в архиве с {date}",
+  "@docsArchivedAt": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "docsArchivedNoDate": "в архиве, дата не указана",
+  "docsUngrouped": "Вне групп",
+  "docsMasterDoc": "Мастер-спека",
+  "docsGroupDoc": "Документ группы",
+  "docsEmpty": "В спеке нет ни одного документа",
+  "docsEmptyHint": "Документы появляются вместе с change'ами: спека изменения, дизайн-решения и задачи лежат в его каталоге.",
+  "docsNothingOpened": "Выберите документ слева",
+  "docsNothingOpenedHint": "Дерево повторяет устройство спеки: группа, её change'и и файлы артефактов схемы.",
+  "docsMissingTitle": "Файла нет",
+  "docsMissingHint": "Артефакт {file} объявлен схемой, но ещё не написан.",
+  "@docsMissingHint": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "docsLoading": "Читаем файл…",
+  "docsOpenInIde": "Открыть в IDE",
+  "docsOpenInIdeFailed": "Не нашли, чем открыть файл: установите редактор или откройте его вручную",
+  "docsBranchClean": "в ветке {branch}",
+  "@docsBranchClean": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "docsBranchModified": "изменён локально · {branch}",
+  "@docsBranchModified": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "docsBranchUntracked": "ещё не в git · {branch}",
+  "@docsBranchUntracked": {
+    "placeholders": { "branch": { "type": "String" } }
+  },
+  "docsBranchUnknown": "git не ответил о состоянии файла",
+  "docsOpenChange": "Открыть change",
   "cancel": "Отмена",
   "confirm": "Готово"
 }

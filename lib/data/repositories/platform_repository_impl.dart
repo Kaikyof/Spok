@@ -8,6 +8,7 @@ import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/status_semantics.dart';
 import '../../domain/entities/console_snapshot.dart';
+import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_field.dart';
 import '../../domain/entities/feature_gate.dart';
@@ -21,6 +22,7 @@ import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../sources/app_config_source.dart';
 import '../sources/gitlab_api.dart';
+import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
@@ -226,6 +228,14 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   @override
+  Future<DocState> docState(String absolutePath) async =>
+      await files?.docState(absolutePath) ?? DocState.unknown;
+
+  @override
+  Future<bool> openInEditor(String absolutePath) =>
+      IdeLauncher(commandLog: commandLog).open(absolutePath);
+
+  @override
   Future<ConsoleSnapshot> load() async {
     final source = files;
     if (source == null) {
@@ -242,6 +252,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     await source.pullPlatform();
     final changes = source.loadChanges();
     final groups = source.loadGroups(changes);
+    final archived = source.loadArchivedChanges();
     final semantics = source.loadStatusSemantics();
     final (redmineProblem, redmineDetail) =
         await _fetchStatuses(source, changes);
@@ -252,6 +263,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       changes: changes,
       divergences: findDivergences(groups.firstOrNull, changes, semantics),
       env: env,
+      docs: source.loadDocTree(groups, changes, archived: archived),
       profile: _buildProfile(source, groups, changes, semantics, env),
       redmineProblem: redmineProblem,
       redmineProblemDetail: redmineDetail,
