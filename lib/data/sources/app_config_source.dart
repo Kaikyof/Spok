@@ -33,7 +33,7 @@ class AppConfigSource {
   File _configFile() {
     final home = Platform.environment['HOME'] ?? '';
     return File(p.join(
-        home, 'Library', 'Application Support', 'PlatformConsole', '.env'));
+        home, 'Library', 'Application Support', 'Spok', '.env'));
   }
 
   Future<String> configPath() async => _configFile().path;

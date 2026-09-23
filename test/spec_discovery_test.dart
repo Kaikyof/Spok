@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:platform_console/data/sources/platform_files_source.dart';
-import 'package:platform_console/data/repositories/platform_repository_impl.dart';
-import 'package:platform_console/domain/entities/feature_gate.dart';
-import 'package:platform_console/domain/entities/group.dart';
-import 'package:platform_console/domain/entities/project_profile.dart';
+import 'package:spok/data/sources/platform_files_source.dart';
+import 'package:spok/data/repositories/platform_repository_impl.dart';
+import 'package:spok/domain/entities/feature_gate.dart';
+import 'package:spok/domain/entities/group.dart';
+import 'package:spok/domain/entities/project_profile.dart';
 
 /// Спека в стиле avelacom: схема со стеком backend, мастер-спека вместо
 /// спринтов, redmine.yaml версии 3 с закэшированным статусом.

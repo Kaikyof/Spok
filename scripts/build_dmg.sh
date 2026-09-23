@@ -10,7 +10,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
-APP_NAME="Platform Console"
+APP_NAME="Spok"
 VOL_NAME="$APP_NAME"
 DIST_DIR="$PROJECT_DIR/dist"
 BUILD_DIR="$PROJECT_DIR/build/macos/Build/Products/Release"

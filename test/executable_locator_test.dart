@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:platform_console/data/sources/executable_locator.dart';
+import 'package:spok/data/sources/executable_locator.dart';
 
 void main() {
   group('Поиск утилит', () {

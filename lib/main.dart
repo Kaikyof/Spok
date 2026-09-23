@@ -34,7 +34,7 @@ Future<void> main() async {
     const WindowOptions(
       minimumSize: AppDimens.minWindowSize,
       size: AppDimens.defaultWindowSize,
-      title: 'Platform Console',
+      title: 'Spok',
       titleBarStyle: TitleBarStyle.normal,
     ),
     null,
@@ -54,7 +54,7 @@ class ConsoleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Platform Console',
+        title: 'Spok',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
