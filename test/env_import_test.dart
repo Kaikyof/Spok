@@ -34,6 +34,12 @@ C=plain # это примечание
       expect(values['C'], 'plain');
     });
 
+    test('BOM в начале файла не приклеивается к первому ключу', () {
+      final values = EnvFile.parse('\ufeffREDMINE_URL=https://r.webant.ru\n');
+
+      expect(values, {'REDMINE_URL': 'https://r.webant.ru'});
+    });
+
     test('строка с export — тот же ключ, а мусор пропускается молча', () {
       final values = EnvFile.parse('export TOKEN=xyz\nпросто текст\n');
 

@@ -266,6 +266,10 @@
   "@envImportResult": {
     "placeholders": { "filled": { "type": "int" } }
   },
+  "envImportEmpty": "В файле эти ключи пустые — прежние значения оставлены: {keys}",
+  "@envImportEmpty": {
+    "placeholders": { "keys": { "type": "String" } }
+  },
   "envImportExtra": "Этих ключей спека не спрашивает, они пропущены: {keys}",
   "@envImportExtra": {
     "placeholders": { "keys": { "type": "String" } }

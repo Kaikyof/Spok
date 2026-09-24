@@ -748,6 +748,12 @@ abstract class AppLocalizations {
   /// **'{filled, plural, one{Подставлено {filled} значение} few{Подставлено {filled} значения} other{Подставлено {filled} значений}} — проверьте и сохраните.'**
   String envImportResult(int filled);
 
+  /// No description provided for @envImportEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В файле эти ключи пустые — прежние значения оставлены: {keys}'**
+  String envImportEmpty(String keys);
+
   /// No description provided for @envImportExtra.
   ///
   /// In ru, this message translates to:

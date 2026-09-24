@@ -109,6 +109,10 @@ class _FakeRepository implements PlatformRepository {
   Future<EnvForm> envForm() async => const EnvForm(
         fields: [
           EnvField(
+              key: 'REDMINE_API_KEY', value: 'старый-ключ', hint: 'Токен'),
+          EnvField(
+              key: 'REDMINE_URL', value: 'https://прежний', hint: 'Адрес'),
+          EnvField(
               key: 'OPENSPEC_REPO_URL',
               value: '',
               hint: 'OpenSpec repo — blob URL for clickable links in Redmine '
@@ -233,6 +237,9 @@ void main() {
         (tester) async {
       final repository = _FakeRepository(fileValues: const {
         'OPENSPEC_REPO_URL': 'https://gitlab.example.com/spec/-/blob/master',
+        'REDMINE_API_KEY': 'новый-ключ',
+        // Пустое значение прежнее не затирает — но и молчать о нём нельзя.
+        'REDMINE_URL': '',
         'SOME_OTHER_KEY': 'значение из чужой спеки',
       });
       console = ConsoleBloc(repository);
@@ -275,9 +282,16 @@ void main() {
       expect(
           find.text('https://gitlab.example.com/spec/-/blob/master'),
           findsOneWidget);
-      expect(find.textContaining('Подставлено 1 значение'), findsOneWidget);
+      // Заполненный ключ перезаписывается импортом, а не остаётся старым.
+      expect(find.text('старый-ключ'), findsNothing);
+      expect(find.textContaining('Подставлено 2 значения'), findsOneWidget);
       // Ключ, которого спека не спрашивает, назван поимённо.
       expect(find.textContaining('SOME_OTHER_KEY'), findsOneWidget);
+      // Пустой в файле ключ оставлен прежним — и об этом сказано поимённо,
+      // иначе «почему значение не изменилось» остаётся без ответа.
+      expect(find.text('https://прежний'), findsOneWidget);
+      expect(find.textContaining('прежние значения оставлены: REDMINE_URL'),
+          findsOneWidget);
       expect(console.state.envSaving, isFalse);
     });
 

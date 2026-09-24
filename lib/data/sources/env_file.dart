@@ -13,7 +13,9 @@ abstract class EnvFile {
   /// пропускаются молча: в чужом `.env` бывает что угодно.
   static Map<String, String> parse(String content) {
     final values = <String, String>{};
-    for (final raw in content.split('\n')) {
+    // BOM в начале файла приклеивается к первому ключу, и тот перестаёт
+    // совпадать с ключом формы: значение тихо не подставилось бы.
+    for (final raw in content.replaceFirst('\ufeff', '').split('\n')) {
       final line = raw.trim();
       if (line.isEmpty || line.startsWith('#')) continue;
       final match = _entry.firstMatch(line);

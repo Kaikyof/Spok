@@ -91,9 +91,9 @@ class _EnvFieldsState extends State<_EnvFields> {
   };
   final _revealed = <String>{};
 
-  /// Итог последнего импорта: сколько ключей подставлено и сколько из файла
-  /// спека не спрашивает. null — не импортировали.
-  ({int filled, List<String> extra})? _imported;
+  /// Итог последнего импорта: что подставлено, что пропущено пустым
+  /// и чего спека не спрашивает. null — не импортировали.
+  ({int filled, List<String> empty, List<String> extra})? _imported;
 
   @override
   void dispose() {
@@ -110,6 +110,11 @@ class _EnvFieldsState extends State<_EnvFields> {
   /// Значения только подставляются в поля — сохранения не происходит:
   /// в чужом файле могут оказаться не те ключи, и человек должен увидеть
   /// их до записи в `.env` и в связку ключей.
+  ///
+  /// Пустое значение в файле прежнее не затирает: `KEY=` в чужом `.env`
+  /// значит «у меня не заполнено», а не «сотри у себя». Но и молчать об
+  /// этом нельзя — иначе заполненный ключ просто остаётся старым, и
+  /// непонятно почему; такие ключи названы в итоге импорта.
   Future<void> _import() async {
     // Репозиторий забираем до диалога выбора файла: после ожидания
     // обращаться к context нельзя, экран мог закрыться.
@@ -119,6 +124,7 @@ class _EnvFieldsState extends State<_EnvFields> {
     final values = await repository.readEnvFile(path);
     if (!mounted) return;
     var filled = 0;
+    final empty = <String>[];
     final extra = <String>[];
     values.forEach((key, value) {
       final controller = _controllers[key];
@@ -126,11 +132,16 @@ class _EnvFieldsState extends State<_EnvFields> {
         extra.add(key);
         return;
       }
-      if (value.isEmpty) return;
+      if (value.isEmpty) {
+        // Прежнее значение осталось — но только если оно было.
+        if (controller.text.trim().isNotEmpty) empty.add(key);
+        return;
+      }
       controller.text = value;
       filled++;
     });
-    setState(() => _imported = (filled: filled, extra: extra));
+    setState(
+        () => _imported = (filled: filled, empty: empty, extra: extra));
   }
 
   void _save() {
@@ -185,6 +196,14 @@ class _EnvFieldsState extends State<_EnvFields> {
                 ? texts.envImportHint
                 : texts.envImportResult(_imported!.filled),
             style: AppTextStyles.hint.copyWith(height: 1.35)),
+        // Пустые в файле ключи — главный источник «а почему значение
+        // не изменилось»: называем их поимённо.
+        if (_imported?.empty.isNotEmpty ?? false) ...[
+          const SizedBox(height: 2),
+          Text(texts.envImportEmpty(_imported!.empty.join(', ')),
+              style: AppTextStyles.hint.copyWith(
+                  height: 1.35, color: AppColors.warning)),
+        ],
         // Лишние ключи не молчим: файл может быть от другой спеки, и это
         // первый признак, что человек взял не тот.
         if (_imported?.extra.isNotEmpty ?? false) ...[

@@ -431,6 +431,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String envImportEmpty(String keys) {
+    return 'В файле эти ключи пустые — прежние значения оставлены: $keys';
+  }
+
+  @override
   String envImportExtra(String keys) {
     return 'Этих ключей спека не спрашивает, они пропущены: $keys';
   }
