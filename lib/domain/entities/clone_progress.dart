@@ -30,15 +30,30 @@ enum CloneFailure {
   unknown,
 }
 
-/// Этап работы git: проценты у каждого свои, и смешивать их нельзя.
-enum ClonePhase { starting, counting, compressing, receiving, resolving, done }
+/// Этап работы git. У каждого своя шкала процентов, поэтому этапы
+/// раскладываются по участкам общей полосы — иначе она ехала бы назад
+/// на каждом новом этапе.
+enum ClonePhase {
+  starting,
+  counting,
+  compressing,
+  receiving,
+  resolving,
+
+  /// Раскладывание файлов в рабочий каталог — `Updating files`.
+  checkout,
+
+  done,
+}
 
 /// Ход клонирования спеки.
 class CloneProgress {
   final OperationStage stage;
   final ClonePhase phase;
 
-  /// Доля текущего этапа, 0..1; null — git ещё не сказал процентов.
+  /// Доля всей работы, 0..1; null — git ещё ничего не сказал о ходе.
+  /// Именно всей, а не текущего этапа: человек смотрит на одну полосу,
+  /// и она обязана только расти.
   final double? fraction;
 
   /// Объём и скорость — как их напечатал git («12.34 MiB», «3.20 MiB/s»):
@@ -57,6 +72,9 @@ class CloneProgress {
   /// Куда склонировано; заполнено, когда всё получилось.
   final String path;
 
+  /// Обновляем уже склонированную спеку, а не скачиваем заново.
+  final bool updating;
+
   const CloneProgress({
     this.stage = OperationStage.idle,
     this.phase = ClonePhase.starting,
@@ -67,6 +85,7 @@ class CloneProgress {
     this.failure,
     this.failureDetail = '',
     this.path = '',
+    this.updating = false,
   });
 
   static const idle = CloneProgress();
@@ -94,6 +113,7 @@ class CloneProgress {
     CloneFailure? Function()? failure,
     String? failureDetail,
     String? path,
+    bool? updating,
   }) =>
       CloneProgress(
         stage: stage ?? this.stage,
@@ -105,5 +125,6 @@ class CloneProgress {
         failure: failure != null ? failure() : this.failure,
         failureDetail: failureDetail ?? this.failureDetail,
         path: path ?? this.path,
+        updating: updating ?? this.updating,
       );
 }

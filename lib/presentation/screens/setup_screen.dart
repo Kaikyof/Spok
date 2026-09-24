@@ -7,7 +7,6 @@ import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../data/sources/git_clone_source.dart';
-import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/operation_progress.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
@@ -225,10 +224,8 @@ class _CloneStep extends StatelessWidget {
                   OperationStage.done => texts.cloneDone,
                   OperationStage.failed when failure != null =>
                     texts.cloneFailureText(failure),
-                  _ => clone.phase == ClonePhase.receiving ||
-                          clone.phase == ClonePhase.starting
-                      ? texts.cloneTitle
-                      : texts.clonePulling,
+                  // Что именно идёт — знает сам клон, а не его этап.
+                  _ => clone.updating ? texts.clonePulling : texts.cloneTitle,
                 },
                 progress: clone.operation,
                 // Объём и скорость — как их напечатал git.

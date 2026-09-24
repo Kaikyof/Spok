@@ -92,27 +92,64 @@ void main() {
   });
 
   group('Разбор строк прогресса', () {
-    test('проценты и объём берутся у скачивания', () {
+    test('объём и скорость берутся так, как их напечатал git', () {
       final progress = GitCloneSource.applyProgressLine(
         CloneProgress.idle,
         'Receiving objects:  45% (1215/2700), 12.34 MiB | 3.20 MiB/s',
       );
 
       expect(progress.phase, ClonePhase.receiving);
-      expect(progress.fraction, closeTo(0.45, 0.001));
       expect(progress.volume, '12.34 MiB');
       expect(progress.speed, '3.20 MiB/s');
     });
 
-    test('у остальных этапов своя шкала — полоса не скачет назад', () {
-      var progress = GitCloneSource.applyProgressLine(CloneProgress.idle,
-          'Receiving objects: 100% (2700/2700), 40.00 MiB | 3.20 MiB/s');
-      progress = GitCloneSource.applyProgressLine(
-          progress, 'Resolving deltas:  12% (150/1200)');
+    test('процент — от всей работы, а не от этапа', () {
+      final progress = GitCloneSource.applyProgressLine(CloneProgress.idle,
+          'Receiving objects:  50% (1350/2700), 12.34 MiB | 3.20 MiB/s');
 
-      expect(progress.phase, ClonePhase.resolving);
-      // Процент дельт не подменяет процент скачивания.
-      expect(progress.fraction, isNull);
+      // Скачивание занимает участок 0.20–0.85: половина скачанного — это
+      // примерно половина всей работы, а не половина полосы с нуля.
+      expect(progress.fraction, closeTo(0.525, 0.01));
+    });
+
+    test('полоса только растёт, как бы git ни переключал этапы', () {
+      final lines = [
+        'remote: Enumerating objects: 2700, done.',
+        'remote: Counting objects:  50% (1350/2700)',
+        'remote: Counting objects: 100% (2700/2700), done.',
+        'remote: Compressing objects:  60% (900/1500)',
+        'Receiving objects:   1% (27/2700), 240.00 KiB | 1.10 MiB/s',
+        'Receiving objects:  99% (2673/2700), 39.00 MiB | 3.20 MiB/s',
+        'Receiving objects: 100% (2700/2700), 40.00 MiB | 3.20 MiB/s',
+        'Resolving deltas:  12% (150/1200)',
+        'Resolving deltas: 100% (1200/1200), done.',
+        'Updating files:  40% (800/2000)',
+        'Updating files: 100% (2000/2000), done.',
+      ];
+
+      var progress = CloneProgress.idle;
+      var previous = 0.0;
+      for (final line in lines) {
+        progress = GitCloneSource.applyProgressLine(progress, line);
+        final fraction = progress.fraction ?? 0;
+        expect(fraction, greaterThanOrEqualTo(previous),
+            reason: 'полоса поехала назад на строке: $line');
+        previous = fraction;
+      }
+      expect(progress.phase, ClonePhase.checkout);
+      expect(previous, closeTo(1, 0.001));
+    });
+
+    test('строка не про этап не сбивает ни этап, ни полосу', () {
+      var progress = GitCloneSource.applyProgressLine(CloneProgress.idle,
+          'Receiving objects:  50% (1350/2700), 12.34 MiB | 3.20 MiB/s');
+      final before = progress.fraction;
+
+      progress = GitCloneSource.applyProgressLine(
+          progress, 'Cloning into \'avelacom-platform\'...');
+
+      expect(progress.phase, ClonePhase.receiving);
+      expect(progress.fraction, before);
     });
   });
 
@@ -164,6 +201,36 @@ void main() {
       expect(events.last.failure, CloneFailure.directoryInUse);
       // Чужой файл на месте: молча сносить каталог нельзя.
       expect(File(p.join(occupied.path, 'чужое.txt')).existsSync(), isTrue);
+    });
+
+    test('прогресс по-настоящему движется и доходит до конца', () async {
+      // `file://` заставляет git работать обычным транспортом, а не
+      // хардлинками: только так в выводе появляются проценты скачивания,
+      // ради которых прогресс и сделан.
+      final events = await GitCloneSource(root: root)
+          .clone('file://${origin.path}')
+          .toList();
+
+      final fractions = [for (final event in events) ?event.fraction];
+      expect(fractions, isNotEmpty,
+          reason: 'git не дал ни одного процента: ${events.last.line}');
+      // Ни одного шага назад за всё клонирование.
+      for (var index = 1; index < fractions.length; index++) {
+        expect(fractions[index], greaterThanOrEqualTo(fractions[index - 1]));
+      }
+      expect(events.last.isDone, isTrue, reason: events.last.failureDetail);
+      expect(events.last.fraction, 1);
+      expect(events.any((event) => event.phase == ClonePhase.receiving), isTrue);
+    });
+
+    test('обновление уже склонированной спеки помечено как обновление',
+        () async {
+      final source = GitCloneSource(root: root);
+      await source.clone(origin.path).toList();
+
+      final events = await source.clone(origin.path).toList();
+
+      expect(events.last.updating, isTrue);
     });
 
     test('адреса нет — ошибка разобрана, обломков не осталось', () async {

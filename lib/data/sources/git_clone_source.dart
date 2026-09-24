@@ -93,7 +93,7 @@ class GitCloneSource {
     // Каталог не наш — удалять его при ошибке нельзя.
     _created = null;
     return _run(git, ['-C', target.path, 'pull', '--progress', '--ff-only'],
-        target: target);
+        target: target, updating: true);
   }
 
   Stream<CloneProgress> _occupied(Directory target) async* {
@@ -139,8 +139,9 @@ class GitCloneSource {
   }
 
   Stream<CloneProgress> _run(String git, List<String> arguments,
-      {required Directory target}) async* {
-    var current = const CloneProgress(stage: OperationStage.running);
+      {required Directory target, bool updating = false}) async* {
+    var current = CloneProgress(
+        stage: OperationStage.running, updating: updating);
     final errors = <String>[];
     final Process process;
     try {
@@ -157,6 +158,7 @@ class GitCloneSource {
         stage: OperationStage.failed,
         failure: CloneFailure.gitMissing,
         failureDetail: error.message,
+        updating: updating,
       );
       return;
     }
@@ -228,32 +230,64 @@ class GitCloneSource {
     }
   }
 
+  /// Участки общей полосы по этапам git. Проценты у каждого этапа свои,
+  /// поэтому каждый занимает свой отрезок: без этого полоса доходила
+  /// до конца на «Counting objects» и уезжала назад на «Receiving».
+  ///
+  /// Границы взяты по тому, сколько этап занимает по времени на обычной
+  /// спеке: скачивание — почти всё, остальное по краям.
+  static const _bands = <ClonePhase, (double, double)>{
+    ClonePhase.starting: (0, 0),
+    ClonePhase.counting: (0, 0.08),
+    ClonePhase.compressing: (0.08, 0.20),
+    ClonePhase.receiving: (0.20, 0.85),
+    ClonePhase.resolving: (0.85, 0.95),
+    ClonePhase.checkout: (0.95, 1),
+    ClonePhase.done: (1, 1),
+  };
+
   /// Разбор строки прогресса git. Открыт для теста: формат этих строк —
   /// внешний контракт, и проверять его надо напрямую.
   static CloneProgress applyProgressLine(CloneProgress current, String line) {
     final percent = RegExp(r'(\d{1,3})%').firstMatch(line);
     final volume = RegExp(r'(\d+[.,]?\d*\s*[KMG]i?B)(?!/s)').firstMatch(line);
     final speed = RegExp(r'(\d+[.,]?\d*\s*[KMG]i?B/s)').firstMatch(line);
-    final phase = switch (line) {
-      _ when line.startsWith('Receiving objects') => ClonePhase.receiving,
-      _ when line.startsWith('Resolving deltas') => ClonePhase.resolving,
-      _ when line.startsWith('Compressing objects') => ClonePhase.compressing,
-      _ when line.startsWith('Counting objects') ||
-              line.startsWith('remote: Counting') =>
-        ClonePhase.counting,
-      _ => current.phase,
-    };
+    final phase = _phaseOf(line) ?? current.phase;
+    final (from, to) = _bands[phase]!;
+    // Внутри своего участка двигаемся по проценту этапа; процентов нет —
+    // стоим на его начале.
+    final withinPhase =
+        percent == null ? 0.0 : int.parse(percent.group(1)!) / 100;
+    final overall = from + (to - from) * withinPhase.clamp(0.0, 1.0);
     return current.copyWith(
       phase: phase,
-      // Проценты берём только у скачивания: у остальных этапов своя шкала,
-      // и полоса от них скакала бы назад.
-      fraction: () => phase == ClonePhase.receiving && percent != null
-          ? int.parse(percent.group(1)!) / 100
-          : (phase == ClonePhase.receiving ? current.fraction : null),
+      // Полоса только растёт: git иногда возвращается к более раннему
+      // этапу (например, доснимает объекты), и рывок назад читался бы
+      // как сбой.
+      fraction: () => overall < (current.fraction ?? 0)
+          ? current.fraction
+          : overall,
       volume: volume?.group(1) ?? current.volume,
       speed: speed?.group(1) ?? current.speed,
       line: line,
     );
+  }
+
+  /// Этап по строке git; null — строка не про этап (её причина другая).
+  static ClonePhase? _phaseOf(String line) {
+    final text = line.replaceFirst(RegExp(r'^remote:\s*'), '');
+    return switch (text) {
+      _ when text.startsWith('Receiving objects') => ClonePhase.receiving,
+      _ when text.startsWith('Resolving deltas') => ClonePhase.resolving,
+      _ when text.startsWith('Compressing objects') => ClonePhase.compressing,
+      _ when text.startsWith('Counting objects') ||
+              text.startsWith('Enumerating objects') =>
+        ClonePhase.counting,
+      _ when text.startsWith('Updating files') ||
+              text.startsWith('Checking out files') =>
+        ClonePhase.checkout,
+      _ => null,
+    };
   }
 
   /// Строки прогресса ошибками не считаем: git пишет в stderr и то и другое.
