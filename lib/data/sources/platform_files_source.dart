@@ -64,6 +64,32 @@ class PlatformFilesSource {
 
   String get specName => p.basename(root.path);
 
+  /// Файлы, по которым приложение разбирает устройство спеки. Нужны экрану
+  /// «Что распознано»: правится устройство в самой спеке, и «изменить»
+  /// открывает тот файл, который решает, а не тот, что похож по имени.
+  /// Пустая строка — файла в этой спеке нет.
+  String get schemaFile {
+    final schemaName = _yamlValue(
+        File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
+    if (schemaName == null) return '';
+    final file = File(
+        p.join(root.path, 'openspec', 'schemas', schemaName, 'schema.yaml'));
+    return file.existsSync() ? file.path : '';
+  }
+
+  String get trackerFile => _existing(p.join(root.path, 'openspec',
+      'redmine.yaml'));
+
+  String get workspaceFile => _existing(p.join(root.path, 'workspace.yaml'));
+
+  String get docDir {
+    final dir = Directory(p.join(root.path, 'openspec', 'doc'));
+    return dir.existsSync() ? dir.path : '';
+  }
+
+  static String _existing(String path) =>
+      File(path).existsSync() ? path : '';
+
   // ─── Схема спеки ───────────────────────────────────────────────────────────
 
   SpecSchema? _schemaCache;

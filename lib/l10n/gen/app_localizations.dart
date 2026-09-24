@@ -256,6 +256,84 @@ abstract class AppLocalizations {
   /// **'не найдено'**
   String get unrecognizedNotFound;
 
+  /// No description provided for @recognizedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что распознано'**
+  String get recognizedTitle;
+
+  /// No description provided for @recognizedSummary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разобрано {done} требований из {total}'**
+  String recognizedSummary(int done, int total);
+
+  /// No description provided for @recognizedNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.'**
+  String get recognizedNote;
+
+  /// No description provided for @recognizedEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить'**
+  String get recognizedEdit;
+
+  /// No description provided for @recognizedEditTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть {file} в редакторе: устройство спеки правится в ней самой'**
+  String recognizedEditTooltip(String file);
+
+  /// No description provided for @recognizedManySources.
+  ///
+  /// In ru, this message translates to:
+  /// **'собрано из нескольких источников'**
+  String get recognizedManySources;
+
+  /// No description provided for @recognizedMatrixTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что будет работать'**
+  String get recognizedMatrixTitle;
+
+  /// No description provided for @recognizedMatrixNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.'**
+  String get recognizedMatrixNote;
+
+  /// No description provided for @recognizedFeatureOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'работает'**
+  String get recognizedFeatureOn;
+
+  /// No description provided for @recognizedFeatureOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'выключено'**
+  String get recognizedFeatureOff;
+
+  /// No description provided for @recognizedFeatureBlocker.
+  ///
+  /// In ru, this message translates to:
+  /// **'не хватает: {requirement}'**
+  String recognizedFeatureBlocker(String requirement);
+
+  /// No description provided for @recognizedOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть спеку'**
+  String get recognizedOpen;
+
+  /// No description provided for @recognizedAnotherSpec.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать другой адрес'**
+  String get recognizedAnotherSpec;
+
   /// No description provided for @partRecognizedSchema.
   ///
   /// In ru, this message translates to:

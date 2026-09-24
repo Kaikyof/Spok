@@ -20,6 +20,7 @@ import 'screens/docs_screen.dart';
 import 'screens/env_screen.dart';
 import 'screens/handoff_screen.dart';
 import 'screens/group_screen.dart';
+import 'screens/recognition_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'ui_kit/app_loader.dart';
@@ -34,11 +35,15 @@ class Shell extends StatelessWidget {
       body: BlocBuilder<ConsoleBloc, ConsoleState>(
         buildWhen: (previous, current) =>
             previous.isFirstLoad != current.isFirstLoad ||
-            previous.needsSetup != current.needsSetup,
+            previous.needsSetup != current.needsSetup ||
+            previous.recognitionReview != current.recognitionReview,
         builder: (context, state) {
           if (state.isFirstLoad) {
             return AppLoader(message: texts.loaderMessage);
           }
+          // Спека только что подключена — шаг «Что распознано» стоит
+          // перед экранами: сначала человек видит разбор, потом данные.
+          if (state.recognitionReview) return const RecognitionScreen();
           if (state.needsSetup) return const SetupScreen();
           return BlocListener<ConsoleBloc, ConsoleState>(
             // Сменились спека или группа — сессии перечитывают команды,

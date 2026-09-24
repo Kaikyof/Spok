@@ -35,6 +35,11 @@ class ConsoleState {
   /// Человек открыл подключение спеки из шапки — показываем экран настройки.
   final bool switchingSpec;
 
+  /// Спека только что подключена — показываем шаг «Что распознано»
+  /// (борд 10). Это шаг доверия: человек видит, что приложение поняло
+  /// в чужой спеке, до того как начнёт этому верить.
+  final bool recognitionReview;
+
   /// Подключённые спеки: между ними переключаются из шапки.
   final List<String> knownSpecs;
 
@@ -70,6 +75,7 @@ class ConsoleState {
     this.changeSpec,
     this.pathRejected = false,
     this.switchingSpec = false,
+    this.recognitionReview = false,
     this.knownSpecs = const [],
     this.clone = CloneProgress.idle,
     this.envForm,
@@ -104,7 +110,8 @@ class ConsoleState {
   /// Нужен экран настройки: спека не найдена либо человек меняет её сам.
   bool get needsSetup =>
       snapshot?.redmineProblem == RedmineProblem.platformNotFound ||
-      switchingSpec;
+      switchingSpec ||
+      recognitionReview;
 
   /// Спека не найдена вовсе — отменить настройку некуда.
   bool get specMissing =>
@@ -143,6 +150,7 @@ class ConsoleState {
     String? Function()? changeSpec,
     bool? pathRejected,
     bool? switchingSpec,
+    bool? recognitionReview,
     List<String>? knownSpecs,
     CloneProgress? clone,
     EnvForm? Function()? envForm,
@@ -173,6 +181,7 @@ class ConsoleState {
         changeSpec: changeSpec != null ? changeSpec() : this.changeSpec,
         pathRejected: pathRejected ?? this.pathRejected,
         switchingSpec: switchingSpec ?? this.switchingSpec,
+        recognitionReview: recognitionReview ?? this.recognitionReview,
         knownSpecs: knownSpecs ?? this.knownSpecs,
         clone: clone ?? this.clone,
         envForm: envForm != null ? envForm() : this.envForm,

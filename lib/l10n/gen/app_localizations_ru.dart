@@ -103,6 +103,53 @@ class AppLocalizationsRu extends AppLocalizations {
   String get unrecognizedNotFound => 'не найдено';
 
   @override
+  String get recognizedTitle => 'Что распознано';
+
+  @override
+  String recognizedSummary(int done, int total) {
+    return 'Разобрано $done требований из $total';
+  }
+
+  @override
+  String get recognizedNote =>
+      'Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.';
+
+  @override
+  String get recognizedEdit => 'Изменить';
+
+  @override
+  String recognizedEditTooltip(String file) {
+    return 'Открыть $file в редакторе: устройство спеки правится в ней самой';
+  }
+
+  @override
+  String get recognizedManySources => 'собрано из нескольких источников';
+
+  @override
+  String get recognizedMatrixTitle => 'Что будет работать';
+
+  @override
+  String get recognizedMatrixNote =>
+      'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.';
+
+  @override
+  String get recognizedFeatureOn => 'работает';
+
+  @override
+  String get recognizedFeatureOff => 'выключено';
+
+  @override
+  String recognizedFeatureBlocker(String requirement) {
+    return 'не хватает: $requirement';
+  }
+
+  @override
+  String get recognizedOpen => 'Открыть спеку';
+
+  @override
+  String get recognizedAnotherSpec => 'Указать другой адрес';
+
+  @override
   String get partRecognizedSchema => 'Схема артефактов';
 
   @override

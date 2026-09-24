@@ -405,12 +405,14 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }) {
     final commands = source.loadSlashCommands();
     final services = source.allServices();
+    final schemaFile = source.schemaFile;
     return SpecRecognition([
       RecognizedItem(
         part: RecognizedPart.schema,
         recognized: !schema.isEmpty,
         value: schema.name,
         lookedIn: 'openspec/schemas/*/schema.yaml',
+        sourcePath: schemaFile,
       ),
       // Плоский список — тоже разобранная стратегия: у спеки может не быть
       // ни спринтов, ни мастер-спек, и это не «не понято».
@@ -419,18 +421,21 @@ class PlatformRepositoryImpl implements PlatformRepository {
         recognized: true,
         value: grouping.name,
         lookedIn: 'openspec/doc',
+        sourcePath: source.docDir,
       ),
       RecognizedItem(
         part: RecognizedPart.stacks,
         recognized: true,
         value: stacks.join(' · '),
         lookedIn: 'schema.yaml → tasks-<stack>',
+        sourcePath: schemaFile,
       ),
       RecognizedItem(
         part: RecognizedPart.statuses,
         recognized: !semantics.isEmpty,
         value: '${semantics.statuses.length}',
         lookedIn: 'openspec/redmine.yaml',
+        sourcePath: source.trackerFile,
       ),
       RecognizedItem(
         part: RecognizedPart.commands,
@@ -443,6 +448,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         recognized: services.isNotEmpty,
         value: '${services.length}',
         lookedIn: 'workspace.yaml → services',
+        sourcePath: source.workspaceFile,
       ),
     ]);
   }

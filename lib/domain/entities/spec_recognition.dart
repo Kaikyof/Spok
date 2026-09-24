@@ -33,11 +33,17 @@ class RecognizedItem {
   /// Где искали — путь или источник; показывается рядом.
   final String lookedIn;
 
+  /// Абсолютный путь к файлу, который решает эту часть: его и открывает
+  /// «изменить». Пусто — источник не один файл (команды собираются из
+  /// пяти мест) или файла в спеке нет вовсе.
+  final String sourcePath;
+
   const RecognizedItem({
     required this.part,
     required this.recognized,
     this.value = '',
     this.lookedIn = '',
+    this.sourcePath = '',
   });
 }
 

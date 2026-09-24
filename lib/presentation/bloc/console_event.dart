@@ -67,6 +67,17 @@ class SpecCloneRequested extends ConsoleEvent {
   SpecCloneRequested(this.url, {this.ref = ''});
 }
 
+/// Человек посмотрел, что приложение распознало в спеке, и идёт дальше.
+/// Шаг закрывается только руками: подключение — единственный момент, когда
+/// разбор смотрят целиком, и проматывать его за человека нельзя.
+class SpecRecognitionConfirmed extends ConsoleEvent {}
+
+/// Открыть в редакторе файл, по которому разобрана часть устройства спеки.
+class RecognitionSourceOpened extends ConsoleEvent {
+  final String path;
+  RecognitionSourceOpened(this.path);
+}
+
 /// Человек нажал «Отменить» у клонирования.
 class SpecCloneCancelled extends ConsoleEvent {}
 

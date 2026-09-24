@@ -74,8 +74,15 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     on<SpecCloneCancelled>((event, emit) => repository.cancelClone());
     on<_CloneProgressed>((event, emit) =>
         emit(state.copyWith(clone: event.progress, pathRejected: false)));
-    on<SpecSwitchRequested>((event, emit) => emit(
-        state.copyWith(switchingSpec: event.open, pathRejected: false)));
+    on<SpecSwitchRequested>((event, emit) => emit(state.copyWith(
+        switchingSpec: event.open,
+        // Вернулись к адресу — разбор прежней спеки уже не о ней.
+        recognitionReview: false,
+        pathRejected: false)));
+    on<SpecRecognitionConfirmed>((event, emit) => emit(state.copyWith(
+        recognitionReview: false, switchingSpec: false)));
+    on<RecognitionSourceOpened>(
+        (event, emit) => repository.openInEditor(event.path));
     on<StackFilterChanged>(
         (event, emit) => emit(state.copyWith(stackFilter: event.stack)));
     add(ConsoleRefreshed());
@@ -111,7 +118,8 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
       return;
     }
     // Спека сменилась — выбранные группа, change и стек относились к старой.
-    emit(ConsoleState(screen: state.screen));
+    // Но не открываем её сразу: сначала шаг «Что распознано» (борд 10).
+    emit(ConsoleState(screen: state.screen, recognitionReview: true));
     add(ConsoleRefreshed());
   }
 

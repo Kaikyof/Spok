@@ -58,6 +58,28 @@
   "unrecognizedNote": "Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.",
   "unrecognizedManual": "Указать вручную",
   "unrecognizedNotFound": "не найдено",
+  "recognizedTitle": "Что распознано",
+  "recognizedSummary": "Разобрано {done} требований из {total}",
+  "@recognizedSummary": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "recognizedNote": "Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.",
+  "recognizedEdit": "Изменить",
+  "recognizedEditTooltip": "Открыть {file} в редакторе: устройство спеки правится в ней самой",
+  "@recognizedEditTooltip": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "recognizedManySources": "собрано из нескольких источников",
+  "recognizedMatrixTitle": "Что будет работать",
+  "recognizedMatrixNote": "Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.",
+  "recognizedFeatureOn": "работает",
+  "recognizedFeatureOff": "выключено",
+  "recognizedFeatureBlocker": "не хватает: {requirement}",
+  "@recognizedFeatureBlocker": {
+    "placeholders": { "requirement": { "type": "String" } }
+  },
+  "recognizedOpen": "Открыть спеку",
+  "recognizedAnotherSpec": "Указать другой адрес",
   "partRecognizedSchema": "Схема артефактов",
   "partRecognizedGrouping": "Группировка работы",
   "partRecognizedStacks": "Стеки",
