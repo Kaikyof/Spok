@@ -6,6 +6,7 @@ import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/secret_backend.dart';
+import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -116,6 +117,36 @@ extension DomainTextFormatters on AppLocalizations {
         CheckOutcome.systemNoConnection => checkNoConnection,
         CheckOutcome.systemNotConfigured => checkNotConfigured,
       };
+
+  /// Что за часть устройства спеки разбиралась.
+  String recognizedPartTitle(RecognizedPart part) => switch (part) {
+        RecognizedPart.schema => partRecognizedSchema,
+        RecognizedPart.grouping => partRecognizedGrouping,
+        RecognizedPart.stacks => partRecognizedStacks,
+        RecognizedPart.statuses => partRecognizedStatuses,
+        RecognizedPart.commands => partRecognizedCommands,
+        RecognizedPart.services => partRecognizedServices,
+      };
+
+  /// Понятое значение словами. Счётчики приходят числом, стратегия —
+  /// именем варианта: текст даёт этот слой, а не домен.
+  String recognizedValue(RecognizedItem item) {
+    if (!item.recognized) return unrecognizedNotFound;
+    final count = int.tryParse(item.value) ?? 0;
+    return switch (item.part) {
+      RecognizedPart.schema => item.value,
+      RecognizedPart.grouping => switch (item.value) {
+          'sprintDir' => groupingSprintDir,
+          'masterDoc' => groupingMasterDoc,
+          _ => groupingNone,
+        },
+      RecognizedPart.stacks =>
+        item.value.isEmpty ? partValueNoStacks : item.value,
+      RecognizedPart.statuses => partValueStatuses(count),
+      RecognizedPart.commands => partValueCommands(count),
+      RecognizedPart.services => partValueServices(count),
+    };
+  }
 
   /// Где лежат секреты — говорим прямо: «сохранено в Keychain» и
   /// «лежит в файле» отвечают на разные вопросы о безопасности, и

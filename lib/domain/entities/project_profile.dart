@@ -1,5 +1,6 @@
 import 'feature_gate.dart';
 import 'group.dart';
+import 'spec_recognition.dart';
 import 'spec_schema.dart';
 import 'status_semantics.dart';
 
@@ -22,6 +23,10 @@ class ProjectProfile {
   /// объясняет, чего не хватает.
   final Map<SpecFeature, FeatureGate> features;
 
+  /// Что понято в устройстве спеки и что нет. Нераспознанное показывается
+  /// человеку, а не заметается под ковёр.
+  final SpecRecognition recognition;
+
   const ProjectProfile({
     this.schema = SpecSchema.empty,
     this.statuses = StatusSemantics.empty,
@@ -29,6 +34,7 @@ class ProjectProfile {
     this.stacks = const [],
     this.services = const [],
     this.features = const {},
+    this.recognition = SpecRecognition.empty,
   });
 
   /// Страница ветки в хостинге кода: собирается из адреса репозитория,

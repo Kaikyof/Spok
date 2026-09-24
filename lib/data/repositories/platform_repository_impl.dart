@@ -17,6 +17,8 @@ import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/entities/spec_recognition.dart';
+import '../../domain/entities/spec_schema.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
@@ -369,7 +371,68 @@ class PlatformRepositoryImpl implements PlatformRepository {
         exampleKeys: exampleKeys,
         envValues: envReport,
       ),
+      recognition: _buildRecognition(
+        source: source,
+        schema: schema,
+        grouping: grouping,
+        stacks: ordered,
+        semantics: semantics,
+      ),
     );
+  }
+
+  /// Что приложение поняло в спеке. Список честный: «не распознано» —
+  /// такой же результат разбора, как и распознанное, и человек должен
+  /// видеть его до того, как решит, что приложение сломано (борд 19).
+  SpecRecognition _buildRecognition({
+    required PlatformFilesSource source,
+    required SpecSchema schema,
+    required GroupingKind grouping,
+    required List<String> stacks,
+    required StatusSemantics semantics,
+  }) {
+    final commands = source.loadSlashCommands();
+    final services = source.allServices();
+    return SpecRecognition([
+      RecognizedItem(
+        part: RecognizedPart.schema,
+        recognized: !schema.isEmpty,
+        value: schema.name,
+        lookedIn: 'openspec/schemas/*/schema.yaml',
+      ),
+      // Плоский список — тоже разобранная стратегия: у спеки может не быть
+      // ни спринтов, ни мастер-спек, и это не «не понято».
+      RecognizedItem(
+        part: RecognizedPart.grouping,
+        recognized: true,
+        value: grouping.name,
+        lookedIn: 'openspec/doc',
+      ),
+      RecognizedItem(
+        part: RecognizedPart.stacks,
+        recognized: true,
+        value: stacks.join(' · '),
+        lookedIn: 'schema.yaml → tasks-<stack>',
+      ),
+      RecognizedItem(
+        part: RecognizedPart.statuses,
+        recognized: !semantics.isEmpty,
+        value: '${semantics.statuses.length}',
+        lookedIn: 'openspec/redmine.yaml',
+      ),
+      RecognizedItem(
+        part: RecognizedPart.commands,
+        recognized: commands.isNotEmpty,
+        value: '${commands.length}',
+        lookedIn: 'schema · .claude · package.json · Makefile',
+      ),
+      RecognizedItem(
+        part: RecognizedPart.services,
+        recognized: services.isNotEmpty,
+        value: '${services.length}',
+        lookedIn: 'workspace.yaml → services',
+      ),
+    ]);
   }
 
   /// Требования фич — то же, что приложение ищет в спеке, но в явном виде:
@@ -464,6 +527,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
           scope: RequirementScope.personal,
           satisfied: (env['GITLAB_TOKEN'] ?? '').isNotEmpty,
           lookedIn: 'GITLAB_TOKEN · .env',
+          keys: const ['GITLAB_TOKEN'],
         ),
         FeatureRequirement(
           id: RequirementId.gitlabReachable,
@@ -491,6 +555,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
           satisfied: chatKeys.isNotEmpty &&
               chatKeys.every((key) => (env[key] ?? '').isNotEmpty),
           lookedIn: 'MATTERMOST_* · .env',
+          keys: [
+            for (final key in chatKeys)
+              if ((env[key] ?? '').isEmpty) key,
+          ],
         ),
       ]),
       SpecFeature.multiStack: FeatureGate([

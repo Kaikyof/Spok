@@ -30,6 +30,7 @@ import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/status_badge.dart';
 import '../widgets/env_editor_dialog.dart';
+import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
@@ -492,10 +493,15 @@ class _CodeDisabledRow extends StatelessWidget {
                 : '${blocker.lookedIn} · ${blocker.detail}',
             style: AppTextStyles.monospace(10.5, color: AppColors.textMuted)),
         if (blocker.scope == RequirementScope.personal) ...[
-          const SizedBox(height: 6),
-          _CodeGateButton(
-              label: texts.gatePersonalFill,
-              onTap: () => EnvEditorDialog.show(context)),
+          const SizedBox(height: AppDimens.gapS),
+          // Имя ключа известно — спрашиваем значение здесь же: человек уже
+          // стоит там, где увидел нехватку (борд 19).
+          if (blocker.keys.isNotEmpty)
+            MissingKeyBlock(keys: blocker.keys, lookedIn: blocker.lookedIn)
+          else
+            _CodeGateButton(
+                label: texts.gatePersonalFill,
+                onTap: () => EnvEditorDialog.show(context)),
         ],
         if (blocker.scope == RequirementScope.runtime) ...[
           const SizedBox(height: 6),

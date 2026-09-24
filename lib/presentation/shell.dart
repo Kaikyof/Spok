@@ -548,14 +548,32 @@ class _FreshnessIndicator extends StatelessWidget {
     final stale = age.inMinutes >= 15;
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: Tooltip(
-        message: texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
-        child: Text(
-          _freshnessLabel(texts, age, stale),
-          style: AppTextStyles.caption.copyWith(
-            color: stale ? AppColors.warning : null,
+      child: Row(
+        children: [
+          Tooltip(
+            message: texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
+            child: Text(
+              _freshnessLabel(texts, age, stale),
+              style: AppTextStyles.caption.copyWith(
+                color: stale ? AppColors.warning : null,
+              ),
+            ),
           ),
-        ),
+          // Подсветка без кнопки оставляет человека искать обновление
+          // глазами по шапке — кнопка стоит рядом с самой пометкой.
+          if (stale)
+            TextButton(
+              onPressed: () =>
+                  context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 28),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                foregroundColor: AppColors.warning,
+              ),
+              child: Text(texts.freshRefresh,
+                  style: const TextStyle(fontSize: 12)),
+            ),
+        ],
       ),
     );
   }

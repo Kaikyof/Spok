@@ -88,6 +88,94 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нет активного спринта.\nСоздайте его командой /opsx:doc.';
 
   @override
+  String unrecognizedTitle(int done, int total) {
+    return 'Разобрано $done из $total — остальное приложение не поняло';
+  }
+
+  @override
+  String get unrecognizedNote =>
+      'Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.';
+
+  @override
+  String get unrecognizedManual => 'Указать вручную';
+
+  @override
+  String get unrecognizedNotFound => 'не найдено';
+
+  @override
+  String get partRecognizedSchema => 'Схема артефактов';
+
+  @override
+  String get partRecognizedGrouping => 'Группировка работы';
+
+  @override
+  String get partRecognizedStacks => 'Стеки';
+
+  @override
+  String get partRecognizedStatuses => 'Статусы трекера';
+
+  @override
+  String get partRecognizedCommands => 'Команды спеки';
+
+  @override
+  String get partRecognizedServices => 'Репозитории кода';
+
+  @override
+  String partValueStatuses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count статусов',
+      few: '$count статуса',
+      one: '$count статус',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String partValueCommands(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count команд',
+      few: '$count команды',
+      one: '$count команда',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String partValueServices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count репозиториев',
+      few: '$count репозитория',
+      one: '$count репозиторий',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get partValueNoStacks => 'без стеков';
+
+  @override
+  String get groupingSprintDir => 'по спринтам';
+
+  @override
+  String get groupingMasterDoc => 'по мастер-спекам';
+
+  @override
+  String get groupingNone => 'плоский список';
+
+  @override
+  String get partialTrackerTitle =>
+      'Статусы трекера недоступны — показаны данные файлов спеки';
+
+  @override
+  String get partialRetry => 'Повторить';
+
+  @override
   String redmineUnavailable(String reason) {
     return 'Статусы Redmine недоступны ($reason) — показаны данные файлов';
   }
@@ -674,7 +762,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get freshStale => 'данные устарели — обновите';
+  String get freshStale => 'данные устарели';
+
+  @override
+  String get freshRefresh => 'Обновить';
 
   @override
   String codeSectionTitle(String stack) {
@@ -865,6 +956,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sprintCreateChange => 'Создать change';
 
   @override
+  String get sprintOpenMasterDoc => 'Открыть мастер-спеку';
+
+  @override
+  String get sprintCommandPreview => 'Создание запустит команду спеки:';
+
+  @override
   String get changeCreateTitle => 'Новый change в спринте';
 
   @override
@@ -919,8 +1016,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get groupNone => 'Группировки нет — показаны все change’и';
 
   @override
-  String get groupEmptyAll =>
-      'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.';
+  String get groupEmptyAll => 'В спеке пока нет change\'ей';
 
   @override
   String get stackWork => 'Работа';
@@ -1163,6 +1259,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reqChatKeysFilled => 'Ключи мессенджера на этой машине';
+
+  @override
+  String get missingKeyTitle =>
+      'Ключа нет только на этой машине — спека тут не при чём';
+
+  @override
+  String get missingKeyNote =>
+      'Значение уйдёт в хранилище секретов, а не в репозиторий';
 
   @override
   String get gatePersonalTitle => 'Не настроено на этой машине';

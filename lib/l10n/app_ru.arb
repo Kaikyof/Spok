@@ -51,6 +51,37 @@
     }
   },
   "sprintEmpty": "Нет активного спринта.\nСоздайте его командой /opsx:doc.",
+  "unrecognizedTitle": "Разобрано {done} из {total} — остальное приложение не поняло",
+  "@unrecognizedTitle": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "unrecognizedNote": "Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.",
+  "unrecognizedManual": "Указать вручную",
+  "unrecognizedNotFound": "не найдено",
+  "partRecognizedSchema": "Схема артефактов",
+  "partRecognizedGrouping": "Группировка работы",
+  "partRecognizedStacks": "Стеки",
+  "partRecognizedStatuses": "Статусы трекера",
+  "partRecognizedCommands": "Команды спеки",
+  "partRecognizedServices": "Репозитории кода",
+  "partValueStatuses": "{count, plural, one{{count} статус} few{{count} статуса} other{{count} статусов}}",
+  "@partValueStatuses": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueCommands": "{count, plural, one{{count} команда} few{{count} команды} other{{count} команд}}",
+  "@partValueCommands": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueServices": "{count, plural, one{{count} репозиторий} few{{count} репозитория} other{{count} репозиториев}}",
+  "@partValueServices": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueNoStacks": "без стеков",
+  "groupingSprintDir": "по спринтам",
+  "groupingMasterDoc": "по мастер-спекам",
+  "groupingNone": "плоский список",
+  "partialTrackerTitle": "Статусы трекера недоступны — показаны данные файлов спеки",
+  "partialRetry": "Повторить",
   "redmineUnavailable": "Статусы Redmine недоступны ({reason}) — показаны данные файлов",
   "@redmineUnavailable": {
     "placeholders": {
@@ -529,7 +560,8 @@
       }
     }
   },
-  "freshStale": "данные устарели — обновите",
+  "freshStale": "данные устарели",
+  "freshRefresh": "Обновить",
   "codeSectionTitle": "Код · {stack}",
   "@codeSectionTitle": {
     "placeholders": {
@@ -665,6 +697,8 @@
   },
   "sprintNoChangesHint": "Change — единица работы: спека, задачи, код и тест-кейсы. Создайте первый, чтобы спринт начал двигаться.",
   "sprintCreateChange": "Создать change",
+  "sprintOpenMasterDoc": "Открыть мастер-спеку",
+  "sprintCommandPreview": "Создание запустит команду спеки:",
   "changeCreateTitle": "Новый change в спринте",
   "changeCreateNameLabel": "Идентификатор change'а (латиницей, через дефис)",
   "changeCreateBriefLabel": "Что нужно сделать — коротко или подробно",
@@ -701,7 +735,7 @@
   "groupTitleFlat": "Change'и",
   "groupSwitcherTooltip": "Переключить группу · openspec/doc",
   "groupNone": "Группировки нет — показаны все change’и",
-  "groupEmptyAll": "В спеке нет change'ей.\nСоздайте первый командой /opsx:propose.",
+  "groupEmptyAll": "В спеке пока нет change'ей",
   "stackWork": "Работа",
   "stackBackend": "Backend",
   "stackMobile": "Mobile",
@@ -815,6 +849,8 @@
   "reqServices": "Сервисы workspace",
   "reqChatKeysDeclared": "Спека работает с мессенджером",
   "reqChatKeysFilled": "Ключи мессенджера на этой машине",
+  "missingKeyTitle": "Ключа нет только на этой машине — спека тут не при чём",
+  "missingKeyNote": "Значение уйдёт в хранилище секретов, а не в репозиторий",
   "gatePersonalTitle": "Не настроено на этой машине",
   "gatePersonalNote": "Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.",
   "gatePersonalFill": "Заполнить",

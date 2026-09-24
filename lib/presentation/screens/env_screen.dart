@@ -11,6 +11,7 @@ import '../bloc/console_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/check_row.dart';
 import '../ui_kit/section_card.dart';
+import '../ui_kit/skeleton.dart';
 import '../widgets/env_editor_dialog.dart';
 
 /// Экран «Окружение»: поймать проблему до запуска, а не в середине.
@@ -23,9 +24,7 @@ class EnvScreen extends StatelessWidget {
     return BlocBuilder<ConsoleBloc, ConsoleState>(
       builder: (context, state) {
         final envReport = state.snapshot?.env;
-        if (envReport == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (envReport == null) return const _EnvSkeleton();
         return ListView(
           padding: AppDimens.screenPadding,
           children: [
@@ -45,6 +44,57 @@ class EnvScreen extends StatelessWidget {
       },
     );
   }
+}
+
+/// Первая загрузка: три секции проверок той же высоты и в тех же местах.
+class _EnvSkeleton extends StatelessWidget {
+  const _EnvSkeleton();
+
+  @override
+  Widget build(BuildContext context) => ListView(
+        padding: AppDimens.screenPadding,
+        children: [
+          const SizedBox(
+            height: 40,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonLine(width: 120),
+                      SizedBox(height: AppDimens.gapS),
+                      SkeletonLine(width: 180, height: 9),
+                    ],
+                  ),
+                ),
+                SkeletonLine(width: 130, height: 30),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimens.gapL),
+          for (final rows in [4, 2, 3]) ...[
+            SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonLine(width: 220),
+                  const SizedBox(height: AppDimens.gapS),
+                  for (var row = 0; row < rows; row++)
+                    SkeletonRow(
+                      columnFlex: const [50, 30],
+                      widthFactors: const [0.6, 0.8],
+                      showTopDivider: row > 0,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimens.gapM),
+          ],
+        ],
+      );
 }
 
 class _EnvHeader extends StatelessWidget {

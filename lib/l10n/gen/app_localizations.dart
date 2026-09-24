@@ -232,6 +232,120 @@ abstract class AppLocalizations {
   /// **'Нет активного спринта.\nСоздайте его командой /opsx:doc.'**
   String get sprintEmpty;
 
+  /// No description provided for @unrecognizedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разобрано {done} из {total} — остальное приложение не поняло'**
+  String unrecognizedTitle(int done, int total);
+
+  /// No description provided for @unrecognizedNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.'**
+  String get unrecognizedNote;
+
+  /// No description provided for @unrecognizedManual.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать вручную'**
+  String get unrecognizedManual;
+
+  /// No description provided for @unrecognizedNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'не найдено'**
+  String get unrecognizedNotFound;
+
+  /// No description provided for @partRecognizedSchema.
+  ///
+  /// In ru, this message translates to:
+  /// **'Схема артефактов'**
+  String get partRecognizedSchema;
+
+  /// No description provided for @partRecognizedGrouping.
+  ///
+  /// In ru, this message translates to:
+  /// **'Группировка работы'**
+  String get partRecognizedGrouping;
+
+  /// No description provided for @partRecognizedStacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стеки'**
+  String get partRecognizedStacks;
+
+  /// No description provided for @partRecognizedStatuses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы трекера'**
+  String get partRecognizedStatuses;
+
+  /// No description provided for @partRecognizedCommands.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команды спеки'**
+  String get partRecognizedCommands;
+
+  /// No description provided for @partRecognizedServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'Репозитории кода'**
+  String get partRecognizedServices;
+
+  /// No description provided for @partValueStatuses.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} статус} few{{count} статуса} other{{count} статусов}}'**
+  String partValueStatuses(int count);
+
+  /// No description provided for @partValueCommands.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} команда} few{{count} команды} other{{count} команд}}'**
+  String partValueCommands(int count);
+
+  /// No description provided for @partValueServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} репозиторий} few{{count} репозитория} other{{count} репозиториев}}'**
+  String partValueServices(int count);
+
+  /// No description provided for @partValueNoStacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'без стеков'**
+  String get partValueNoStacks;
+
+  /// No description provided for @groupingSprintDir.
+  ///
+  /// In ru, this message translates to:
+  /// **'по спринтам'**
+  String get groupingSprintDir;
+
+  /// No description provided for @groupingMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'по мастер-спекам'**
+  String get groupingMasterDoc;
+
+  /// No description provided for @groupingNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'плоский список'**
+  String get groupingNone;
+
+  /// No description provided for @partialTrackerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы трекера недоступны — показаны данные файлов спеки'**
+  String get partialTrackerTitle;
+
+  /// No description provided for @partialRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get partialRetry;
+
   /// No description provided for @redmineUnavailable.
   ///
   /// In ru, this message translates to:
@@ -1188,8 +1302,14 @@ abstract class AppLocalizations {
   /// No description provided for @freshStale.
   ///
   /// In ru, this message translates to:
-  /// **'данные устарели — обновите'**
+  /// **'данные устарели'**
   String get freshStale;
+
+  /// No description provided for @freshRefresh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить'**
+  String get freshRefresh;
 
   /// No description provided for @codeSectionTitle.
   ///
@@ -1497,6 +1617,18 @@ abstract class AppLocalizations {
   /// **'Создать change'**
   String get sprintCreateChange;
 
+  /// No description provided for @sprintOpenMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть мастер-спеку'**
+  String get sprintOpenMasterDoc;
+
+  /// No description provided for @sprintCommandPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создание запустит команду спеки:'**
+  String get sprintCommandPreview;
+
   /// No description provided for @changeCreateTitle.
   ///
   /// In ru, this message translates to:
@@ -1590,7 +1722,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupEmptyAll.
   ///
   /// In ru, this message translates to:
-  /// **'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.'**
+  /// **'В спеке пока нет change\'ей'**
   String get groupEmptyAll;
 
   /// No description provided for @stackWork.
@@ -2024,6 +2156,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ключи мессенджера на этой машине'**
   String get reqChatKeysFilled;
+
+  /// No description provided for @missingKeyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключа нет только на этой машине — спека тут не при чём'**
+  String get missingKeyTitle;
+
+  /// No description provided for @missingKeyNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение уйдёт в хранилище секретов, а не в репозиторий'**
+  String get missingKeyNote;
 
   /// No description provided for @gatePersonalTitle.
   ///
