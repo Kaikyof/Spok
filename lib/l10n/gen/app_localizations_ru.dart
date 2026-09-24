@@ -292,6 +292,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get changeSpecOpen => 'Открыть целиком';
 
   @override
+  String get changeSpecExpandHere => 'Развернуть здесь';
+
+  @override
+  String get changeSpecCollapse => 'Свернуть';
+
+  @override
   String get changeMoreActions => 'Ещё действия';
 
   @override

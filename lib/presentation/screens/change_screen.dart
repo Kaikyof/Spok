@@ -884,29 +884,7 @@ class _SpecCard extends StatelessWidget {
           else if (content == null)
             Text(texts.changeSpecLoading, style: AppTextStyles.captionMuted)
           else
-            ConstrainedBox(
-              // Спека бывает длинной: карточка не должна выталкивать
-              // задачи и код за пределы экрана.
-              constraints: const BoxConstraints(maxHeight: 420),
-              child: Markdown(
-                data: content!,
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                selectable: true,
-                styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(
-                      fontSize: 12.5, height: 1.5,
-                      color: AppColors.textSecondary),
-                  h1: AppTextStyles.sectionTitle,
-                  h2: AppTextStyles.sectionTitle,
-                  h3: AppTextStyles.rowTitle,
-                  code: AppTextStyles.monospace(11.5,
-                      color: AppColors.monospaceText),
-                  listBullet: const TextStyle(
-                      fontSize: 12.5, color: AppColors.textSecondary),
-                ),
-              ),
-            ),
+            _SpecBody(content: content!),
         ],
       ),
     );
@@ -1259,6 +1237,144 @@ class _DocViewer extends StatelessWidget {
             child: DocMarkdown(data: content ?? texts.docReadError(doc.path)),
           ),
         ),
+      ],
+    );
+  }
+}
+
+
+/// Текст спеки в карточке.
+///
+/// Своей прокрутки у блока нет намеренно. Раньше спека жила в окне
+/// высотой 420 внутри прокрутки страницы, и это упиралось в тупик:
+/// докрутив спеку до конца, человек упирался — страница дальше не шла.
+/// Вложенные прокрутки во Flutter не передают колесо наружу: сигнал
+/// забирает самый внутренний список и, дойдя до края, просто молчит
+/// (`ScrollPositionWithSingleContext.pointerScroll` ничего не делает,
+/// когда двигаться некуда). Поэтому прокрутка на странице одна, а длинная
+/// спека складывается — задачи и код остаются под рукой, как и задумано.
+class _SpecBody extends StatefulWidget {
+  final String content;
+
+  const _SpecBody({required this.content});
+
+  @override
+  State<_SpecBody> createState() => _SpecBodyState();
+}
+
+class _SpecBodyState extends State<_SpecBody> {
+  /// Высота, после которой спека складывается: примерно экран текста.
+  static const _collapsedHeight = 420.0;
+
+  final _controller = ScrollController();
+
+  bool _expanded = false;
+
+  /// Спека не поместилась в сложенный вид — есть что разворачивать.
+  bool _clipped = false;
+
+  @override
+  void didUpdateWidget(_SpecBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Открыли другой change — меряем заново и показываем его спеку
+    // с начала, а не в том виде, в каком оставили прошлую.
+    if (oldWidget.content != widget.content) {
+      _expanded = false;
+      _clipped = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Померить можно только после раскладки: сам markdown знает свою высоту
+  /// лишь когда отрисован. Контроллер сложенного вида отвечает на это
+  /// точно — `maxScrollExtent` больше нуля ровно тогда, когда текст
+  /// не поместился.
+  void _measure() {
+    if (_expanded || _clipped || !_controller.hasClients) return;
+    if (_controller.position.maxScrollExtent > 0.5) {
+      setState(() => _clipped = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    final markdown = Markdown(
+      data: widget.content,
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      selectable: true,
+      controller: _controller,
+      // Прокрутка на странице одна — эта в неё не вмешивается.
+      physics: const NeverScrollableScrollPhysics(),
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(
+            fontSize: 12.5, height: 1.5, color: AppColors.textSecondary),
+        h1: AppTextStyles.sectionTitle,
+        h2: AppTextStyles.sectionTitle,
+        h3: AppTextStyles.rowTitle,
+        code: AppTextStyles.monospace(11.5, color: AppColors.monospaceText),
+        listBullet:
+            const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_expanded)
+          markdown
+        else
+          ClipRect(
+            child: ConstrainedBox(
+              constraints:
+                  const BoxConstraints(maxHeight: _collapsedHeight),
+              child: _clipped
+                  // Текст тает к нижнему краю: видно, что он не кончился,
+                  // и обрыв на полуслове не читается как сбой.
+                  ? ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black,
+                          Colors.black,
+                          Colors.transparent
+                        ],
+                        stops: [0, 0.85, 1],
+                      ).createShader(bounds),
+                      blendMode: BlendMode.dstIn,
+                      child: markdown,
+                    )
+                  : markdown,
+            ),
+          ),
+        if (_clipped)
+          Padding(
+            padding: const EdgeInsets.only(top: AppDimens.gapS),
+            child: InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 16, color: AppColors.accent),
+                  const SizedBox(width: 4),
+                  Text(
+                      _expanded
+                          ? texts.changeSpecCollapse
+                          : texts.changeSpecExpandHere,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.accent)),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

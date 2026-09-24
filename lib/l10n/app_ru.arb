@@ -201,6 +201,8 @@
     "placeholders": { "file": { "type": "String" } }
   },
   "changeSpecOpen": "Открыть целиком",
+  "changeSpecExpandHere": "Развернуть здесь",
+  "changeSpecCollapse": "Свернуть",
   "changeMoreActions": "Ещё действия",
   "changeActionsHint": "команда подставится в строку ввода сессии",
   "artifactWaits": "ждёт: {what}",

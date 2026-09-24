@@ -532,6 +532,18 @@ abstract class AppLocalizations {
   /// **'Открыть целиком'**
   String get changeSpecOpen;
 
+  /// No description provided for @changeSpecExpandHere.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развернуть здесь'**
+  String get changeSpecExpandHere;
+
+  /// No description provided for @changeSpecCollapse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть'**
+  String get changeSpecCollapse;
+
   /// No description provided for @changeMoreActions.
   ///
   /// In ru, this message translates to:
