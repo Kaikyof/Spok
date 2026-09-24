@@ -4,6 +4,7 @@ import '../entities/env_field.dart';
 import '../entities/handoff_recipient.dart';
 import '../entities/issue_comment.dart';
 import '../entities/merge_request_info.dart';
+import '../entities/secret_backend.dart';
 import '../entities/slash_command.dart';
 
 abstract class PlatformRepository {
@@ -56,6 +57,10 @@ abstract class PlatformRepository {
   /// Форма ключей спеки: поля из `.env.example` со значениями из `.env`.
   Future<EnvForm> envForm();
 
-  /// Сохраняет значения в `.env` спеки.
+  /// Сохраняет значения: секреты — в системное хранилище, остальное —
+  /// в `.env` спеки. Файл пересобирается, он производный.
   Future<void> saveEnv(Map<String, String> values);
+
+  /// Где лежат секреты на этой машине: связка ключей или файл.
+  Future<SecretBackend> secretBackend();
 }

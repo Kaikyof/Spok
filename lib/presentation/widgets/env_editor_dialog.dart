@@ -5,9 +5,12 @@ import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/env_field.dart';
+import '../../domain/entities/operation_progress.dart';
+import '../../domain/entities/secret_backend.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../localization/text_formatters.dart';
+import '../ui_kit/progress_panel.dart';
 
 /// Форма ключей спеки: поля строятся из `.env.example`, значения пишутся
 /// в `.env`. Правка ключей в терминале — лишний переход из приложения.
@@ -28,10 +31,16 @@ class EnvEditorDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return BlocBuilder<ConsoleBloc, ConsoleState>(
+    return BlocConsumer<ConsoleBloc, ConsoleState>(
       buildWhen: (previous, current) =>
           previous.envForm != current.envForm ||
           previous.envSaving != current.envSaving,
+      // Диалог закрывается, когда запись действительно закончилась:
+      // связка ключей может спросить разрешение, и до её ответа
+      // говорить «сохранено» нельзя.
+      listenWhen: (previous, current) =>
+          previous.envSaving && !current.envSaving,
+      listener: (context, state) => Navigator.of(context).maybePop(),
       builder: (context, state) {
         final form = state.envForm;
         return AlertDialog(
@@ -43,7 +52,7 @@ class EnvEditorDialog extends StatelessWidget {
                 ? const SizedBox(
                     height: 80,
                     child: Center(child: CircularProgressIndicator()))
-                : _EnvFields(form: form),
+                : _EnvFields(form: form, saving: state.envSaving),
           ),
         );
       },
@@ -54,7 +63,11 @@ class EnvEditorDialog extends StatelessWidget {
 class _EnvFields extends StatefulWidget {
   final EnvForm form;
 
-  const _EnvFields({required this.form});
+  /// Значения уже пишутся: связка ключей может спросить разрешение,
+  /// и человеку нужно видеть, что операция идёт.
+  final bool saving;
+
+  const _EnvFields({required this.form, required this.saving});
 
   @override
   State<_EnvFields> createState() => _EnvFieldsState();
@@ -80,7 +93,6 @@ class _EnvFieldsState extends State<_EnvFields> {
           for (final entry in _controllers.entries)
             entry.key: entry.value.text.trim(),
         }));
-    Navigator.of(context).pop();
   }
 
   @override
@@ -125,6 +137,36 @@ class _EnvFieldsState extends State<_EnvFields> {
           ),
         ),
         const SizedBox(height: AppDimens.gapM),
+        // Пока идёт запись — общий вид длинной операции: связка ключей
+        // спрашивает разрешение, и это занимает секунды.
+        if (widget.saving) ...[
+          ProgressPanel(
+              title: texts.envEditSaving,
+              progress: const OperationProgress.running()),
+          const SizedBox(height: AppDimens.gapM),
+        ],
+        Row(
+          children: [
+            Icon(
+                widget.form.backend.isKeyring
+                    ? Icons.lock_outline
+                    : Icons.folder_outlined,
+                size: 14,
+                color: widget.form.backend.isKeyring
+                    ? AppColors.success
+                    : AppColors.warning),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(texts.secretBackendNote(widget.form.backend),
+                  style: AppTextStyles.hint.copyWith(
+                      height: 1.4,
+                      color: widget.form.backend.isKeyring
+                          ? AppColors.textSecondary
+                          : AppColors.warning)),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimens.gapXs),
         Text(texts.envEditSecretNote,
             style: AppTextStyles.hint.copyWith(height: 1.4)),
         const SizedBox(height: AppDimens.gapXs),
@@ -134,7 +176,7 @@ class _EnvFieldsState extends State<_EnvFields> {
         Row(
           children: [
             FilledButton(
-              onPressed: _save,
+              onPressed: widget.saving ? null : _save,
               style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: AppColors.background),
@@ -142,7 +184,8 @@ class _EnvFieldsState extends State<_EnvFields> {
             ),
             const SizedBox(width: AppDimens.gapM),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed:
+                  widget.saving ? null : () => Navigator.of(context).pop(),
               child: Text(texts.setupCancel,
                   style: const TextStyle(color: AppColors.textSecondary)),
             ),

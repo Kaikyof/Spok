@@ -762,7 +762,11 @@
   "envEditTitle": "Ключи спеки",
   "envEditSave": "Сохранить в .env",
   "envEditOptional": "необязательный",
-  "envEditSecretNote": "Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.",
+  "envEditSecretNote": "Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.",
+  "envEditSaving": "Сохраняем ключи",
+  "envEditStoreKeychain": "Секреты сохраняются в Keychain",
+  "envEditStoreLibsecret": "Секреты сохраняются в связку ключей системы",
+  "envEditStoreFile": "Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600",
   "envEditGitWarning": ".env не закрыт .gitignore — секреты могут уехать в репозиторий",
   "envEditPath": "Файл: {path}",
   "@envEditPath": {
@@ -908,6 +912,12 @@
   },
   "docsBranchUnknown": "git не ответил о состоянии файла",
   "docsOpenChange": "Открыть change",
+  "progressCancel": "Отменить",
+  "progressRetry": "Повторить",
+  "progressPercent": "{percent} %",
+  "@progressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
   "cancel": "Отмена",
   "confirm": "Готово"
 }

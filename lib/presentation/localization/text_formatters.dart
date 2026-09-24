@@ -5,6 +5,7 @@ import '../../domain/entities/env_check.dart';
 import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/secret_backend.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -114,6 +115,15 @@ extension DomainTextFormatters on AppLocalizations {
         CheckOutcome.systemTimeout => checkTimeout,
         CheckOutcome.systemNoConnection => checkNoConnection,
         CheckOutcome.systemNotConfigured => checkNotConfigured,
+      };
+
+  /// Где лежат секреты — говорим прямо: «сохранено в Keychain» и
+  /// «лежит в файле» отвечают на разные вопросы о безопасности, и
+  /// умолчание здесь читается как обман.
+  String secretBackendNote(SecretBackend backend) => switch (backend) {
+        SecretBackend.keychain => envEditStoreKeychain,
+        SecretBackend.libsecret => envEditStoreLibsecret,
+        SecretBackend.file => envEditStoreFile,
       };
 
   /// Пояснение к ключу .env; для репозиториев и систем detail — данные

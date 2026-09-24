@@ -855,7 +855,7 @@ delivery: batch | per-change
 | Этап | Содержание | Зависит | Риск | Статус |
 |---|---|---|---|---|
 | 0. Кроссплатформенность | Linux-runner, пути через `app_paths`, `which claude` вместо хардкода | — | низкий | ⬜ |
-| 1. Секреты и `.env` | `SecretStore` (Keychain/libsecret) + файловый fallback, форма ключей, `EnvMaterializer` | 0 | средний | 🟡 форма ключей |
+| 1. Секреты и `.env` | `SecretStore` (Keychain/libsecret) + файловый fallback, форма ключей, `EnvMaterializer` | 0 | средний | ✅ кроме путей хранилища (ждут `app_paths`, этап 0) |
 | 2. Клон по URL и реестр | `SpecProject`, `projects.json`, `GitCloneSource` с прогрессом и разбором ошибок | 0, 1 | средний | 🟡 реестр |
 | 3. Discovery | метаданные схемы → эвристика; команды с дедупом; фичи по данным; когда `openspec/redmine.yaml` нет — статусы спрашиваются один раз со списком из `GET /issue_statuses.json` | 2 | средний | ✅ кроме опроса статусов при отсутствии `redmine.yaml` |
 | 4. Опциональные уровни модели | `Group` + 6 стратегий, `WorkUnit`, стеки опциональны | 3 | **высокий** | 🟡 3 стратегии |

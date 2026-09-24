@@ -1812,8 +1812,32 @@ abstract class AppLocalizations {
   /// No description provided for @envEditSecretNote.
   ///
   /// In ru, this message translates to:
-  /// **'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.'**
+  /// **'Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.'**
   String get envEditSecretNote;
+
+  /// No description provided for @envEditSaving.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняем ключи'**
+  String get envEditSaving;
+
+  /// No description provided for @envEditStoreKeychain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секреты сохраняются в Keychain'**
+  String get envEditStoreKeychain;
+
+  /// No description provided for @envEditStoreLibsecret.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секреты сохраняются в связку ключей системы'**
+  String get envEditStoreLibsecret;
+
+  /// No description provided for @envEditStoreFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600'**
+  String get envEditStoreFile;
 
   /// No description provided for @envEditGitWarning.
   ///
@@ -2378,6 +2402,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Открыть change'**
   String get docsOpenChange;
+
+  /// No description provided for @progressCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отменить'**
+  String get progressCancel;
+
+  /// No description provided for @progressRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get progressRetry;
+
+  /// No description provided for @progressPercent.
+  ///
+  /// In ru, this message translates to:
+  /// **'{percent} %'**
+  String progressPercent(int percent);
 
   /// No description provided for @cancel.
   ///

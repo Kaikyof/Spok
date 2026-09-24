@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spok/domain/entities/change_unit.dart';
+import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
@@ -161,6 +162,9 @@ class _FakeRepository implements PlatformRepository {
 
   @override
   Future<void> saveEnv(Map<String, String> values) async {}
+
+  @override
+  Future<SecretBackend> secretBackend() async => SecretBackend.file;
 }
 
 Widget _wrap(ConsoleBloc console, SessionsBloc sessions) => MaterialApp(

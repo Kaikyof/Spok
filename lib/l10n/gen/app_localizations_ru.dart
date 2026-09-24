@@ -1045,7 +1045,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get envEditSecretNote =>
-      'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.';
+      'Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.';
+
+  @override
+  String get envEditSaving => 'Сохраняем ключи';
+
+  @override
+  String get envEditStoreKeychain => 'Секреты сохраняются в Keychain';
+
+  @override
+  String get envEditStoreLibsecret =>
+      'Секреты сохраняются в связку ключей системы';
+
+  @override
+  String get envEditStoreFile =>
+      'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600';
 
   @override
   String get envEditGitWarning =>
@@ -1363,6 +1377,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get docsOpenChange => 'Открыть change';
+
+  @override
+  String get progressCancel => 'Отменить';
+
+  @override
+  String get progressRetry => 'Повторить';
+
+  @override
+  String progressPercent(int percent) {
+    return '$percent %';
+  }
 
   @override
   String get cancel => 'Отмена';

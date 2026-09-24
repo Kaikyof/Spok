@@ -20,25 +20,57 @@ import '../../domain/entities/slash_command.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/repositories/platform_repository.dart';
+import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
+import '../sources/env_materializer.dart';
 import '../sources/gitlab_api.dart';
 import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
+import '../sources/secret_store.dart';
 
 class PlatformRepositoryImpl implements PlatformRepository {
   PlatformFilesSource? files;
   final AppConfigSource config;
   final CommandLog? commandLog;
   final FindDivergences findDivergences;
+  final SecretStore secrets;
+
+  /// Спеки, `.env` которых уже собран в этом запуске: пересобирать файл
+  /// на каждом обновлении слепка незачем — он меняется только когда
+  /// человек правит ключи.
+  final _materialized = <String>{};
 
   PlatformRepositoryImpl(this.files,
       {AppConfigSource? config,
       this.commandLog,
-      FindDivergences? findDivergences})
+      FindDivergences? findDivergences,
+      SecretStore? secrets})
       : config = config ?? AppConfigSource(),
-        findDivergences = findDivergences ?? FindDivergences();
+        findDivergences = findDivergences ?? FindDivergences(),
+        secrets = secrets ?? SecretStore();
+
+  /// Сборщик `.env` текущей спеки; null — спека не подключена.
+  EnvMaterializer? get _materializer {
+    final source = files;
+    return source == null ? null : EnvMaterializer(source, secrets: secrets);
+  }
+
+  /// Собирает `.env` спеки из хранилища секретов — один раз на спеку.
+  /// Клон мог быть создан только что: без этого шага скрипты спеки
+  /// стартовали бы без ключей, которые человек уже вводил.
+  Future<void> materializeEnv({bool force = false}) async {
+    final source = files;
+    if (source == null) return;
+    if (!force && !_materialized.add(source.path)) return;
+    try {
+      await _materializer?.materialize();
+    } catch (_) {
+      // Не вышло — ключи всё равно читаются из файла, как раньше.
+      // Ронять загрузку спеки из-за хранилища секретов нельзя.
+    }
+  }
 
   /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
   static Future<PlatformRepositoryImpl> create({CommandLog? commandLog}) async {
@@ -95,6 +127,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     await config.writePlatformDir(trimmedPath);
     await config.rememberSpec(trimmedPath);
     files = PlatformFilesSource(Directory(trimmedPath), commandLog: commandLog);
+    await materializeEnv();
     return true;
   }
 
@@ -114,6 +147,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
   Future<EnvForm> envForm() async {
     final source = files;
     if (source == null) return EnvForm.empty;
+    // Собираем файл до чтения формы: значение из связки ключей должно
+    // попасть в поле, даже если в клоне его ещё нет.
+    await materializeEnv();
     final env = source.loadEnv();
     return EnvForm(
       fields: [
@@ -127,12 +163,19 @@ class PlatformRepositoryImpl implements PlatformRepository {
       ],
       ignoredByGit: await source.envIgnoredByGit(),
       path: source.envPath,
+      backend: await secrets.backend(),
     );
   }
 
   @override
-  Future<void> saveEnv(Map<String, String> values) async =>
-      files?.writeEnv(values);
+  Future<void> saveEnv(Map<String, String> values) async {
+    final materializer = _materializer;
+    if (materializer == null) return;
+    await materializer.save(values);
+  }
+
+  @override
+  Future<SecretBackend> secretBackend() => secrets.backend();
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async {
@@ -249,6 +292,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
       );
     }
 
+    // Ключи возвращаем в клон до чтения: проверки окружения и трекер
+    // ниже уже рассчитывают на заполненный `.env`.
+    await materializeEnv();
     await source.pullPlatform();
     final changes = source.loadChanges();
     final groups = source.loadGroups(changes);
@@ -503,6 +549,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       keys: _checkEnvKeys(source, env),
       repos: await _checkRepos(source),
       systems: await _checkSystems(env),
+      backend: await secrets.backend(),
     );
   }
 
