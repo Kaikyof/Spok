@@ -17,6 +17,7 @@ import '../bloc/sessions_bloc.dart';
 import '../ui_kit/agent_markdown.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/suggestion_list.dart';
+import '../ui_kit/tappable.dart';
 
 /// Агентные сессии: часть работы требует суждения и ведётся моделью
 /// в диалоге (бриф §5.6). Внизу экрана — терминал во всю ширину контента:
@@ -128,28 +129,35 @@ class _QuickLaunch extends StatelessWidget {
                   ),
                 ),
             ],
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.cardHighlight,
-                borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    texts.sessionMoreActions,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+            child: Tappable(
+              tapHandledAbove: true,
+              borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.cardHighlight,
+                  borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      texts.sessionMoreActions,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                  const Icon(
-                    Icons.expand_more,
-                    size: 14,
-                    color: AppColors.textMuted,
-                  ),
-                ],
+                    const Icon(
+                      Icons.expand_more,
+                      size: 14,
+                      color: AppColors.textMuted,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -171,7 +179,7 @@ class _RoleButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
     onTap: () => terminalKey.currentState?.insertCommand(command),
     borderRadius: BorderRadius.circular(AppDimens.controlRadius),
     child: Container(
@@ -260,36 +268,44 @@ class _SessionSelector extends StatelessWidget {
           ),
         ),
       ],
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (session != null) ...[
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: statusOf(texts, session.status).$1,
-                shape: BoxShape.circle,
+      child: Tappable(
+        tapHandledAbove: true,
+        borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (session != null) ...[
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: statusOf(texts, session.status).$1,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.sectionTitle,
               ),
             ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Text(
-              title,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.sectionTitle,
-            ),
-          ),
-          if (state.sessions.length > 1) ...[
-            const SizedBox(width: 8),
-            Text(
-              '${state.sessions.length}',
-              style: AppTextStyles.monospace(11, color: AppColors.textMuted),
+            if (state.sessions.length > 1) ...[
+              const SizedBox(width: 8),
+              Text(
+                '${state.sessions.length}',
+                style: AppTextStyles.monospace(11, color: AppColors.textMuted),
+              ),
+            ],
+            const Icon(
+              Icons.expand_more,
+              size: 16,
+              color: AppColors.textMuted,
             ),
           ],
-          const Icon(Icons.expand_more, size: 16, color: AppColors.textMuted),
-        ],
+        ),
       ),
     );
   }
@@ -478,7 +494,7 @@ class _NextStepButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
     onTap: onTap,
     borderRadius: BorderRadius.circular(AppDimens.controlRadius),
     child: Container(
@@ -1320,7 +1336,7 @@ class _PaletteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return InkWell(
+    return Tappable(
       onTap: onTap,
       child: Container(
         color: active ? AppColors.card : null,
@@ -1607,30 +1623,36 @@ class _PickerChip extends StatelessWidget {
   const _PickerChip({required this.label, this.warning = false});
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-    decoration: BoxDecoration(
-      color: AppColors.cardHighlight,
-      borderRadius: BorderRadius.circular(13),
-      // Полный доступ к инструментам подсвечен рамкой: режим виден сразу.
-      border: warning ? Border.all(color: AppColors.warningBorder) : null,
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Окно бывает узким (бриф §9) — подпись ужимается, а не ломает ряд.
-        Flexible(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: AppColors.textSecondary,
+  // Нажатие забирает `PopupMenuButton` выше — за курсор и подсветку
+  // отвечаем мы.
+  Widget build(BuildContext context) => Tappable(
+    tapHandledAbove: true,
+    borderRadius: BorderRadius.circular(13),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.cardHighlight,
+        borderRadius: BorderRadius.circular(13),
+        // Полный доступ к инструментам подсвечен рамкой: режим виден сразу.
+        border: warning ? Border.all(color: AppColors.warningBorder) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Окно бывает узким (бриф §9) — подпись ужимается, а не ломает ряд.
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-        ),
-        const Icon(Icons.expand_more, size: 14, color: AppColors.textMuted),
-      ],
+          const Icon(Icons.expand_more, size: 14, color: AppColors.textMuted),
+        ],
+      ),
     ),
   );
 }

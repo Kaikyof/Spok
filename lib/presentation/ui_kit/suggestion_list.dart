@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
+import 'tappable.dart';
 
 /// Одна строка подсказки: значение моноширинным и пояснение рядом.
 class SuggestionItem {
@@ -74,7 +75,7 @@ class _SuggestionRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),

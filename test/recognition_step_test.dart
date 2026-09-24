@@ -86,6 +86,10 @@ class _FakeRepository implements PlatformRepository {
 
   bool accepted = true;
 
+  /// Реестр подключённых спек: из него видно, новая спека или человек
+  /// вернулся к уже подключённой.
+  List<String> registry = const [];
+
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
         groups: const [],
@@ -151,7 +155,7 @@ class _FakeRepository implements PlatformRepository {
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
 
   @override
-  Future<List<String>> knownSpecs() async => const [];
+  Future<List<String>> knownSpecs() async => registry;
 
   @override
   Future<EnvForm> envForm() async => EnvForm.empty;
@@ -215,6 +219,21 @@ void main() {
 
       expect(console.state.recognitionReview, isTrue);
       expect(console.state.needsSetup, isTrue);
+    });
+
+    testWidgets('спека из списка открывается сразу — разбор её уже смотрели',
+        (tester) async {
+      await open(tester);
+      repository.registry = const ['/tmp/spec'];
+      // Реестр попадает в состояние обычным обновлением.
+      console.add(ConsoleRefreshed());
+      await tester.pumpAndSettle();
+
+      console.add(PlatformPathSubmitted('/tmp/spec/'));
+      await tester.pumpAndSettle();
+
+      expect(console.state.recognitionReview, isFalse);
+      expect(console.state.needsSetup, isFalse);
     });
 
     testWidgets('непринятый путь оставляет человека на адресе, без разбора',

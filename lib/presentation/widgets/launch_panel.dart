@@ -7,6 +7,7 @@ import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/command_run.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../ui_kit/tappable.dart';
 
 /// Нижняя сворачиваемая панель запуска (бриф §5.5): выполняемая команда
 /// моноширинным, вывод, код возврата, длительность и копирование.
@@ -92,7 +93,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final currentRun = run;
-    return InkWell(
+    return Tappable(
       onTap: currentRun == null ? null : onToggle,
       child: SizedBox(
         height: 40,

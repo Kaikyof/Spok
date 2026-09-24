@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
+import 'tappable.dart';
 
 /// Сегментированный переключатель стеков: Все · iOS · Android.
 class StackFilterControl<T> extends StatelessWidget {
@@ -47,7 +48,7 @@ class _SegmentButton extends StatelessWidget {
       {required this.label, required this.active, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimens.controlRadius),
         child: Container(

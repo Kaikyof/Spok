@@ -32,6 +32,7 @@ import '../ui_kit/status_badge.dart';
 import '../widgets/env_editor_dialog.dart';
 import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
+import '../ui_kit/tappable.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
 class ChangeScreen extends StatelessWidget {
@@ -110,7 +111,7 @@ class _ChangeListRow extends StatelessWidget {
     final visibleStacks = change.stacks
         .where((stack) => state.allowsStack(stack.stack))
         .toList();
-    return InkWell(
+    return Tappable(
       onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(change)),
       borderRadius: BorderRadius.circular(AppDimens.cardRadius),
       child: SectionCard(
@@ -271,9 +272,10 @@ class _ChangeCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            InkWell(
+            Tappable(
               onTap: () =>
                   context.read<ConsoleBloc>().add(ChangeOpened(null)),
+              effect: HoverEffect.underline,
               child:
                   Text(texts.backToChanges, style: AppTextStyles.captionMuted),
             ),
@@ -448,8 +450,9 @@ class _CodeCard extends StatelessWidget {
             if (state.profile.branchUrl(stackState.stack, sourceBranch)
                 case final gitlabUrl?) ...[
               const SizedBox(height: 6),
-              InkWell(
+              Tappable(
                 onTap: () => launchUrl(Uri.parse(gitlabUrl)),
+                effect: HoverEffect.underline,
                 child: Text(texts.codeOpenInGitlab,
                     style: const TextStyle(
                         fontSize: 11.5, color: AppColors.accent)),
@@ -631,8 +634,9 @@ class _MergeRequestRow extends StatelessWidget {
                       color: AppColors.textPrimary)),
             ),
             if (mr.webUrl.isNotEmpty)
-              InkWell(
+              Tappable(
                 onTap: () => launchUrl(Uri.parse(mr.webUrl)),
+                effect: HoverEffect.underline,
                 child: Text(texts.codeOpenMr,
                     style: const TextStyle(
                         fontSize: 11.5, color: AppColors.accent)),
@@ -702,8 +706,9 @@ class _CommentsCardState extends State<_CommentsCard> {
           else ...[
             for (final comment in visible) _CommentRow(comment: comment),
             if (!_expanded && loaded.length > _collapsedCount)
-              InkWell(
+              Tappable(
                 onTap: () => setState(() => _expanded = true),
+                effect: HoverEffect.underline,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(texts.commentsShowAll(loaded.length),
@@ -853,9 +858,10 @@ class _SpecCard extends StatelessWidget {
                     style: AppTextStyles.sectionTitle),
               ),
               if (doc != null && doc.exists)
-                InkWell(
+                Tappable(
                   onTap: () =>
                       context.read<ConsoleBloc>().add(DocOpened(doc)),
+                  effect: HoverEffect.underline,
                   child: Text(texts.changeSpecOpen,
                       style: const TextStyle(
                           fontSize: 11.5, color: AppColors.accent)),
@@ -899,7 +905,7 @@ class _ArtifactRow extends StatelessWidget {
   DocArtifact get artifact => state.doc;
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
         onTap: artifact.exists
             ? () => context.read<ConsoleBloc>().add(DocOpened(artifact))
             : null,
@@ -1124,21 +1130,26 @@ class _MoreActionsMenu extends StatelessWidget {
             ),
           ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.cardHighlight,
-          borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(texts.changeMoreActions,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textPrimary)),
-            const Icon(Icons.expand_more, size: 15, color: AppColors.textMuted),
-          ],
+      child: Tappable(
+        tapHandledAbove: true,
+        borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.cardHighlight,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(texts.changeMoreActions,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textPrimary)),
+              const Icon(Icons.expand_more,
+                  size: 15, color: AppColors.textMuted),
+            ],
+          ),
         ),
       ),
     );
@@ -1212,8 +1223,9 @@ class _DocViewer extends StatelessWidget {
               horizontal: AppDimens.gapXl, vertical: 12),
           child: Row(
             children: [
-              InkWell(
+              Tappable(
                 onTap: () => context.read<ConsoleBloc>().add(DocOpened(null)),
+                effect: HoverEffect.underline,
                 child: Text(
                     backLabel != null ? '← $backLabel' : texts.backFallback,
                     style: AppTextStyles.captionMuted),
@@ -1357,8 +1369,9 @@ class _SpecBodyState extends State<_SpecBody> {
         if (_clipped)
           Padding(
             padding: const EdgeInsets.only(top: AppDimens.gapS),
-            child: InkWell(
+            child: Tappable(
               onTap: () => setState(() => _expanded = !_expanded),
+              effect: HoverEffect.underline,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

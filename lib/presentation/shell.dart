@@ -24,6 +24,7 @@ import 'screens/recognition_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'ui_kit/app_loader.dart';
+import 'ui_kit/tappable.dart';
 
 class Shell extends StatelessWidget {
   const Shell({super.key});
@@ -216,29 +217,35 @@ class _SpecSwitcher extends StatelessWidget {
             if (state.knownSpecs.isNotEmpty) const PopupMenuDivider(),
             PopupMenuItem(value: '', child: Text(texts.specAdd)),
           ],
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    current == null
-                        ? texts.appBadgeGeneric
-                        : p.basename(current).toUpperCase(),
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.sectionLabel.copyWith(
-                      letterSpacing: 1.2,
-                      fontSize: 10.5,
+          // Нажатие забирает `PopupMenuButton` — курсор и подсветку
+          // рисуем сами, иначе переключатель выглядит подписью.
+          child: Tappable(
+            tapHandledAbove: true,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      current == null
+                          ? texts.appBadgeGeneric
+                          : p.basename(current).toUpperCase(),
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.sectionLabel.copyWith(
+                        letterSpacing: 1.2,
+                        fontSize: 10.5,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.unfold_more,
-                  size: 13,
-                  color: AppColors.textMuted,
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.unfold_more,
+                    size: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -266,7 +273,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    child: InkWell(
+    child: Tappable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppDimens.controlRadius),
       child: Container(
@@ -511,17 +518,21 @@ class _GroupSwitcher extends StatelessWidget {
                 ),
               ),
           ],
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: titleText),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.expand_more,
-                size: 18,
-                color: AppColors.textMuted,
-              ),
-            ],
+          child: Tappable(
+            tapHandledAbove: true,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: titleText),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.expand_more,
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
           ),
         );
       },

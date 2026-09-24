@@ -21,6 +21,7 @@ import '../ui_kit/section_card.dart';
 import '../widgets/feature_unavailable_view.dart';
 import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
+import '../ui_kit/tappable.dart';
 
 /// Передача группы: мастер из четырёх шагов, все видны сразу.
 /// Шаг, для которого у спеки нет данных, не исчезает — он объясняет,
@@ -563,7 +564,7 @@ class _RecipientOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return InkWell(
+    return Tappable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppDimens.controlRadius),
       child: Padding(

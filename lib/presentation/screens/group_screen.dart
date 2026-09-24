@@ -23,6 +23,7 @@ import '../ui_kit/status_badge.dart';
 import '../widgets/create_change_dialog.dart';
 import '../widgets/create_sprint_dialog.dart';
 import '../widgets/stack_filter_bar.dart';
+import '../ui_kit/tappable.dart';
 
 /// Главный экран: за пять секунд показать, где работа и что мешает.
 /// Группа — спринт, мастер-спека или просто все change'и спеки.
@@ -572,7 +573,7 @@ class _ChangeRow extends StatelessWidget {
       stack.isEmpty ? change.stacks.firstOrNull : change.stack(stack);
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
         onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(change)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

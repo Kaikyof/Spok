@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
 
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/clone_progress.dart';
@@ -112,14 +113,19 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
 
   Future<void> _onPathSubmitted(
       PlatformPathSubmitted event, Emitter<ConsoleState> emit) async {
+    // Спека уже в реестре — человек просто вернулся к ней из списка.
+    // Разбор он на ней уже видел, и показывать его снова значило бы
+    // ставить экран поперёк каждого переключения.
+    final known = {for (final path in state.knownSpecs) p.canonicalize(path)};
+    final fresh = !known.contains(p.canonicalize(event.path));
     final accepted = await repository.setPlatformDir(event.path);
     if (!accepted) {
       emit(state.copyWith(pathRejected: true));
       return;
     }
     // Спека сменилась — выбранные группа, change и стек относились к старой.
-    // Но не открываем её сразу: сначала шаг «Что распознано» (борд 10).
-    emit(ConsoleState(screen: state.screen, recognitionReview: true));
+    // Новую не открываем сразу: сначала шаг «Что распознано» (борд 10).
+    emit(ConsoleState(screen: state.screen, recognitionReview: fresh));
     add(ConsoleRefreshed());
   }
 
