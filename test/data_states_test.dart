@@ -111,6 +111,9 @@ class _FakeRepository implements PlatformRepository {
   Future<EnvForm> envForm() async => EnvForm.empty;
 
   @override
+  Future<Map<String, String>> readEnvFile(String path) async => const {};
+
+  @override
   Future<void> saveEnv(Map<String, String> values) async {}
 
   @override

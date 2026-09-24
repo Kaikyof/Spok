@@ -71,6 +71,11 @@ abstract class PlatformRepository {
   /// в `.env` спеки. Файл пересобирается, он производный.
   Future<void> saveEnv(Map<String, String> values);
 
+  /// Читает `.env`-файл по указанному пути — человек приносит готовый
+  /// файл из другого проекта или из переписки, и перебивать ключи руками
+  /// ему незачем. Файл только читается, ничего не записывается.
+  Future<Map<String, String>> readEnvFile(String path);
+
   /// Где лежат секреты на этой машине: связка ключей или файл.
   Future<SecretBackend> secretBackend();
 }

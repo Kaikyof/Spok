@@ -260,6 +260,21 @@
     }
   },
   "envRecheck": "Перепроверить всё",
+  "envImportFromFile": "Импортировать из файла…",
+  "envImportHint": "Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.",
+  "envImportResult": "{filled, plural, one{Подставлено {filled} значение} few{Подставлено {filled} значения} other{Подставлено {filled} значений}} — проверьте и сохраните.",
+  "@envImportResult": {
+    "placeholders": { "filled": { "type": "int" } }
+  },
+  "envImportExtra": "Этих ключей спека не спрашивает, они пропущены: {keys}",
+  "@envImportExtra": {
+    "placeholders": { "keys": { "type": "String" } }
+  },
+  "envKeysCommand": "Спека заполняет окружение командой {command} — запустить в сессии",
+  "@envKeysCommand": {
+    "placeholders": { "command": { "type": "String" } }
+  },
+  "envTaskCommandTooltip": "Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны",
   "envKeysSection": "Ключи в .env — показывается только наличие, не значения",
   "envReposSection": "Репозитории",
   "envSystemsSection": "Внешние системы",

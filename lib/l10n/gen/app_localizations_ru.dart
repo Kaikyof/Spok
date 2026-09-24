@@ -412,6 +412,39 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envRecheck => 'Перепроверить всё';
 
   @override
+  String get envImportFromFile => 'Импортировать из файла…';
+
+  @override
+  String get envImportHint =>
+      'Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.';
+
+  @override
+  String envImportResult(int filled) {
+    String _temp0 = intl.Intl.pluralLogic(
+      filled,
+      locale: localeName,
+      other: 'Подставлено $filled значений',
+      few: 'Подставлено $filled значения',
+      one: 'Подставлено $filled значение',
+    );
+    return '$_temp0 — проверьте и сохраните.';
+  }
+
+  @override
+  String envImportExtra(String keys) {
+    return 'Этих ключей спека не спрашивает, они пропущены: $keys';
+  }
+
+  @override
+  String envKeysCommand(String command) {
+    return 'Спека заполняет окружение командой $command — запустить в сессии';
+  }
+
+  @override
+  String get envTaskCommandTooltip =>
+      'Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны';
+
+  @override
   String get envKeysSection =>
       'Ключи в .env — показывается только наличие, не значения';
 

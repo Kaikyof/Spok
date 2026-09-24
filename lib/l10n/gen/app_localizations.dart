@@ -730,6 +730,42 @@ abstract class AppLocalizations {
   /// **'Перепроверить всё'**
   String get envRecheck;
 
+  /// No description provided for @envImportFromFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импортировать из файла…'**
+  String get envImportFromFile;
+
+  /// No description provided for @envImportHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.'**
+  String get envImportHint;
+
+  /// No description provided for @envImportResult.
+  ///
+  /// In ru, this message translates to:
+  /// **'{filled, plural, one{Подставлено {filled} значение} few{Подставлено {filled} значения} other{Подставлено {filled} значений}} — проверьте и сохраните.'**
+  String envImportResult(int filled);
+
+  /// No description provided for @envImportExtra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этих ключей спека не спрашивает, они пропущены: {keys}'**
+  String envImportExtra(String keys);
+
+  /// No description provided for @envKeysCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека заполняет окружение командой {command} — запустить в сессии'**
+  String envKeysCommand(String command);
+
+  /// No description provided for @envTaskCommandTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны'**
+  String get envTaskCommandTooltip;
+
   /// No description provided for @envKeysSection.
   ///
   /// In ru, this message translates to:

@@ -1,3 +1,4 @@
+import 'env_task.dart';
 import 'feature_gate.dart';
 import 'group.dart';
 import 'slash_command.dart';
@@ -28,6 +29,11 @@ class ProjectProfile {
   /// человеку, а не заметается под ковёр.
   final SpecRecognition recognition;
 
+  /// Команды, которыми спека лечит нехватки окружения: склонировать
+  /// репозитории, заполнить ключи, проверить системы. Раздела в карте
+  /// нет — спека такой команды не объявляет, и кнопки не будет.
+  final Map<EnvTask, SlashCommand> envCommands;
+
   /// Команда передачи этой спеки; null — спека передачу не описывает,
   /// и фича выключена. Имя и сигнатура нужны экрану: команда строится
   /// из них, а не из зашитой строки.
@@ -42,6 +48,7 @@ class ProjectProfile {
     this.features = const {},
     this.recognition = SpecRecognition.empty,
     this.handoverCommand,
+    this.envCommands = const {},
   });
 
   /// Страница ветки в хостинге кода: собирается из адреса репозитория,

@@ -22,6 +22,7 @@ import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/spec_schema.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
+import '../../domain/usecases/find_env_commands.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
@@ -33,6 +34,7 @@ import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
 import '../sources/secret_store.dart';
+import '../sources/env_file.dart';
 
 class PlatformRepositoryImpl implements PlatformRepository {
   PlatformFilesSource? files;
@@ -186,6 +188,13 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final materializer = _materializer;
     if (materializer == null) return;
     await materializer.save(values);
+  }
+
+  @override
+  Future<Map<String, String>> readEnvFile(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return const {};
+    return EnvFile.parse(await file.readAsString());
   }
 
   @override
@@ -384,6 +393,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         envValues: envReport,
       ),
       handoverCommand: _handoverCommand(source),
+      envCommands: const FindEnvCommands()(source.loadSlashCommands()),
       recognition: _buildRecognition(
         source: source,
         schema: schema,
