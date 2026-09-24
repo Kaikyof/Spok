@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/platform/app_paths.dart';
 import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/operation_progress.dart';
 import 'executable_locator.dart';
@@ -15,13 +16,9 @@ import 'executable_locator.dart';
 /// значит, работают его ssh-ключи, его `~/.gitconfig` и его credential
 /// helper, и ничего из этого приложение у него не спрашивает.
 class GitCloneSource {
-  /// Куда складываются клоны спек. Каталог тот же, где лежит конфиг
-  /// приложения: одно место на все данные Spok.
-  static Directory defaultRoot() {
-    final home = Platform.environment['HOME'] ?? '';
-    return Directory(
-        p.join(home, 'Library', 'Application Support', 'Spok', 'specs'));
-  }
+  /// Куда складываются клоны спек — каталог данных приложения
+  /// (`AppPaths.specs`), один на все спеки.
+  static Directory defaultRoot() => AppPaths.specs();
 
   final Directory root;
 

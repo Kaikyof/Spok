@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/platform/app_paths.dart';
 import '../../domain/entities/secret_backend.dart';
 import 'executable_locator.dart';
 
@@ -35,11 +36,7 @@ class SecretStore {
     _backend = SecretBackend.file;
   }
 
-  static Directory _defaultFallbackDir() {
-    final home = Platform.environment['HOME'] ?? '';
-    return Directory(
-        p.join(home, 'Library', 'Application Support', 'Spok'));
-  }
+  static Directory _defaultFallbackDir() => AppPaths.data();
 
   /// Учётная запись в связке: секреты разных спек не должны сливаться
   /// в одну запись — у каждой спеки свой токен к одному и тому же GitLab.

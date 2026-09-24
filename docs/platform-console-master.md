@@ -16,8 +16,8 @@
 
 | Этап | Статус | Что именно |
 |---|---|---|
-| 0. Кроссплатформенность | ⬜ | только macOS |
-| 1. Секреты и `.env` | 🟡 | форма ключей в приложении есть; Keychain и `EnvMaterializer` — нет |
+| 0. Кроссплатформенность | 🟡 | пути через `AppPaths` (macOS · XDG · Windows), Linux-runner, `claude` ищется, а не прибит; на живой Linux-машине не собиралось |
+| 1. Секреты и `.env` | ✅ | форма ключей, Keychain/libsecret с файловым запасным вариантом, `EnvMaterializer`; хранилище — в каталоге данных системы |
 | 2. Клон по URL и реестр | 🟡 | реестр подключённых спек и переключатель есть; клонирования по git-URL нет |
 | 3. Discovery | ✅ | схема, статусы, команды с дедупом и источником (схема · `.claude` · зеркала · `package.json` · `Makefile`), фичи по данным |
 | 4. Опциональные уровни модели | 🟡 | `Group` и 3 стратегии из 6, стеки опциональны; `WorkUnit` отдельным типом не выделен |
@@ -114,7 +114,8 @@
 ### Техника
 
 64 файла Dart · 7 690 строк · 479 строк локализации · 7 тестов. Flutter 3.47,
-macOS. Clean Architecture: `domain` (сущности, usecases), `data` (файлы, Redmine,
+macOS и Linux (раскладка каталогов — `core/platform/app_paths.dart`).
+Clean Architecture: `domain` (сущности, usecases), `data` (файлы, Redmine,
 GitLab, CLI), `presentation` (bloc, экраны, ui_kit), `l10n`.
 
 Читаемые файлы: `openspec/doc/<sprint>/{doc.md,sprint.yaml,builds.yaml}`,
@@ -854,8 +855,8 @@ delivery: batch | per-change
 
 | Этап | Содержание | Зависит | Риск | Статус |
 |---|---|---|---|---|
-| 0. Кроссплатформенность | Linux-runner, пути через `app_paths`, `which claude` вместо хардкода | — | низкий | ⬜ |
-| 1. Секреты и `.env` | `SecretStore` (Keychain/libsecret) + файловый fallback, форма ключей, `EnvMaterializer` | 0 | средний | ✅ кроме путей хранилища (ждут `app_paths`, этап 0) |
+| 0. Кроссплатформенность | Linux-runner, пути через `app_paths`, `which claude` вместо хардкода | — | низкий | 🟡 `AppPaths` берёт систему и окружение полями — раскладка всех трёх систем проверяется на одной; остаётся прогон на живом Linux |
+| 1. Секреты и `.env` | `SecretStore` (Keychain/libsecret) + файловый fallback, форма ключей, `EnvMaterializer` | 0 | средний | ✅ |
 | 2. Клон по URL и реестр | `SpecProject`, `projects.json`, `GitCloneSource` с прогрессом и разбором ошибок | 0, 1 | средний | 🟡 `GitCloneSource` и реестр путей есть; `SpecProject`/`projects.json` — нет |
 | 3. Discovery | метаданные схемы → эвристика; команды с дедупом; фичи по данным; когда `openspec/redmine.yaml` нет — статусы спрашиваются один раз со списком из `GET /issue_statuses.json` | 2 | средний | ✅ кроме опроса статусов при отсутствии `redmine.yaml` |
 | 4. Опциональные уровни модели | `Group` + 6 стратегий, `WorkUnit`, стеки опциональны | 3 | **высокий** | 🟡 3 стратегии |

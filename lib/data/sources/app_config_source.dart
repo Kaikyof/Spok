@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Конфиг приложения — .env-файл в Application Support (macOS).
+import '../../core/platform/app_paths.dart';
+
+/// Конфиг приложения — .env-файл в каталоге настроек системы
+/// (`AppPaths.config`).
 /// Без path_provider: чистый dart:io, чтобы конфиг был доступен и из
 /// CLI-инструментов (tool/smoke.dart), а не только из Flutter-рантайма.
 class AppConfigSource {
@@ -30,25 +33,20 @@ class AppConfigSource {
     return slug.isEmpty ? key : '${key}__$slug';
   }
 
-  static const appDirName = 'Spok';
-
-  /// Каталог конфига до переименования приложения. Конфиг оттуда переносится
-  /// при первом обращении: иначе после обновления пользователь встречает
-  /// пустой мастер настройки и заново ищет путь к спеке.
-  static const legacyAppDirName = 'PlatformConsole';
-
+  /// Конфиг прежней версии приложения переносится при первом обращении:
+  /// иначе после обновления пользователь встречает пустой мастер настройки
+  /// и заново ищет путь к спеке.
   File _configFile() {
-    final home = Platform.environment['HOME'] ?? '';
-    final support = p.join(home, 'Library', 'Application Support');
-    final file = File(p.join(support, appDirName, '.env'));
-    if (!file.existsSync()) {
-      final legacy = File(p.join(support, legacyAppDirName, '.env'));
-      // Копируем, а не переносим: откат на прежнюю версию приложения
-      // продолжит читать свой конфиг.
-      if (legacy.existsSync()) {
-        file.parent.createSync(recursive: true);
-        legacy.copySync(file.path);
-      }
+    final file = File(p.join(AppPaths.config().path, '.env'));
+    if (file.existsSync()) return file;
+    final legacyDir = AppPaths.legacyConfig();
+    if (legacyDir == null) return file;
+    final legacy = File(p.join(legacyDir.path, '.env'));
+    // Копируем, а не переносим: откат на прежнюю версию приложения
+    // продолжит читать свой конфиг.
+    if (legacy.existsSync()) {
+      file.parent.createSync(recursive: true);
+      legacy.copySync(file.path);
     }
     return file;
   }
