@@ -7,6 +7,7 @@ import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/handoff_blocker.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/group.dart';
@@ -18,6 +19,7 @@ import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
 import '../widgets/feature_unavailable_view.dart';
+import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
 
 /// Передача группы: мастер из четырёх шагов, все видны сразу.
@@ -66,7 +68,9 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     flex: 50,
                     child: Column(
                       children: [
-                        _ReadinessStep(readiness: readiness),
+                        _ReadinessStep(
+                            readiness: readiness,
+                            problem: snapshot.redmineProblem),
                         const SizedBox(height: AppDimens.gapL),
                         _BuildStep(group: group, stacks: state.stacks),
                         const SizedBox(height: AppDimens.gapL),
@@ -159,28 +163,72 @@ class _StepHeader extends StatelessWidget {
 class _ReadinessStep extends StatelessWidget {
   final HandoffReadiness readiness;
 
-  const _ReadinessStep({required this.readiness});
+  /// Почему трекер молчит: без этого «статус не опрошен» — полуправда,
+  /// а человеку нужно знать, заполнять ему ключ или ждать Redmine.
+  final RedmineProblem problem;
+
+  const _ReadinessStep({required this.readiness, required this.problem});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    // Четвёртое состояние шага: не «готов» и не «есть блокеры», а
+    // «неизвестно» — приложение не смогло спросить трекер.
+    final unknown = readiness.statusUnknown;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _StepHeader(
           number: 1,
           title: texts.handoffStepReadiness,
-          color: readiness.ready ? AppColors.success : AppColors.warning,
+          color: unknown
+              ? AppColors.textMuted
+              : (readiness.ready ? AppColors.success : AppColors.warning),
+          dimmed: unknown,
         ),
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                  texts.handoffReadyCount(
-                      readiness.readyCount, readiness.totalCount),
+                  unknown
+                      ? texts.handoffReadinessUnknown
+                      : texts.handoffReadyCount(
+                          readiness.readyCount, readiness.totalCount),
                   style: AppTextStyles.rowTitle),
               const SizedBox(height: AppDimens.gapS),
+              if (unknown) ...[
+                Text(
+                    switch (problem) {
+                      RedmineProblem.noApiKey => texts.handoffStatusNoKey,
+                      RedmineProblem.unreachable =>
+                        texts.handoffStatusUnreachable,
+                      _ => texts.handoffStatusNotAsked,
+                    },
+                    style: AppTextStyles.hint.copyWith(height: 1.4)),
+                const SizedBox(height: AppDimens.gapM),
+                // Ключ личный — поле прямо здесь, без похода в форму ключей
+                // за одним значением. Молчащий трекер поля не требует:
+                // ему нужен повтор.
+                if (problem == RedmineProblem.noApiKey)
+                  const MissingKeyBlock(
+                      keys: ['REDMINE_API_KEY'], lookedIn: 'REDMINE_API_KEY · .env')
+                else
+                  OutlinedButton(
+                    onPressed: () =>
+                        context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 28),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      side: const BorderSide(color: AppColors.border),
+                      backgroundColor: AppColors.cardHighlight,
+                      foregroundColor: AppColors.textPrimary,
+                    ),
+                    child: Text(texts.partialRetry,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                const SizedBox(height: AppDimens.gapM),
+              ],
               if (readiness.blockers.isEmpty)
                 Text(texts.handoffNoBlockers,
                     style: const TextStyle(
@@ -216,6 +264,8 @@ class _BlockerRow extends StatelessWidget {
       HandoffBlockerKind.tasksOpen => texts.handoffBlockerTasks(
           blocker.changeTitle, stackLabel,
           blocker.openTaskNumbers.join(', ')),
+      HandoffBlockerKind.statusUnknown =>
+        texts.handoffBlockerStatusUnknown(blocker.changeTitle, stackLabel),
       HandoffBlockerKind.buildMissing =>
         texts.handoffBlockerBuild(stackLabel),
     };
@@ -749,10 +799,16 @@ class _PreviewStep extends StatelessWidget {
         ),
         const SizedBox(height: AppDimens.gapS),
         Text(
-          readiness.ready
-              ? texts.handoffStackNotice(texts.stackLabel(_messageStack))
-              : texts.handoffSendBlocked(
-                  readiness.readyCount, readiness.totalCount),
+          switch (readiness) {
+            // «Готовность 0 из 3» тут соврало бы: дело не в блокерах,
+            // а в том, что статусы неизвестны.
+            final state when state.statusUnknown =>
+              texts.handoffSendUnknown,
+            final state when state.ready =>
+              texts.handoffStackNotice(texts.stackLabel(_messageStack)),
+            final state => texts.handoffSendBlocked(
+                state.readyCount, state.totalCount),
+          },
           style: TextStyle(
               fontSize: 11.5,
               color:

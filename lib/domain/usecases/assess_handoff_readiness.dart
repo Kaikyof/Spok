@@ -44,6 +44,15 @@ class AssessHandoffReadiness {
       ({ChangeUnit change, StackState stack}) entry,
       String? expectedStatus) sync* {
     final status = entry.stack.redmineStatus;
+    if (expectedStatus != null && status == null) {
+      // Статуса нет вовсе: ни живого, ни из кэша. Молчать нельзя — иначе
+      // стек уедет в готовые, хотя о нём не известно ничего.
+      yield HandoffBlocker(
+        kind: HandoffBlockerKind.statusUnknown,
+        changeTitle: entry.change.title,
+        stack: entry.stack.stack,
+      );
+    }
     if (expectedStatus != null && status != null && status != expectedStatus) {
       yield HandoffBlocker(
         kind: HandoffBlockerKind.statusNotReady,

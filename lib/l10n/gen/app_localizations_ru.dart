@@ -630,6 +630,27 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get handoffReadinessUnknown =>
+      'Готовность неизвестна — статусы трекера не опрошены';
+
+  @override
+  String get handoffStatusNoKey =>
+      'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.';
+
+  @override
+  String get handoffStatusUnreachable =>
+      'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.';
+
+  @override
+  String get handoffStatusNotAsked =>
+      'Статусы этих change\'ей не опрошены и в файлах спеки их нет. Готовность не считается.';
+
+  @override
+  String handoffBlockerStatusUnknown(String change, String stack) {
+    return '$change — $stack: статус не опрошен';
+  }
+
+  @override
   String get handoffBlockersLabel => 'БЛОКЕРЫ';
 
   @override
@@ -692,6 +713,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get handoffSendButton => 'Отправить спринт тестировщику';
+
+  @override
+  String get handoffSendUnknown =>
+      'недоступно: статусы трекера не опрошены — готовность неизвестна';
 
   @override
   String handoffSendBlocked(int ready, int total) {

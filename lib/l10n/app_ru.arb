@@ -376,6 +376,17 @@
       }
     }
   },
+  "handoffReadinessUnknown": "Готовность неизвестна — статусы трекера не опрошены",
+  "handoffStatusNoKey": "Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change'ей нет. Спросить трекер нечем — готовность не считается.",
+  "handoffStatusUnreachable": "Redmine не отвечает, а в файлах спеки статусов этих change'ей нет. Готовность не считается — данных о ней нет.",
+  "handoffStatusNotAsked": "Статусы этих change'ей не опрошены и в файлах спеки их нет. Готовность не считается.",
+  "handoffBlockerStatusUnknown": "{change} — {stack}: статус не опрошен",
+  "@handoffBlockerStatusUnknown": {
+    "placeholders": {
+      "change": { "type": "String" },
+      "stack": { "type": "String" }
+    }
+  },
   "handoffBlockersLabel": "БЛОКЕРЫ",
   "handoffNoBlockers": "блокеров нет — спринт можно передавать",
   "handoffBlockerStatus": "{change} — {stack} в статусе «{status}», ожидается «Ожидает тестирования»",
@@ -447,6 +458,7 @@
   },
   "handoffEffectMessage": "в канал команды уйдёт 1 сообщение",
   "handoffSendButton": "Отправить спринт тестировщику",
+  "handoffSendUnknown": "недоступно: статусы трекера не опрошены — готовность неизвестна",
   "handoffSendBlocked": "недоступно: готовность {ready} из {total} — устраните блокеры шага 1",
   "@handoffSendBlocked": {
     "placeholders": {

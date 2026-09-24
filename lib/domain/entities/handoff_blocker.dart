@@ -1,5 +1,10 @@
 /// Что мешает передать спринт. Блокер показывается причиной, а не кодом.
-enum HandoffBlockerKind { statusNotReady, tasksOpen, buildMissing }
+///
+/// [statusUnknown] — статус стека не опрошен (нет ключа трекера либо он
+/// молчит) и кэша в `redmine.yaml` change'а тоже нет. Это блокер, а не
+/// пустое место: раньше такой стек молча попадал в готовые, и экран
+/// обещал готовность, о которой ничего не знал.
+enum HandoffBlockerKind { statusNotReady, statusUnknown, tasksOpen, buildMissing }
 
 class HandoffBlocker {
   final HandoffBlockerKind kind;
@@ -30,4 +35,9 @@ class HandoffReadiness {
   });
 
   bool get ready => blockers.isEmpty && totalCount > 0;
+
+  /// Статусы части стеков не опрошены — готовность неизвестна, и шаг
+  /// говорит это причиной, а не цифрой «0 из 3».
+  bool get statusUnknown => blockers
+      .any((blocker) => blocker.kind == HandoffBlockerKind.statusUnknown);
 }

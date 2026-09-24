@@ -1102,6 +1102,36 @@ abstract class AppLocalizations {
   /// **'{ready} из {total} change\'ей готовы к передаче'**
   String handoffReadyCount(int ready, int total);
 
+  /// No description provided for @handoffReadinessUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готовность неизвестна — статусы трекера не опрошены'**
+  String get handoffReadinessUnknown;
+
+  /// No description provided for @handoffStatusNoKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.'**
+  String get handoffStatusNoKey;
+
+  /// No description provided for @handoffStatusUnreachable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.'**
+  String get handoffStatusUnreachable;
+
+  /// No description provided for @handoffStatusNotAsked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы этих change\'ей не опрошены и в файлах спеки их нет. Готовность не считается.'**
+  String get handoffStatusNotAsked;
+
+  /// No description provided for @handoffBlockerStatusUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'{change} — {stack}: статус не опрошен'**
+  String handoffBlockerStatusUnknown(String change, String stack);
+
   /// No description provided for @handoffBlockersLabel.
   ///
   /// In ru, this message translates to:
@@ -1203,6 +1233,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отправить спринт тестировщику'**
   String get handoffSendButton;
+
+  /// No description provided for @handoffSendUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'недоступно: статусы трекера не опрошены — готовность неизвестна'**
+  String get handoffSendUnknown;
 
   /// No description provided for @handoffSendBlocked.
   ///
