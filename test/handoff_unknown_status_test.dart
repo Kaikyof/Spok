@@ -25,6 +25,7 @@ import 'package:spok/l10n/gen/app_localizations.dart';
 import 'package:spok/presentation/bloc/console_bloc.dart';
 import 'package:spok/presentation/bloc/sessions_bloc.dart';
 import 'package:spok/presentation/screens/handoff_screen.dart';
+import 'package:spok/presentation/widgets/feature_unavailable_view.dart';
 import 'package:spok/presentation/widgets/missing_key_block.dart';
 
 /// Спека объявила статус передачи, группировку и семантику статусов —
@@ -57,6 +58,14 @@ FeatureGate _gate(RequirementId id, {required bool satisfied}) => FeatureGate([
           id: id, scope: RequirementScope.spec, satisfied: satisfied),
     ]);
 
+/// Команда передачи у спеки есть — иначе фича выключена целиком и экран
+/// вместо шагов показывает чеклист требований.
+const _handover = SlashCommand(
+  id: 'opsx-sprint',
+  description: 'Спринт: статус, передача, финальный merge',
+  argumentHint: '[sprint] [status|build|handover|finish] [--stack backend]',
+);
+
 final _features = {
   SpecFeature.handoff: FeatureGate([
     FeatureRequirement(
@@ -67,6 +76,10 @@ final _features = {
         id: RequirementId.statusSemantics,
         scope: RequirementScope.spec,
         satisfied: true),
+    FeatureRequirement(
+        id: RequirementId.handoverCommand,
+        scope: RequirementScope.spec,
+        satisfied: true),
   ]),
   SpecFeature.builds: _gate(RequirementId.buildsFile, satisfied: false),
 };
@@ -74,7 +87,10 @@ final _features = {
 class _FakeRepository implements PlatformRepository {
   final RedmineProblem problem;
 
-  _FakeRepository(this.problem);
+  /// Спека без команды передачи — случай avelacom: передавать нечем.
+  final bool withoutHandover;
+
+  _FakeRepository(this.problem, {this.withoutHandover = false});
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
@@ -87,7 +103,8 @@ class _FakeRepository implements PlatformRepository {
           stacks: const ['backend'],
           grouping: GroupingKind.sprintDir,
           statuses: _semantics,
-          features: _features,
+          features: withoutHandover ? _featuresWithoutHandover : _features,
+          handoverCommand: withoutHandover ? null : _handover,
         ),
         redmineProblem: problem,
         refreshedAt: DateTime.now(),
@@ -158,10 +175,26 @@ class _FakeRepository implements PlatformRepository {
 }
 
 
+/// Ворота той же фичи у спеки, которая передачу не описывает.
+final _featuresWithoutHandover = {
+  ..._features,
+  SpecFeature.handoff: FeatureGate([
+    ..._features[SpecFeature.handoff]!.requirements.where(
+        (requirement) => requirement.id != RequirementId.handoverCommand),
+    const FeatureRequirement(
+        id: RequirementId.handoverCommand,
+        scope: RequirementScope.spec,
+        satisfied: false,
+        lookedIn: '.claude/commands, openspec/schemas/*/commands'),
+  ]),
+};
+
 void main() {
   group('Передача без статусов трекера', () {
-    Future<ConsoleBloc> open(WidgetTester tester, RedmineProblem problem) async {
-      final repository = _FakeRepository(problem);
+    Future<ConsoleBloc> open(WidgetTester tester, RedmineProblem problem,
+        {bool withoutHandover = false}) async {
+      final repository =
+          _FakeRepository(problem, withoutHandover: withoutHandover);
       final console = ConsoleBloc(repository);
       final sessions = SessionsBloc(repository);
       addTearDown(console.close);
@@ -218,6 +251,18 @@ void main() {
 
       expect(find.byType(MissingKeyBlock), findsNothing);
       expect(find.text('Повторить'), findsOneWidget);
+    });
+
+    testWidgets('спека без команды передачи — фича выключена с чеклистом',
+        (tester) async {
+      await open(tester, RedmineProblem.none, withoutHandover: true);
+
+      // Шагов нет вовсе: передавать нечем, и экран говорит это, а не
+      // показывает предпросмотр команды, которой у спеки не существует.
+      expect(find.byType(FeatureUnavailableView), findsOneWidget);
+      expect(find.text('Команда передачи'), findsOneWidget);
+      expect(find.text('Готовность'), findsNothing);
+      expect(find.text('Отправить спринт тестировщику'), findsNothing);
     });
 
     testWidgets('отправка недоступна и причина названа честно',

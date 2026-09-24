@@ -1,5 +1,6 @@
 import 'feature_gate.dart';
 import 'group.dart';
+import 'slash_command.dart';
 import 'spec_recognition.dart';
 import 'spec_schema.dart';
 import 'status_semantics.dart';
@@ -27,6 +28,11 @@ class ProjectProfile {
   /// человеку, а не заметается под ковёр.
   final SpecRecognition recognition;
 
+  /// Команда передачи этой спеки; null — спека передачу не описывает,
+  /// и фича выключена. Имя и сигнатура нужны экрану: команда строится
+  /// из них, а не из зашитой строки.
+  final SlashCommand? handoverCommand;
+
   const ProjectProfile({
     this.schema = SpecSchema.empty,
     this.statuses = StatusSemantics.empty,
@@ -35,6 +41,7 @@ class ProjectProfile {
     this.services = const [],
     this.features = const {},
     this.recognition = SpecRecognition.empty,
+    this.handoverCommand,
   });
 
   /// Страница ветки в хостинге кода: собирается из адреса репозитория,

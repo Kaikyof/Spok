@@ -192,11 +192,15 @@ REDMINE_PROJECT_ID=319
     final snapshot = await PlatformRepositoryImpl(source).load();
     final profile = snapshot.profile;
 
-    // Передача: группировка и статусы есть, сборок и получателей нет —
-    // но это необязательные требования, фича доступна.
+    // Передача: группировка и статусы есть, а команды передачи у спеки
+    // нет — передавать нечем, и фича выключена с объяснением.
     final handoff = profile.gate(SpecFeature.handoff);
-    expect(handoff.available, isTrue);
+    expect(handoff.available, isFalse);
+    expect(handoff.blocker?.id, RequirementId.handoverCommand);
+    expect(handoff.blocker?.scope, RequirementScope.spec);
     expect(handoff.unmetCount, 3);
+    // Сборки и получатели — необязательные: без них шаги гаснут, но
+    // передача остаётся возможной.
     expect(
         handoff.optional
             .where((requirement) => !requirement.satisfied)
@@ -204,8 +208,8 @@ REDMINE_PROJECT_ID=319
         containsAll([
           RequirementId.buildsFile,
           RequirementId.recipientsScript,
-          RequirementId.handoverCommand,
         ]));
+    expect(profile.handoverCommand, isNull);
 
     // MR: спека не объявила GITLAB_TOKEN — это нехватка на стороне спеки,
     // а не «не настроено у меня».
@@ -214,6 +218,23 @@ REDMINE_PROJECT_ID=319
     expect(mr.blocker?.id, RequirementId.gitlabTokenDeclared);
     expect(mr.blocker?.scope, RequirementScope.spec);
     expect(mr.blocker?.lookedIn, contains('.env.example'));
+  });
+
+  test('команда передачи в спеке включает передачу и попадает в профиль',
+      () async {
+    final file = File(p.join(root.path, '.claude/commands/opsx-sprint.md'));
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync('''
+---
+id: opsx-sprint
+description: Sprint level — status, batch handover to the tester
+argument-hint: [sprint] [status|build|handover|finish] [--stack backend]
+---
+''');
+    final profile = (await PlatformRepositoryImpl(source).load()).profile;
+
+    expect(profile.gate(SpecFeature.handoff).available, isTrue);
+    expect(profile.handoverCommand?.id, 'opsx-sprint');
   });
 
   test('заполненный ключ переводит нехватку из «у спеки» в «у меня»',

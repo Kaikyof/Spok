@@ -383,6 +383,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         exampleKeys: exampleKeys,
         envValues: envReport,
       ),
+      handoverCommand: _handoverCommand(source),
       recognition: _buildRecognition(
         source: source,
         schema: schema,
@@ -392,6 +393,16 @@ class PlatformRepositoryImpl implements PlatformRepository {
       ),
     );
   }
+
+  /// Команда передачи — любая команда спеки, знающая слово handover:
+  /// в avtoto это `/opsx-sprint … handover`, у другой спеки будет своё имя.
+  SlashCommand? _handoverCommand(PlatformFilesSource source) =>
+      source
+          .loadSlashCommands()
+          .where((command) =>
+              command.id.contains('handover') ||
+              command.argumentHint.contains('handover'))
+          .firstOrNull;
 
   /// Что приложение поняло в спеке. Список честный: «не распознано» —
   /// такой же результат разбора, как и распознанное, и человек должен
@@ -470,10 +481,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         .where((group) => group.builds.isNotEmpty)
         .map((group) => group.id)
         .firstOrNull;
-    // Команда передачи — любая команда спеки, знающая слово handover.
-    final handover = source.loadSlashCommands().where((command) =>
-        command.id.contains('handover') ||
-        command.argumentHint.contains('handover'));
+    final handover = [?_handoverCommand(source)];
     final recipients = source.recipientsScript;
     final services = source.allServices();
     final gitlabCheck = envValues.systems
@@ -510,11 +518,14 @@ class PlatformRepositoryImpl implements PlatformRepository {
           optional: true,
           lookedIn: recipients ?? 'scripts/*handover*recipient*',
         ),
+        // Обязательное: команда передачи — то, чем передача вообще
+        // выполняется. Без неё шаги посчитают готовность и подберут
+        // получателей, а отправлять будет нечем, и кнопка отправки
+        // запустила бы команду, которой у спеки нет.
         FeatureRequirement(
           id: RequirementId.handoverCommand,
           scope: RequirementScope.spec,
           satisfied: handover.isNotEmpty,
-          optional: true,
           lookedIn: handover.map((command) => command.invocation).firstOrNull ??
               '.claude/commands, openspec/schemas/*/commands',
         ),

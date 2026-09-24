@@ -12,7 +12,9 @@ import '../../domain/entities/handoff_blocker.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
+import '../../domain/usecases/build_handover_command.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
@@ -45,7 +47,10 @@ class _HandoffScreenState extends State<HandoffScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final group = state.group;
-          if (!state.profile.enabled(SpecFeature.handoff) || group == null) {
+          final handover = state.profile.handoverCommand;
+          if (!state.profile.enabled(SpecFeature.handoff) ||
+              group == null ||
+              handover == null) {
             return FeatureUnavailableView(
                 feature: SpecFeature.handoff,
                 gate: state.profile.gate(SpecFeature.handoff));
@@ -92,6 +97,7 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     flex: 50,
                     child: _PreviewStep(
                       group: group,
+                      handover: handover,
                       changes: groupChanges,
                       readiness: readiness,
                       stack: state.handoffStack,
@@ -611,6 +617,10 @@ class _PreviewStep extends StatelessWidget {
   final List<ChangeUnit> changes;
   final HandoffReadiness readiness;
   final String stack;
+
+  /// Команда передачи этой спеки — экран доходит до предпросмотра только
+  /// когда она найдена: без неё фича выключена целиком.
+  final SlashCommand handover;
   final HandoffRecipients? recipients;
   final HandoffRecipient? chosenTester;
   final HandoffRecipient? chosenManager;
@@ -620,6 +630,7 @@ class _PreviewStep extends StatelessWidget {
     required this.changes,
     required this.readiness,
     required this.stack,
+    required this.handover,
     required this.recipients,
     required this.chosenTester,
     required this.chosenManager,
@@ -634,11 +645,14 @@ class _PreviewStep extends StatelessWidget {
   /// Стек сообщения: передача идёт по одному стеку за раз.
   String get _messageStack => stack;
 
-  /// Точная команда платформы — она же уйдёт в агентную сессию.
-  /// Стека может не быть вовсе — тогда и флага в команде нет.
-  String get _handoffCommand =>
-      '/opsx-sprint ${group.id} handover'
-      '${_messageStack.isEmpty ? '' : ' --stack $_messageStack'}';
+  /// Точная команда платформы — она же уйдёт в агентную сессию. Имя и
+  /// аргументы берутся из сигнатуры команды самой спеки, а не зашиты:
+  /// `/opsx-sprint … handover` — это команда avtoto, у другой спеки своя.
+  String get _handoffCommand => const BuildHandoverCommand()(
+        handover,
+        groupId: group.id,
+        stack: _messageStack,
+      );
 
   /// Команда с уточнением получателей: скрипт подбирает список, а кого
   /// именно назначить — решает человек здесь.
