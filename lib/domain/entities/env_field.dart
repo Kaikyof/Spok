@@ -1,3 +1,5 @@
+import 'secret_backend.dart';
+
 /// Поле формы ключей: что спрашивает спека и что уже заполнено.
 class EnvField {
   final String key;
@@ -18,7 +20,13 @@ class EnvField {
 
   /// Секрет не показывается на экране открытым: токены и пароли
   /// попадают в скриншоты и демонстрации экрана.
-  bool get secret => RegExp(r'(TOKEN|KEY|SECRET|PASSWORD)$').hasMatch(key);
+  bool get secret => isSecretKey(key);
+
+  /// Тот же признак по одному имени ключа — им пользуется и хранилище
+  /// секретов: форма и `EnvMaterializer` обязаны считать секретом одно
+  /// и то же, иначе токен уедет в файл мимо связки ключей.
+  static bool isSecretKey(String key) =>
+      RegExp(r'(TOKEN|KEY|SECRET|PASSWORD)$').hasMatch(key);
 
   EnvField copyWith({String? value}) => EnvField(
         key: key,
@@ -38,10 +46,15 @@ class EnvForm {
   /// Путь к файлу, который будет записан.
   final String path;
 
+  /// Где лежат секреты этой спеки. Хранилища может не быть — тогда экран
+  /// говорит об этом прямо, а не умалчивает.
+  final SecretBackend backend;
+
   const EnvForm({
     required this.fields,
     required this.ignoredByGit,
     required this.path,
+    this.backend = SecretBackend.file,
   });
 
   static const empty = EnvForm(fields: [], ignoredByGit: true, path: '');

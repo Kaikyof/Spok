@@ -7,18 +7,23 @@ import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/handoff_blocker.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/slash_command.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
+import '../../domain/usecases/build_handover_command.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
 import '../widgets/feature_unavailable_view.dart';
+import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
+import '../ui_kit/tappable.dart';
 
 /// Передача группы: мастер из четырёх шагов, все видны сразу.
 /// Шаг, для которого у спеки нет данных, не исчезает — он объясняет,
@@ -42,7 +47,10 @@ class _HandoffScreenState extends State<HandoffScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final group = state.group;
-          if (!state.profile.enabled(SpecFeature.handoff) || group == null) {
+          final handover = state.profile.handoverCommand;
+          if (!state.profile.enabled(SpecFeature.handoff) ||
+              group == null ||
+              handover == null) {
             return FeatureUnavailableView(
                 feature: SpecFeature.handoff,
                 gate: state.profile.gate(SpecFeature.handoff));
@@ -66,7 +74,9 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     flex: 50,
                     child: Column(
                       children: [
-                        _ReadinessStep(readiness: readiness),
+                        _ReadinessStep(
+                            readiness: readiness,
+                            problem: snapshot.redmineProblem),
                         const SizedBox(height: AppDimens.gapL),
                         _BuildStep(group: group, stacks: state.stacks),
                         const SizedBox(height: AppDimens.gapL),
@@ -87,6 +97,7 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     flex: 50,
                     child: _PreviewStep(
                       group: group,
+                      handover: handover,
                       changes: groupChanges,
                       readiness: readiness,
                       stack: state.handoffStack,
@@ -159,28 +170,72 @@ class _StepHeader extends StatelessWidget {
 class _ReadinessStep extends StatelessWidget {
   final HandoffReadiness readiness;
 
-  const _ReadinessStep({required this.readiness});
+  /// Почему трекер молчит: без этого «статус не опрошен» — полуправда,
+  /// а человеку нужно знать, заполнять ему ключ или ждать Redmine.
+  final RedmineProblem problem;
+
+  const _ReadinessStep({required this.readiness, required this.problem});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    // Четвёртое состояние шага: не «готов» и не «есть блокеры», а
+    // «неизвестно» — приложение не смогло спросить трекер.
+    final unknown = readiness.statusUnknown;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _StepHeader(
           number: 1,
           title: texts.handoffStepReadiness,
-          color: readiness.ready ? AppColors.success : AppColors.warning,
+          color: unknown
+              ? AppColors.textMuted
+              : (readiness.ready ? AppColors.success : AppColors.warning),
+          dimmed: unknown,
         ),
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                  texts.handoffReadyCount(
-                      readiness.readyCount, readiness.totalCount),
+                  unknown
+                      ? texts.handoffReadinessUnknown
+                      : texts.handoffReadyCount(
+                          readiness.readyCount, readiness.totalCount),
                   style: AppTextStyles.rowTitle),
               const SizedBox(height: AppDimens.gapS),
+              if (unknown) ...[
+                Text(
+                    switch (problem) {
+                      RedmineProblem.noApiKey => texts.handoffStatusNoKey,
+                      RedmineProblem.unreachable =>
+                        texts.handoffStatusUnreachable,
+                      _ => texts.handoffStatusNotAsked,
+                    },
+                    style: AppTextStyles.hint.copyWith(height: 1.4)),
+                const SizedBox(height: AppDimens.gapM),
+                // Ключ личный — поле прямо здесь, без похода в форму ключей
+                // за одним значением. Молчащий трекер поля не требует:
+                // ему нужен повтор.
+                if (problem == RedmineProblem.noApiKey)
+                  const MissingKeyBlock(
+                      keys: ['REDMINE_API_KEY'], lookedIn: 'REDMINE_API_KEY · .env')
+                else
+                  OutlinedButton(
+                    onPressed: () =>
+                        context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 28),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      side: const BorderSide(color: AppColors.border),
+                      backgroundColor: AppColors.cardHighlight,
+                      foregroundColor: AppColors.textPrimary,
+                    ),
+                    child: Text(texts.partialRetry,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                const SizedBox(height: AppDimens.gapM),
+              ],
               if (readiness.blockers.isEmpty)
                 Text(texts.handoffNoBlockers,
                     style: const TextStyle(
@@ -216,6 +271,8 @@ class _BlockerRow extends StatelessWidget {
       HandoffBlockerKind.tasksOpen => texts.handoffBlockerTasks(
           blocker.changeTitle, stackLabel,
           blocker.openTaskNumbers.join(', ')),
+      HandoffBlockerKind.statusUnknown =>
+        texts.handoffBlockerStatusUnknown(blocker.changeTitle, stackLabel),
       HandoffBlockerKind.buildMissing =>
         texts.handoffBlockerBuild(stackLabel),
     };
@@ -513,7 +570,7 @@ class _RecipientOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    return InkWell(
+    return Tappable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppDimens.controlRadius),
       child: Padding(
@@ -560,6 +617,10 @@ class _PreviewStep extends StatelessWidget {
   final List<ChangeUnit> changes;
   final HandoffReadiness readiness;
   final String stack;
+
+  /// Команда передачи этой спеки — экран доходит до предпросмотра только
+  /// когда она найдена: без неё фича выключена целиком.
+  final SlashCommand handover;
   final HandoffRecipients? recipients;
   final HandoffRecipient? chosenTester;
   final HandoffRecipient? chosenManager;
@@ -569,6 +630,7 @@ class _PreviewStep extends StatelessWidget {
     required this.changes,
     required this.readiness,
     required this.stack,
+    required this.handover,
     required this.recipients,
     required this.chosenTester,
     required this.chosenManager,
@@ -583,11 +645,14 @@ class _PreviewStep extends StatelessWidget {
   /// Стек сообщения: передача идёт по одному стеку за раз.
   String get _messageStack => stack;
 
-  /// Точная команда платформы — она же уйдёт в агентную сессию.
-  /// Стека может не быть вовсе — тогда и флага в команде нет.
-  String get _handoffCommand =>
-      '/opsx-sprint ${group.id} handover'
-      '${_messageStack.isEmpty ? '' : ' --stack $_messageStack'}';
+  /// Точная команда платформы — она же уйдёт в агентную сессию. Имя и
+  /// аргументы берутся из сигнатуры команды самой спеки, а не зашиты:
+  /// `/opsx-sprint … handover` — это команда avtoto, у другой спеки своя.
+  String get _handoffCommand => const BuildHandoverCommand()(
+        handover,
+        groupId: group.id,
+        stack: _messageStack,
+      );
 
   /// Команда с уточнением получателей: скрипт подбирает список, а кого
   /// именно назначить — решает человек здесь.
@@ -749,10 +814,16 @@ class _PreviewStep extends StatelessWidget {
         ),
         const SizedBox(height: AppDimens.gapS),
         Text(
-          readiness.ready
-              ? texts.handoffStackNotice(texts.stackLabel(_messageStack))
-              : texts.handoffSendBlocked(
-                  readiness.readyCount, readiness.totalCount),
+          switch (readiness) {
+            // «Готовность 0 из 3» тут соврало бы: дело не в блокерах,
+            // а в том, что статусы неизвестны.
+            final state when state.statusUnknown =>
+              texts.handoffSendUnknown,
+            final state when state.ready =>
+              texts.handoffStackNotice(texts.stackLabel(_messageStack)),
+            final state => texts.handoffSendBlocked(
+                state.readyCount, state.totalCount),
+          },
           style: TextStyle(
               fontSize: 11.5,
               color:

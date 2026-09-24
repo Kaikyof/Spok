@@ -42,6 +42,11 @@ class FeatureRequirement {
   /// Подробность отказа: код ответа, хост, имя ключа.
   final String detail;
 
+  /// Ключи `.env`, которых не хватает лично на этой машине. Не текст:
+  /// по ним экран сам предлагает поле для ввода, не отправляя человека
+  /// в форму ключей за одним значением.
+  final List<String> keys;
+
   const FeatureRequirement({
     required this.id,
     required this.scope,
@@ -49,6 +54,7 @@ class FeatureRequirement {
     this.optional = false,
     this.lookedIn = '',
     this.detail = '',
+    this.keys = const [],
   });
 }
 

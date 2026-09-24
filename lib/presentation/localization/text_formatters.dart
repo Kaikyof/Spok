@@ -1,3 +1,4 @@
+import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/divergence.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_state.dart';
@@ -5,6 +6,8 @@ import '../../domain/entities/env_check.dart';
 import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/secret_backend.dart';
+import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -114,6 +117,59 @@ extension DomainTextFormatters on AppLocalizations {
         CheckOutcome.systemTimeout => checkTimeout,
         CheckOutcome.systemNoConnection => checkNoConnection,
         CheckOutcome.systemNotConfigured => checkNotConfigured,
+      };
+
+  /// Почему клон не удался — человеческим текстом и с подсказкой, что
+  /// делать: код git человеку ничего не говорит, а «нет ssh-ключа»
+  /// и «неверный токен» лечатся по-разному.
+  String cloneFailureText(CloneFailure failure) => switch (failure) {
+        CloneFailure.accessDenied => cloneFailAccessDenied,
+        CloneFailure.authFailed => cloneFailAuth,
+        CloneFailure.directoryInUse => cloneFailDirInUse,
+        CloneFailure.repoNotFound => cloneFailRepoNotFound,
+        CloneFailure.networkUnreachable => cloneFailNetwork,
+        CloneFailure.gitMissing => cloneFailGitMissing,
+        CloneFailure.cancelled => cloneFailCancelled,
+        CloneFailure.unknown => cloneFailUnknown,
+      };
+
+  /// Что за часть устройства спеки разбиралась.
+  String recognizedPartTitle(RecognizedPart part) => switch (part) {
+        RecognizedPart.schema => partRecognizedSchema,
+        RecognizedPart.grouping => partRecognizedGrouping,
+        RecognizedPart.stacks => partRecognizedStacks,
+        RecognizedPart.statuses => partRecognizedStatuses,
+        RecognizedPart.commands => partRecognizedCommands,
+        RecognizedPart.services => partRecognizedServices,
+      };
+
+  /// Понятое значение словами. Счётчики приходят числом, стратегия —
+  /// именем варианта: текст даёт этот слой, а не домен.
+  String recognizedValue(RecognizedItem item) {
+    if (!item.recognized) return unrecognizedNotFound;
+    final count = int.tryParse(item.value) ?? 0;
+    return switch (item.part) {
+      RecognizedPart.schema => item.value,
+      RecognizedPart.grouping => switch (item.value) {
+          'sprintDir' => groupingSprintDir,
+          'masterDoc' => groupingMasterDoc,
+          _ => groupingNone,
+        },
+      RecognizedPart.stacks =>
+        item.value.isEmpty ? partValueNoStacks : item.value,
+      RecognizedPart.statuses => partValueStatuses(count),
+      RecognizedPart.commands => partValueCommands(count),
+      RecognizedPart.services => partValueServices(count),
+    };
+  }
+
+  /// Где лежат секреты — говорим прямо: «сохранено в Keychain» и
+  /// «лежит в файле» отвечают на разные вопросы о безопасности, и
+  /// умолчание здесь читается как обман.
+  String secretBackendNote(SecretBackend backend) => switch (backend) {
+        SecretBackend.keychain => envEditStoreKeychain,
+        SecretBackend.libsecret => envEditStoreLibsecret,
+        SecretBackend.file => envEditStoreFile,
       };
 
   /// Пояснение к ключу .env; для репозиториев и систем detail — данные

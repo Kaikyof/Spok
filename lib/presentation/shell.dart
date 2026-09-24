@@ -20,9 +20,11 @@ import 'screens/docs_screen.dart';
 import 'screens/env_screen.dart';
 import 'screens/handoff_screen.dart';
 import 'screens/group_screen.dart';
+import 'screens/recognition_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'ui_kit/app_loader.dart';
+import 'ui_kit/tappable.dart';
 
 class Shell extends StatelessWidget {
   const Shell({super.key});
@@ -34,11 +36,15 @@ class Shell extends StatelessWidget {
       body: BlocBuilder<ConsoleBloc, ConsoleState>(
         buildWhen: (previous, current) =>
             previous.isFirstLoad != current.isFirstLoad ||
-            previous.needsSetup != current.needsSetup,
+            previous.needsSetup != current.needsSetup ||
+            previous.recognitionReview != current.recognitionReview,
         builder: (context, state) {
           if (state.isFirstLoad) {
             return AppLoader(message: texts.loaderMessage);
           }
+          // Спека только что подключена — шаг «Что распознано» стоит
+          // перед экранами: сначала человек видит разбор, потом данные.
+          if (state.recognitionReview) return const RecognitionScreen();
           if (state.needsSetup) return const SetupScreen();
           return BlocListener<ConsoleBloc, ConsoleState>(
             // Сменились спека или группа — сессии перечитывают команды,
@@ -211,29 +217,35 @@ class _SpecSwitcher extends StatelessWidget {
             if (state.knownSpecs.isNotEmpty) const PopupMenuDivider(),
             PopupMenuItem(value: '', child: Text(texts.specAdd)),
           ],
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    current == null
-                        ? texts.appBadgeGeneric
-                        : p.basename(current).toUpperCase(),
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.sectionLabel.copyWith(
-                      letterSpacing: 1.2,
-                      fontSize: 10.5,
+          // Нажатие забирает `PopupMenuButton` — курсор и подсветку
+          // рисуем сами, иначе переключатель выглядит подписью.
+          child: Tappable(
+            tapHandledAbove: true,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      current == null
+                          ? texts.appBadgeGeneric
+                          : p.basename(current).toUpperCase(),
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.sectionLabel.copyWith(
+                        letterSpacing: 1.2,
+                        fontSize: 10.5,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.unfold_more,
-                  size: 13,
-                  color: AppColors.textMuted,
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.unfold_more,
+                    size: 13,
+                    color: AppColors.textMuted,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -261,7 +273,7 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    child: InkWell(
+    child: Tappable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppDimens.controlRadius),
       child: Container(
@@ -506,17 +518,21 @@ class _GroupSwitcher extends StatelessWidget {
                 ),
               ),
           ],
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: titleText),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.expand_more,
-                size: 18,
-                color: AppColors.textMuted,
-              ),
-            ],
+          child: Tappable(
+            tapHandledAbove: true,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: titleText),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.expand_more,
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -548,14 +564,32 @@ class _FreshnessIndicator extends StatelessWidget {
     final stale = age.inMinutes >= 15;
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: Tooltip(
-        message: texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
-        child: Text(
-          _freshnessLabel(texts, age, stale),
-          style: AppTextStyles.caption.copyWith(
-            color: stale ? AppColors.warning : null,
+      child: Row(
+        children: [
+          Tooltip(
+            message: texts.updatedAt(DateFormat.Hm().format(refreshedAt)),
+            child: Text(
+              _freshnessLabel(texts, age, stale),
+              style: AppTextStyles.caption.copyWith(
+                color: stale ? AppColors.warning : null,
+              ),
+            ),
           ),
-        ),
+          // Подсветка без кнопки оставляет человека искать обновление
+          // глазами по шапке — кнопка стоит рядом с самой пометкой.
+          if (stale)
+            TextButton(
+              onPressed: () =>
+                  context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 28),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                foregroundColor: AppColors.warning,
+              ),
+              child: Text(texts.freshRefresh,
+                  style: const TextStyle(fontSize: 12)),
+            ),
+        ],
       ),
     );
   }

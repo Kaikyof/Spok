@@ -8,11 +8,16 @@ class StatusBadge extends StatelessWidget {
   final Color dotColor;
   final bool muted;
 
+  /// Точка полая — данные не живые, а из файла спеки (борд 19). Полая
+  /// точка видна и тем, кто не различает приглушённый цвет от обычного.
+  final bool hollow;
+
   const StatusBadge({
     super.key,
     required this.text,
     required this.dotColor,
     this.muted = false,
+    this.hollow = false,
   });
 
   @override
@@ -22,7 +27,11 @@ class StatusBadge extends StatelessWidget {
           Container(
             width: 7,
             height: 7,
-            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: hollow ? Colors.transparent : dotColor,
+              shape: BoxShape.circle,
+              border: hollow ? Border.all(color: dotColor, width: 1.2) : null,
+            ),
           ),
           const SizedBox(width: 6),
           Flexible(

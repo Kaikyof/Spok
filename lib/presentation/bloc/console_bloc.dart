@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
 
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/clone_progress.dart';
+import '../../domain/entities/operation_progress.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_node.dart';
@@ -68,22 +71,61 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
           },
         )));
     on<PlatformPathSubmitted>(_onPathSubmitted);
-    on<SpecSwitchRequested>((event, emit) => emit(
-        state.copyWith(switchingSpec: event.open, pathRejected: false)));
+    on<SpecCloneRequested>(_onCloneRequested);
+    on<SpecCloneCancelled>((event, emit) => repository.cancelClone());
+    on<_CloneProgressed>((event, emit) =>
+        emit(state.copyWith(clone: event.progress, pathRejected: false)));
+    on<SpecSwitchRequested>((event, emit) => emit(state.copyWith(
+        switchingSpec: event.open,
+        // Вернулись к адресу — разбор прежней спеки уже не о ней.
+        recognitionReview: false,
+        pathRejected: false)));
+    on<SpecRecognitionConfirmed>((event, emit) => emit(state.copyWith(
+        recognitionReview: false, switchingSpec: false)));
+    on<RecognitionSourceOpened>(
+        (event, emit) => repository.openInEditor(event.path));
     on<StackFilterChanged>(
         (event, emit) => emit(state.copyWith(stackFilter: event.stack)));
     add(ConsoleRefreshed());
   }
 
+  /// Клонирование идёт своим потоком, а его ход показывается по мере
+  /// поступления: человек должен видеть, что git работает, и иметь
+  /// возможность остановить его.
+  Future<void> _onCloneRequested(
+      SpecCloneRequested event, Emitter<ConsoleState> emit) async {
+    final url = event.url.trim();
+    if (url.isEmpty) return;
+    emit(state.copyWith(
+        clone: const CloneProgress(stage: OperationStage.running),
+        pathRejected: false));
+    await for (final progress
+        in repository.cloneSpec(url, ref: event.ref)) {
+      if (isClosed) return;
+      add(_CloneProgressed(progress));
+      // Склонировали — дальше обычная проверка корня: в репозитории может
+      // не оказаться openspec/, и об этом скажет тот же экран.
+      if (progress.isDone && progress.path.isNotEmpty) {
+        add(PlatformPathSubmitted(progress.path));
+      }
+    }
+  }
+
   Future<void> _onPathSubmitted(
       PlatformPathSubmitted event, Emitter<ConsoleState> emit) async {
+    // Спека уже в реестре — человек просто вернулся к ней из списка.
+    // Разбор он на ней уже видел, и показывать его снова значило бы
+    // ставить экран поперёк каждого переключения.
+    final known = {for (final path in state.knownSpecs) p.canonicalize(path)};
+    final fresh = !known.contains(p.canonicalize(event.path));
     final accepted = await repository.setPlatformDir(event.path);
     if (!accepted) {
       emit(state.copyWith(pathRejected: true));
       return;
     }
     // Спека сменилась — выбранные группа, change и стек относились к старой.
-    emit(ConsoleState(screen: state.screen));
+    // Новую не открываем сразу: сначала шаг «Что распознано» (борд 10).
+    emit(ConsoleState(screen: state.screen, recognitionReview: fresh));
     add(ConsoleRefreshed());
   }
 

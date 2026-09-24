@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/core/resources/app_dimens.dart';
+import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
@@ -89,7 +91,20 @@ class _FakePlatformRepository implements PlatformRepository {
   Future<EnvForm> envForm() async => EnvForm.empty;
 
   @override
+  Future<Map<String, String>> readEnvFile(String path) async => const {};
+
+  @override
   Future<void> saveEnv(Map<String, String> values) async {}
+
+  @override
+  Future<SecretBackend> secretBackend() async => SecretBackend.file;
+
+  @override
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
+      const Stream.empty();
+
+  @override
+  void cancelClone() {}
 }
 
 Widget _wrap(SessionsBloc bloc) => MaterialApp(

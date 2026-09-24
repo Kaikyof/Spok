@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_text_styles.dart';
+import 'tappable.dart';
 
 /// Кликабельный номер задачи Redmine: «#63577 ↗».
 class RedmineIssueLink extends StatelessWidget {
@@ -34,7 +35,8 @@ class RedmineIssueLink extends StatelessWidget {
     if (!_clickable) return label;
     return Tooltip(
       message: tooltip,
-      child: InkWell(onTap: _open, child: label),
+      child: Tappable(
+          onTap: _open, effect: HoverEffect.underline, child: label),
     );
   }
 }

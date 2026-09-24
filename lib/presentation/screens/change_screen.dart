@@ -30,7 +30,9 @@ import '../ui_kit/redmine_issue_link.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/status_badge.dart';
 import '../widgets/env_editor_dialog.dart';
+import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
+import '../ui_kit/tappable.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
 class ChangeScreen extends StatelessWidget {
@@ -109,7 +111,7 @@ class _ChangeListRow extends StatelessWidget {
     final visibleStacks = change.stacks
         .where((stack) => state.allowsStack(stack.stack))
         .toList();
-    return InkWell(
+    return Tappable(
       onTap: () => context.read<ConsoleBloc>().add(ChangeOpened(change)),
       borderRadius: BorderRadius.circular(AppDimens.cardRadius),
       child: SectionCard(
@@ -270,9 +272,10 @@ class _ChangeCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            InkWell(
+            Tappable(
               onTap: () =>
                   context.read<ConsoleBloc>().add(ChangeOpened(null)),
+              effect: HoverEffect.underline,
               child:
                   Text(texts.backToChanges, style: AppTextStyles.captionMuted),
             ),
@@ -447,8 +450,9 @@ class _CodeCard extends StatelessWidget {
             if (state.profile.branchUrl(stackState.stack, sourceBranch)
                 case final gitlabUrl?) ...[
               const SizedBox(height: 6),
-              InkWell(
+              Tappable(
                 onTap: () => launchUrl(Uri.parse(gitlabUrl)),
+                effect: HoverEffect.underline,
                 child: Text(texts.codeOpenInGitlab,
                     style: const TextStyle(
                         fontSize: 11.5, color: AppColors.accent)),
@@ -492,10 +496,15 @@ class _CodeDisabledRow extends StatelessWidget {
                 : '${blocker.lookedIn} · ${blocker.detail}',
             style: AppTextStyles.monospace(10.5, color: AppColors.textMuted)),
         if (blocker.scope == RequirementScope.personal) ...[
-          const SizedBox(height: 6),
-          _CodeGateButton(
-              label: texts.gatePersonalFill,
-              onTap: () => EnvEditorDialog.show(context)),
+          const SizedBox(height: AppDimens.gapS),
+          // Имя ключа известно — спрашиваем значение здесь же: человек уже
+          // стоит там, где увидел нехватку (борд 19).
+          if (blocker.keys.isNotEmpty)
+            MissingKeyBlock(keys: blocker.keys, lookedIn: blocker.lookedIn)
+          else
+            _CodeGateButton(
+                label: texts.gatePersonalFill,
+                onTap: () => EnvEditorDialog.show(context)),
         ],
         if (blocker.scope == RequirementScope.runtime) ...[
           const SizedBox(height: 6),
@@ -625,8 +634,9 @@ class _MergeRequestRow extends StatelessWidget {
                       color: AppColors.textPrimary)),
             ),
             if (mr.webUrl.isNotEmpty)
-              InkWell(
+              Tappable(
                 onTap: () => launchUrl(Uri.parse(mr.webUrl)),
+                effect: HoverEffect.underline,
                 child: Text(texts.codeOpenMr,
                     style: const TextStyle(
                         fontSize: 11.5, color: AppColors.accent)),
@@ -696,8 +706,9 @@ class _CommentsCardState extends State<_CommentsCard> {
           else ...[
             for (final comment in visible) _CommentRow(comment: comment),
             if (!_expanded && loaded.length > _collapsedCount)
-              InkWell(
+              Tappable(
                 onTap: () => setState(() => _expanded = true),
+                effect: HoverEffect.underline,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(texts.commentsShowAll(loaded.length),
@@ -847,9 +858,10 @@ class _SpecCard extends StatelessWidget {
                     style: AppTextStyles.sectionTitle),
               ),
               if (doc != null && doc.exists)
-                InkWell(
+                Tappable(
                   onTap: () =>
                       context.read<ConsoleBloc>().add(DocOpened(doc)),
+                  effect: HoverEffect.underline,
                   child: Text(texts.changeSpecOpen,
                       style: const TextStyle(
                           fontSize: 11.5, color: AppColors.accent)),
@@ -878,29 +890,7 @@ class _SpecCard extends StatelessWidget {
           else if (content == null)
             Text(texts.changeSpecLoading, style: AppTextStyles.captionMuted)
           else
-            ConstrainedBox(
-              // Спека бывает длинной: карточка не должна выталкивать
-              // задачи и код за пределы экрана.
-              constraints: const BoxConstraints(maxHeight: 420),
-              child: Markdown(
-                data: content!,
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                selectable: true,
-                styleSheet: MarkdownStyleSheet(
-                  p: const TextStyle(
-                      fontSize: 12.5, height: 1.5,
-                      color: AppColors.textSecondary),
-                  h1: AppTextStyles.sectionTitle,
-                  h2: AppTextStyles.sectionTitle,
-                  h3: AppTextStyles.rowTitle,
-                  code: AppTextStyles.monospace(11.5,
-                      color: AppColors.monospaceText),
-                  listBullet: const TextStyle(
-                      fontSize: 12.5, color: AppColors.textSecondary),
-                ),
-              ),
-            ),
+            _SpecBody(content: content!),
         ],
       ),
     );
@@ -915,7 +905,7 @@ class _ArtifactRow extends StatelessWidget {
   DocArtifact get artifact => state.doc;
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => Tappable(
         onTap: artifact.exists
             ? () => context.read<ConsoleBloc>().add(DocOpened(artifact))
             : null,
@@ -1140,21 +1130,26 @@ class _MoreActionsMenu extends StatelessWidget {
             ),
           ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.cardHighlight,
-          borderRadius: BorderRadius.circular(AppDimens.controlRadius),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(texts.changeMoreActions,
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textPrimary)),
-            const Icon(Icons.expand_more, size: 15, color: AppColors.textMuted),
-          ],
+      child: Tappable(
+        tapHandledAbove: true,
+        borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.cardHighlight,
+            borderRadius: BorderRadius.circular(AppDimens.controlRadius),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(texts.changeMoreActions,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textPrimary)),
+              const Icon(Icons.expand_more,
+                  size: 15, color: AppColors.textMuted),
+            ],
+          ),
         ),
       ),
     );
@@ -1228,8 +1223,9 @@ class _DocViewer extends StatelessWidget {
               horizontal: AppDimens.gapXl, vertical: 12),
           child: Row(
             children: [
-              InkWell(
+              Tappable(
                 onTap: () => context.read<ConsoleBloc>().add(DocOpened(null)),
+                effect: HoverEffect.underline,
                 child: Text(
                     backLabel != null ? '← $backLabel' : texts.backFallback,
                     style: AppTextStyles.captionMuted),
@@ -1253,6 +1249,145 @@ class _DocViewer extends StatelessWidget {
             child: DocMarkdown(data: content ?? texts.docReadError(doc.path)),
           ),
         ),
+      ],
+    );
+  }
+}
+
+
+/// Текст спеки в карточке.
+///
+/// Своей прокрутки у блока нет намеренно. Раньше спека жила в окне
+/// высотой 420 внутри прокрутки страницы, и это упиралось в тупик:
+/// докрутив спеку до конца, человек упирался — страница дальше не шла.
+/// Вложенные прокрутки во Flutter не передают колесо наружу: сигнал
+/// забирает самый внутренний список и, дойдя до края, просто молчит
+/// (`ScrollPositionWithSingleContext.pointerScroll` ничего не делает,
+/// когда двигаться некуда). Поэтому прокрутка на странице одна, а длинная
+/// спека складывается — задачи и код остаются под рукой, как и задумано.
+class _SpecBody extends StatefulWidget {
+  final String content;
+
+  const _SpecBody({required this.content});
+
+  @override
+  State<_SpecBody> createState() => _SpecBodyState();
+}
+
+class _SpecBodyState extends State<_SpecBody> {
+  /// Высота, после которой спека складывается: примерно экран текста.
+  static const _collapsedHeight = 420.0;
+
+  final _controller = ScrollController();
+
+  bool _expanded = false;
+
+  /// Спека не поместилась в сложенный вид — есть что разворачивать.
+  bool _clipped = false;
+
+  @override
+  void didUpdateWidget(_SpecBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Открыли другой change — меряем заново и показываем его спеку
+    // с начала, а не в том виде, в каком оставили прошлую.
+    if (oldWidget.content != widget.content) {
+      _expanded = false;
+      _clipped = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Померить можно только после раскладки: сам markdown знает свою высоту
+  /// лишь когда отрисован. Контроллер сложенного вида отвечает на это
+  /// точно — `maxScrollExtent` больше нуля ровно тогда, когда текст
+  /// не поместился.
+  void _measure() {
+    if (_expanded || _clipped || !_controller.hasClients) return;
+    if (_controller.position.maxScrollExtent > 0.5) {
+      setState(() => _clipped = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    final markdown = Markdown(
+      data: widget.content,
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      selectable: true,
+      controller: _controller,
+      // Прокрутка на странице одна — эта в неё не вмешивается.
+      physics: const NeverScrollableScrollPhysics(),
+      styleSheet: MarkdownStyleSheet(
+        p: const TextStyle(
+            fontSize: 12.5, height: 1.5, color: AppColors.textSecondary),
+        h1: AppTextStyles.sectionTitle,
+        h2: AppTextStyles.sectionTitle,
+        h3: AppTextStyles.rowTitle,
+        code: AppTextStyles.monospace(11.5, color: AppColors.monospaceText),
+        listBullet:
+            const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_expanded)
+          markdown
+        else
+          ClipRect(
+            child: ConstrainedBox(
+              constraints:
+                  const BoxConstraints(maxHeight: _collapsedHeight),
+              child: _clipped
+                  // Текст тает к нижнему краю: видно, что он не кончился,
+                  // и обрыв на полуслове не читается как сбой.
+                  ? ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black,
+                          Colors.black,
+                          Colors.transparent
+                        ],
+                        stops: [0, 0.85, 1],
+                      ).createShader(bounds),
+                      blendMode: BlendMode.dstIn,
+                      child: markdown,
+                    )
+                  : markdown,
+            ),
+          ),
+        if (_clipped)
+          Padding(
+            padding: const EdgeInsets.only(top: AppDimens.gapS),
+            child: Tappable(
+              onTap: () => setState(() => _expanded = !_expanded),
+              effect: HoverEffect.underline,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 16, color: AppColors.accent),
+                  const SizedBox(width: 4),
+                  Text(
+                      _expanded
+                          ? texts.changeSpecCollapse
+                          : texts.changeSpecExpandHere,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppColors.accent)),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

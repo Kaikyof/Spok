@@ -11,23 +11,16 @@ import 'executable_locator.dart';
 /// Приложение не прячет механику: сессия работает в репозитории платформы
 /// под ключами и правами пользователя.
 class AgentCliSource {
-  static const _binaryCandidates = [
-    '/opt/homebrew/bin/claude',
-    '/usr/local/bin/claude',
-  ];
-
   final CommandLog? commandLog;
   Process? _process;
 
   AgentCliSource({this.commandLog});
 
-  static String? locateBinary() {
-    for (final candidate in _binaryCandidates) {
-      if (File(candidate).existsSync()) return candidate;
-    }
-    // Запуск из Finder не даёт PATH с nvm/volta — ищем по типовым местам.
-    return ExecutableLocator.locate('claude');
-  }
+  /// Путь к CLI агента. Хардкода `/opt/homebrew/bin/claude` здесь нет:
+  /// на Linux его нет вовсе, а на macOS установка может быть и в volta,
+  /// и в nvm. Ищет [ExecutableLocator] — он же знает, что запуск из
+  /// Finder приходит с урезанным PATH.
+  static String? locateBinary() => ExecutableLocator.locate('claude');
 
   bool get isRunning => _process != null;
 

@@ -232,6 +232,198 @@ abstract class AppLocalizations {
   /// **'Нет активного спринта.\nСоздайте его командой /opsx:doc.'**
   String get sprintEmpty;
 
+  /// No description provided for @unrecognizedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разобрано {done} из {total} — остальное приложение не поняло'**
+  String unrecognizedTitle(int done, int total);
+
+  /// No description provided for @unrecognizedNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.'**
+  String get unrecognizedNote;
+
+  /// No description provided for @unrecognizedManual.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать вручную'**
+  String get unrecognizedManual;
+
+  /// No description provided for @unrecognizedNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'не найдено'**
+  String get unrecognizedNotFound;
+
+  /// No description provided for @recognizedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что распознано'**
+  String get recognizedTitle;
+
+  /// No description provided for @recognizedSummary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разобрано {done} требований из {total}'**
+  String recognizedSummary(int done, int total);
+
+  /// No description provided for @recognizedNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.'**
+  String get recognizedNote;
+
+  /// No description provided for @recognizedEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить'**
+  String get recognizedEdit;
+
+  /// No description provided for @recognizedEditTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть {file} в редакторе: устройство спеки правится в ней самой'**
+  String recognizedEditTooltip(String file);
+
+  /// No description provided for @recognizedManySources.
+  ///
+  /// In ru, this message translates to:
+  /// **'собрано из нескольких источников'**
+  String get recognizedManySources;
+
+  /// No description provided for @recognizedMatrixTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что будет работать'**
+  String get recognizedMatrixTitle;
+
+  /// No description provided for @recognizedMatrixNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.'**
+  String get recognizedMatrixNote;
+
+  /// No description provided for @recognizedFeatureOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'работает'**
+  String get recognizedFeatureOn;
+
+  /// No description provided for @recognizedFeatureOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'выключено'**
+  String get recognizedFeatureOff;
+
+  /// No description provided for @recognizedFeatureBlocker.
+  ///
+  /// In ru, this message translates to:
+  /// **'не хватает: {requirement}'**
+  String recognizedFeatureBlocker(String requirement);
+
+  /// No description provided for @recognizedOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть спеку'**
+  String get recognizedOpen;
+
+  /// No description provided for @recognizedAnotherSpec.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать другой адрес'**
+  String get recognizedAnotherSpec;
+
+  /// No description provided for @partRecognizedSchema.
+  ///
+  /// In ru, this message translates to:
+  /// **'Схема артефактов'**
+  String get partRecognizedSchema;
+
+  /// No description provided for @partRecognizedGrouping.
+  ///
+  /// In ru, this message translates to:
+  /// **'Группировка работы'**
+  String get partRecognizedGrouping;
+
+  /// No description provided for @partRecognizedStacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стеки'**
+  String get partRecognizedStacks;
+
+  /// No description provided for @partRecognizedStatuses.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы трекера'**
+  String get partRecognizedStatuses;
+
+  /// No description provided for @partRecognizedCommands.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команды спеки'**
+  String get partRecognizedCommands;
+
+  /// No description provided for @partRecognizedServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'Репозитории кода'**
+  String get partRecognizedServices;
+
+  /// No description provided for @partValueStatuses.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} статус} few{{count} статуса} other{{count} статусов}}'**
+  String partValueStatuses(int count);
+
+  /// No description provided for @partValueCommands.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} команда} few{{count} команды} other{{count} команд}}'**
+  String partValueCommands(int count);
+
+  /// No description provided for @partValueServices.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} репозиторий} few{{count} репозитория} other{{count} репозиториев}}'**
+  String partValueServices(int count);
+
+  /// No description provided for @partValueNoStacks.
+  ///
+  /// In ru, this message translates to:
+  /// **'без стеков'**
+  String get partValueNoStacks;
+
+  /// No description provided for @groupingSprintDir.
+  ///
+  /// In ru, this message translates to:
+  /// **'по спринтам'**
+  String get groupingSprintDir;
+
+  /// No description provided for @groupingMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'по мастер-спекам'**
+  String get groupingMasterDoc;
+
+  /// No description provided for @groupingNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'плоский список'**
+  String get groupingNone;
+
+  /// No description provided for @partialTrackerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы трекера недоступны — показаны данные файлов спеки'**
+  String get partialTrackerTitle;
+
+  /// No description provided for @partialRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get partialRetry;
+
   /// No description provided for @redmineUnavailable.
   ///
   /// In ru, this message translates to:
@@ -418,6 +610,18 @@ abstract class AppLocalizations {
   /// **'Открыть целиком'**
   String get changeSpecOpen;
 
+  /// No description provided for @changeSpecExpandHere.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развернуть здесь'**
+  String get changeSpecExpandHere;
+
+  /// No description provided for @changeSpecCollapse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Свернуть'**
+  String get changeSpecCollapse;
+
   /// No description provided for @changeMoreActions.
   ///
   /// In ru, this message translates to:
@@ -525,6 +729,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Перепроверить всё'**
   String get envRecheck;
+
+  /// No description provided for @envImportFromFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Импортировать из файла…'**
+  String get envImportFromFile;
+
+  /// No description provided for @envImportHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.'**
+  String get envImportHint;
+
+  /// No description provided for @envImportResult.
+  ///
+  /// In ru, this message translates to:
+  /// **'{filled, plural, one{Подставлено {filled} значение} few{Подставлено {filled} значения} other{Подставлено {filled} значений}} — проверьте и сохраните.'**
+  String envImportResult(int filled);
+
+  /// No description provided for @envImportEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'В файле эти ключи пустые — прежние значения оставлены: {keys}'**
+  String envImportEmpty(String keys);
+
+  /// No description provided for @envImportExtra.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этих ключей спека не спрашивает, они пропущены: {keys}'**
+  String envImportExtra(String keys);
+
+  /// No description provided for @envKeysCommand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека заполняет окружение командой {command} — запустить в сессии'**
+  String envKeysCommand(String command);
+
+  /// No description provided for @envTaskCommandTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны'**
+  String get envTaskCommandTooltip;
 
   /// No description provided for @envKeysSection.
   ///
@@ -715,8 +961,98 @@ abstract class AppLocalizations {
   /// No description provided for @setupFieldLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Путь к репозиторию спеки'**
+  /// **'Адрес репозитория спеки или путь к локальной копии'**
   String get setupFieldLabel;
+
+  /// No description provided for @cloneConnect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключить'**
+  String get cloneConnect;
+
+  /// No description provided for @cloneTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клонируем репозиторий'**
+  String get cloneTitle;
+
+  /// No description provided for @clonePulling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновляем уже склонированную спеку'**
+  String get clonePulling;
+
+  /// No description provided for @cloneTargetHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похоже на git-адрес — склонируем вашим git в {path}'**
+  String cloneTargetHint(String path);
+
+  /// No description provided for @cloneLocalHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похоже на путь — откроем локальную копию, ничего не скачиваем'**
+  String get cloneLocalHint;
+
+  /// No description provided for @cloneMeasure.
+  ///
+  /// In ru, this message translates to:
+  /// **'{volume} · {speed}'**
+  String cloneMeasure(String volume, String speed);
+
+  /// No description provided for @cloneDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека склонирована — читаем её'**
+  String get cloneDone;
+
+  /// No description provided for @cloneFailAccessDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Git не пустил по ssh-ключу. Проверьте, что ключ этой машины добавлен в ваш профиль на хостинге, или дайте адрес по https.'**
+  String get cloneFailAccessDenied;
+
+  /// No description provided for @cloneFailAuth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Логин или токен не приняты. Для https нужен personal access token, а не пароль от аккаунта.'**
+  String get cloneFailAuth;
+
+  /// No description provided for @cloneFailDirInUse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталог уже занят другим репозиторием — Spok его не тронет. Уберите каталог или подключите спеку как локальную копию.'**
+  String get cloneFailDirInUse;
+
+  /// No description provided for @cloneFailRepoNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.'**
+  String get cloneFailRepoNotFound;
+
+  /// No description provided for @cloneFailNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хостинг не отвечает: нет сети или он недоступен с этой машины.'**
+  String get cloneFailNetwork;
+
+  /// No description provided for @cloneFailGitMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'На машине не нашлось git — установите его и повторите.'**
+  String get cloneFailGitMissing;
+
+  /// No description provided for @cloneFailCancelled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клонирование отменено, недокачанный каталог убран.'**
+  String get cloneFailCancelled;
+
+  /// No description provided for @cloneFailUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Git не смог склонировать репозиторий. Его сообщение — ниже.'**
+  String get cloneFailUnknown;
 
   /// No description provided for @setupSave.
   ///
@@ -807,6 +1143,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'{ready} из {total} change\'ей готовы к передаче'**
   String handoffReadyCount(int ready, int total);
+
+  /// No description provided for @handoffReadinessUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готовность неизвестна — статусы трекера не опрошены'**
+  String get handoffReadinessUnknown;
+
+  /// No description provided for @handoffStatusNoKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.'**
+  String get handoffStatusNoKey;
+
+  /// No description provided for @handoffStatusUnreachable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.'**
+  String get handoffStatusUnreachable;
+
+  /// No description provided for @handoffStatusNotAsked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статусы этих change\'ей не опрошены и в файлах спеки их нет. Готовность не считается.'**
+  String get handoffStatusNotAsked;
+
+  /// No description provided for @handoffBlockerStatusUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'{change} — {stack}: статус не опрошен'**
+  String handoffBlockerStatusUnknown(String change, String stack);
 
   /// No description provided for @handoffBlockersLabel.
   ///
@@ -909,6 +1275,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отправить спринт тестировщику'**
   String get handoffSendButton;
+
+  /// No description provided for @handoffSendUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'недоступно: статусы трекера не опрошены — готовность неизвестна'**
+  String get handoffSendUnknown;
 
   /// No description provided for @handoffSendBlocked.
   ///
@@ -1188,8 +1560,14 @@ abstract class AppLocalizations {
   /// No description provided for @freshStale.
   ///
   /// In ru, this message translates to:
-  /// **'данные устарели — обновите'**
+  /// **'данные устарели'**
   String get freshStale;
+
+  /// No description provided for @freshRefresh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновить'**
+  String get freshRefresh;
 
   /// No description provided for @codeSectionTitle.
   ///
@@ -1497,6 +1875,18 @@ abstract class AppLocalizations {
   /// **'Создать change'**
   String get sprintCreateChange;
 
+  /// No description provided for @sprintOpenMasterDoc.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть мастер-спеку'**
+  String get sprintOpenMasterDoc;
+
+  /// No description provided for @sprintCommandPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создание запустит команду спеки:'**
+  String get sprintCommandPreview;
+
   /// No description provided for @changeCreateTitle.
   ///
   /// In ru, this message translates to:
@@ -1590,7 +1980,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupEmptyAll.
   ///
   /// In ru, this message translates to:
-  /// **'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.'**
+  /// **'В спеке пока нет change\'ей'**
   String get groupEmptyAll;
 
   /// No description provided for @stackWork.
@@ -1764,7 +2154,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupCloneHint.
   ///
   /// In ru, this message translates to:
-  /// **'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>'**
+  /// **'Клонируем вашим git: работают ваши ssh-ключи и настройки — пароль приложение не спрашивает.'**
   String get setupCloneHint;
 
   /// No description provided for @groupTitleUngrouped.
@@ -1812,8 +2202,32 @@ abstract class AppLocalizations {
   /// No description provided for @envEditSecretNote.
   ///
   /// In ru, this message translates to:
-  /// **'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.'**
+  /// **'Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.'**
   String get envEditSecretNote;
+
+  /// No description provided for @envEditSaving.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняем ключи'**
+  String get envEditSaving;
+
+  /// No description provided for @envEditStoreKeychain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секреты сохраняются в Keychain'**
+  String get envEditStoreKeychain;
+
+  /// No description provided for @envEditStoreLibsecret.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секреты сохраняются в связку ключей системы'**
+  String get envEditStoreLibsecret;
+
+  /// No description provided for @envEditStoreFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600'**
+  String get envEditStoreFile;
 
   /// No description provided for @envEditGitWarning.
   ///
@@ -2000,6 +2414,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ключи мессенджера на этой машине'**
   String get reqChatKeysFilled;
+
+  /// No description provided for @missingKeyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ключа нет только на этой машине — спека тут не при чём'**
+  String get missingKeyTitle;
+
+  /// No description provided for @missingKeyNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Значение уйдёт в хранилище секретов, а не в репозиторий'**
+  String get missingKeyNote;
 
   /// No description provided for @gatePersonalTitle.
   ///
@@ -2378,6 +2804,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Открыть change'**
   String get docsOpenChange;
+
+  /// No description provided for @progressCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отменить'**
+  String get progressCancel;
+
+  /// No description provided for @progressRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get progressRetry;
+
+  /// No description provided for @progressPercent.
+  ///
+  /// In ru, this message translates to:
+  /// **'{percent} %'**
+  String progressPercent(int percent);
 
   /// No description provided for @cancel.
   ///

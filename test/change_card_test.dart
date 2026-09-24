@@ -1,10 +1,14 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/change_unit.dart';
+import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
@@ -160,7 +164,20 @@ class _FakeRepository implements PlatformRepository {
   Future<EnvForm> envForm() async => EnvForm.empty;
 
   @override
+  Future<Map<String, String>> readEnvFile(String path) async => const {};
+
+  @override
   Future<void> saveEnv(Map<String, String> values) async {}
+
+  @override
+  Future<SecretBackend> secretBackend() async => SecretBackend.file;
+
+  @override
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
+      const Stream.empty();
+
+  @override
+  void cancelClone() {}
 }
 
 Widget _wrap(ConsoleBloc console, SessionsBloc sessions) => MaterialApp(
@@ -232,6 +249,63 @@ void main() {
 
       expect(find.text('Спека ещё не написана'), findsOneWidget);
       expect(find.textContaining('proposal.md'), findsWidgets);
+    });
+
+    testWidgets('длинная спека складывается, а не заводит вторую прокрутку',
+        (tester) async {
+      // Спека заведомо выше сложенного вида (420 точек).
+      File('${changeDir.path}/proposal.md').writeAsStringSync([
+        '## Зачем',
+        for (var line = 0; line < 80; line++)
+          'Строка $line: письма должны уходить всем получателям.',
+      ].join('\n\n'));
+      await openCard(tester);
+
+      // Колесо над текстом спеки двигает страницу. Раньше спека жила
+      // в собственной прокрутке и колесо забирала себе: докрутив её
+      // до конца, человек упирался в тупик — страница дальше не шла.
+      final page = tester.state<ScrollableState>(find.byType(Scrollable).first);
+      expect(page.position.pixels, 0);
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse)
+        ..hover(tester.getCenter(find.byType(Markdown)));
+      await tester.sendEventToBinding(pointer.scroll(const Offset(0, 300)));
+      await tester.pump();
+
+      expect(page.position.pixels, greaterThan(0));
+      expect(find.text('Развернуть здесь'), findsOneWidget);
+    });
+
+    testWidgets('спека разворачивается и сворачивается на месте',
+        (tester) async {
+      File('${changeDir.path}/proposal.md').writeAsStringSync([
+        '## Зачем',
+        for (var line = 0; line < 80; line++)
+          'Строка $line: письма должны уходить всем получателям.',
+      ].join('\n\n'));
+      await openCard(tester);
+
+      await tester.tap(find.text('Развернуть здесь'));
+      await tester.pumpAndSettle();
+      expect(find.text('Свернуть'), findsOneWidget);
+      expect(find.text('Развернуть здесь'), findsNothing);
+
+      // Развёрнутая спека длинная, и «Свернуть» оказывается ниже экрана —
+      // страница до неё прокручивается, потому что прокрутка одна.
+      await tester.ensureVisible(find.text('Свернуть'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Свернуть'));
+      await tester.pumpAndSettle();
+      expect(find.text('Развернуть здесь'), findsOneWidget);
+    });
+
+    testWidgets('короткой спеке разворачивать нечего — кнопки нет',
+        (tester) async {
+      File('${changeDir.path}/proposal.md')
+          .writeAsStringSync('## Зачем\n\nПисьма должны уходить всем.');
+      await openCard(tester);
+
+      expect(find.text('Развернуть здесь'), findsNothing);
     });
 
     testWidgets('артефакт ждёт предшественника по requires', (tester) async {

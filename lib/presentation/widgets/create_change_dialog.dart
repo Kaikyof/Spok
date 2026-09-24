@@ -16,6 +16,12 @@ class CreateChangeDialog extends StatefulWidget {
 
   final String sprintId;
 
+  /// Команда, которую запустит диалог. Превью на пустой группе берёт строку
+  /// отсюда же: показать одно, а запустить другое — хуже, чем не показывать
+  /// вовсе.
+  static String commandLine(String groupId, {String name = '<имя>'}) =>
+      '/opsx-propose $name${groupId.isEmpty ? '' : ' --doc $groupId'}';
+
   static Future<void> show(BuildContext context, String sprintId) => showDialog(
         context: context,
         builder: (_) => BlocProvider.value(
@@ -70,11 +76,8 @@ class _CreateChangeDialogState extends State<CreateChangeDialog> {
       return;
     }
     final source = _attachedName.isEmpty ? 'текст' : 'файл $_attachedName';
-    // Группы может не быть вовсе — тогда и флага мастер-спеки нет.
-    final docFlag =
-        widget.sprintId.isEmpty ? '' : ' --doc ${widget.sprintId}';
     context.read<SessionsBloc>().add(HandoffRunRequested(
-          '/opsx-propose $name$docFlag\n\n'
+          '${CreateChangeDialog.commandLine(widget.sprintId, name: name)}\n\n'
           'Что нужно сделать ($source):\n\n$brief',
         ));
     context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));

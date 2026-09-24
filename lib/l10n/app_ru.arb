@@ -51,6 +51,59 @@
     }
   },
   "sprintEmpty": "Нет активного спринта.\nСоздайте его командой /opsx:doc.",
+  "unrecognizedTitle": "Разобрано {done} из {total} — остальное приложение не поняло",
+  "@unrecognizedTitle": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "unrecognizedNote": "Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.",
+  "unrecognizedManual": "Указать вручную",
+  "unrecognizedNotFound": "не найдено",
+  "recognizedTitle": "Что распознано",
+  "recognizedSummary": "Разобрано {done} требований из {total}",
+  "@recognizedSummary": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "recognizedNote": "Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.",
+  "recognizedEdit": "Изменить",
+  "recognizedEditTooltip": "Открыть {file} в редакторе: устройство спеки правится в ней самой",
+  "@recognizedEditTooltip": {
+    "placeholders": { "file": { "type": "String" } }
+  },
+  "recognizedManySources": "собрано из нескольких источников",
+  "recognizedMatrixTitle": "Что будет работать",
+  "recognizedMatrixNote": "Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.",
+  "recognizedFeatureOn": "работает",
+  "recognizedFeatureOff": "выключено",
+  "recognizedFeatureBlocker": "не хватает: {requirement}",
+  "@recognizedFeatureBlocker": {
+    "placeholders": { "requirement": { "type": "String" } }
+  },
+  "recognizedOpen": "Открыть спеку",
+  "recognizedAnotherSpec": "Указать другой адрес",
+  "partRecognizedSchema": "Схема артефактов",
+  "partRecognizedGrouping": "Группировка работы",
+  "partRecognizedStacks": "Стеки",
+  "partRecognizedStatuses": "Статусы трекера",
+  "partRecognizedCommands": "Команды спеки",
+  "partRecognizedServices": "Репозитории кода",
+  "partValueStatuses": "{count, plural, one{{count} статус} few{{count} статуса} other{{count} статусов}}",
+  "@partValueStatuses": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueCommands": "{count, plural, one{{count} команда} few{{count} команды} other{{count} команд}}",
+  "@partValueCommands": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueServices": "{count, plural, one{{count} репозиторий} few{{count} репозитория} other{{count} репозиториев}}",
+  "@partValueServices": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partValueNoStacks": "без стеков",
+  "groupingSprintDir": "по спринтам",
+  "groupingMasterDoc": "по мастер-спекам",
+  "groupingNone": "плоский список",
+  "partialTrackerTitle": "Статусы трекера недоступны — показаны данные файлов спеки",
+  "partialRetry": "Повторить",
   "redmineUnavailable": "Статусы Redmine недоступны ({reason}) — показаны данные файлов",
   "@redmineUnavailable": {
     "placeholders": {
@@ -170,6 +223,8 @@
     "placeholders": { "file": { "type": "String" } }
   },
   "changeSpecOpen": "Открыть целиком",
+  "changeSpecExpandHere": "Развернуть здесь",
+  "changeSpecCollapse": "Свернуть",
   "changeMoreActions": "Ещё действия",
   "changeActionsHint": "команда подставится в строку ввода сессии",
   "artifactWaits": "ждёт: {what}",
@@ -205,6 +260,25 @@
     }
   },
   "envRecheck": "Перепроверить всё",
+  "envImportFromFile": "Импортировать из файла…",
+  "envImportHint": "Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.",
+  "envImportResult": "{filled, plural, one{Подставлено {filled} значение} few{Подставлено {filled} значения} other{Подставлено {filled} значений}} — проверьте и сохраните.",
+  "@envImportResult": {
+    "placeholders": { "filled": { "type": "int" } }
+  },
+  "envImportEmpty": "В файле эти ключи пустые — прежние значения оставлены: {keys}",
+  "@envImportEmpty": {
+    "placeholders": { "keys": { "type": "String" } }
+  },
+  "envImportExtra": "Этих ключей спека не спрашивает, они пропущены: {keys}",
+  "@envImportExtra": {
+    "placeholders": { "keys": { "type": "String" } }
+  },
+  "envKeysCommand": "Спека заполняет окружение командой {command} — запустить в сессии",
+  "@envKeysCommand": {
+    "placeholders": { "command": { "type": "String" } }
+  },
+  "envTaskCommandTooltip": "Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны",
   "envKeysSection": "Ключи в .env — показывается только наличие, не значения",
   "envReposSection": "Репозитории",
   "envSystemsSection": "Внешние системы",
@@ -264,7 +338,31 @@
   "loaderMessage": "Читаю состояние платформы…",
   "setupTitle": "Какая спека?",
   "setupNote": "Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.",
-  "setupFieldLabel": "Путь к репозиторию спеки",
+  "setupFieldLabel": "Адрес репозитория спеки или путь к локальной копии",
+  "cloneConnect": "Подключить",
+  "cloneTitle": "Клонируем репозиторий",
+  "clonePulling": "Обновляем уже склонированную спеку",
+  "cloneTargetHint": "Похоже на git-адрес — склонируем вашим git в {path}",
+  "@cloneTargetHint": {
+    "placeholders": { "path": { "type": "String" } }
+  },
+  "cloneLocalHint": "Похоже на путь — откроем локальную копию, ничего не скачиваем",
+  "cloneMeasure": "{volume} · {speed}",
+  "@cloneMeasure": {
+    "placeholders": {
+      "volume": { "type": "String" },
+      "speed": { "type": "String" }
+    }
+  },
+  "cloneDone": "Спека склонирована — читаем её",
+  "cloneFailAccessDenied": "Git не пустил по ssh-ключу. Проверьте, что ключ этой машины добавлен в ваш профиль на хостинге, или дайте адрес по https.",
+  "cloneFailAuth": "Логин или токен не приняты. Для https нужен personal access token, а не пароль от аккаунта.",
+  "cloneFailDirInUse": "Каталог уже занят другим репозиторием — Spok его не тронет. Уберите каталог или подключите спеку как локальную копию.",
+  "cloneFailRepoNotFound": "По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.",
+  "cloneFailNetwork": "Хостинг не отвечает: нет сети или он недоступен с этой машины.",
+  "cloneFailGitMissing": "На машине не нашлось git — установите его и повторите.",
+  "cloneFailCancelled": "Клонирование отменено, недокачанный каталог убран.",
+  "cloneFailUnknown": "Git не смог склонировать репозиторий. Его сообщение — ниже.",
   "setupSave": "Сохранить и продолжить",
   "setupError": "По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки",
   "setupConfigHint": "Хранится в {path} (ключ AVTOTO_PLATFORM_DIR); переменные окружения SPEC_PLATFORM_DIR и AVTOTO_PLATFORM_DIR имеют приоритет.",
@@ -295,6 +393,17 @@
       "total": {
         "type": "int"
       }
+    }
+  },
+  "handoffReadinessUnknown": "Готовность неизвестна — статусы трекера не опрошены",
+  "handoffStatusNoKey": "Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change'ей нет. Спросить трекер нечем — готовность не считается.",
+  "handoffStatusUnreachable": "Redmine не отвечает, а в файлах спеки статусов этих change'ей нет. Готовность не считается — данных о ней нет.",
+  "handoffStatusNotAsked": "Статусы этих change'ей не опрошены и в файлах спеки их нет. Готовность не считается.",
+  "handoffBlockerStatusUnknown": "{change} — {stack}: статус не опрошен",
+  "@handoffBlockerStatusUnknown": {
+    "placeholders": {
+      "change": { "type": "String" },
+      "stack": { "type": "String" }
     }
   },
   "handoffBlockersLabel": "БЛОКЕРЫ",
@@ -368,6 +477,7 @@
   },
   "handoffEffectMessage": "в канал команды уйдёт 1 сообщение",
   "handoffSendButton": "Отправить спринт тестировщику",
+  "handoffSendUnknown": "недоступно: статусы трекера не опрошены — готовность неизвестна",
   "handoffSendBlocked": "недоступно: готовность {ready} из {total} — устраните блокеры шага 1",
   "@handoffSendBlocked": {
     "placeholders": {
@@ -529,7 +639,8 @@
       }
     }
   },
-  "freshStale": "данные устарели — обновите",
+  "freshStale": "данные устарели",
+  "freshRefresh": "Обновить",
   "codeSectionTitle": "Код · {stack}",
   "@codeSectionTitle": {
     "placeholders": {
@@ -665,6 +776,8 @@
   },
   "sprintNoChangesHint": "Change — единица работы: спека, задачи, код и тест-кейсы. Создайте первый, чтобы спринт начал двигаться.",
   "sprintCreateChange": "Создать change",
+  "sprintOpenMasterDoc": "Открыть мастер-спеку",
+  "sprintCommandPreview": "Создание запустит команду спеки:",
   "changeCreateTitle": "Новый change в спринте",
   "changeCreateNameLabel": "Идентификатор change'а (латиницей, через дефис)",
   "changeCreateBriefLabel": "Что нужно сделать — коротко или подробно",
@@ -701,7 +814,7 @@
   "groupTitleFlat": "Change'и",
   "groupSwitcherTooltip": "Переключить группу · openspec/doc",
   "groupNone": "Группировки нет — показаны все change’и",
-  "groupEmptyAll": "В спеке нет change'ей.\nСоздайте первый командой /opsx:propose.",
+  "groupEmptyAll": "В спеке пока нет change'ей",
   "stackWork": "Работа",
   "stackBackend": "Backend",
   "stackMobile": "Mobile",
@@ -754,7 +867,7 @@
   "setupCancel": "Отмена",
   "setupHintPath": "/Users/…/avelacom-platform",
   "setupBrowse": "Выбрать каталог…",
-  "setupCloneHint": "Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>",
+  "setupCloneHint": "Клонируем вашим git: работают ваши ssh-ключи и настройки — пароль приложение не спрашивает.",
   "groupTitleUngrouped": "Вне мастер-спек",
   "specSwitcherTooltip": "Сменить спеку",
   "specAdd": "Подключить другую спеку…",
@@ -762,7 +875,11 @@
   "envEditTitle": "Ключи спеки",
   "envEditSave": "Сохранить в .env",
   "envEditOptional": "необязательный",
-  "envEditSecretNote": "Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.",
+  "envEditSecretNote": "Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.",
+  "envEditSaving": "Сохраняем ключи",
+  "envEditStoreKeychain": "Секреты сохраняются в Keychain",
+  "envEditStoreLibsecret": "Секреты сохраняются в связку ключей системы",
+  "envEditStoreFile": "Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600",
   "envEditGitWarning": ".env не закрыт .gitignore — секреты могут уехать в репозиторий",
   "envEditPath": "Файл: {path}",
   "@envEditPath": {
@@ -811,6 +928,8 @@
   "reqServices": "Сервисы workspace",
   "reqChatKeysDeclared": "Спека работает с мессенджером",
   "reqChatKeysFilled": "Ключи мессенджера на этой машине",
+  "missingKeyTitle": "Ключа нет только на этой машине — спека тут не при чём",
+  "missingKeyNote": "Значение уйдёт в хранилище секретов, а не в репозиторий",
   "gatePersonalTitle": "Не настроено на этой машине",
   "gatePersonalNote": "Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.",
   "gatePersonalFill": "Заполнить",
@@ -908,6 +1027,12 @@
   },
   "docsBranchUnknown": "git не ответил о состоянии файла",
   "docsOpenChange": "Открыть change",
+  "progressCancel": "Отменить",
+  "progressRetry": "Повторить",
+  "progressPercent": "{percent} %",
+  "@progressPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
   "cancel": "Отмена",
   "confirm": "Готово"
 }

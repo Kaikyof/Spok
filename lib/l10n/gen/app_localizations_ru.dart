@@ -88,6 +88,141 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нет активного спринта.\nСоздайте его командой /opsx:doc.';
 
   @override
+  String unrecognizedTitle(int done, int total) {
+    return 'Разобрано $done из $total — остальное приложение не поняло';
+  }
+
+  @override
+  String get unrecognizedNote =>
+      'Спека может быть устроена не по-нашему. Экраны, которым эти данные нужны, объяснят нехватку у себя.';
+
+  @override
+  String get unrecognizedManual => 'Указать вручную';
+
+  @override
+  String get unrecognizedNotFound => 'не найдено';
+
+  @override
+  String get recognizedTitle => 'Что распознано';
+
+  @override
+  String recognizedSummary(int done, int total) {
+    return 'Разобрано $done требований из $total';
+  }
+
+  @override
+  String get recognizedNote =>
+      'Устройство спеки приложение вывело из её файлов, а не знало наперёд. Посмотрите, всё ли понято верно: на этом стоят все экраны.';
+
+  @override
+  String get recognizedEdit => 'Изменить';
+
+  @override
+  String recognizedEditTooltip(String file) {
+    return 'Открыть $file в редакторе: устройство спеки правится в ней самой';
+  }
+
+  @override
+  String get recognizedManySources => 'собрано из нескольких источников';
+
+  @override
+  String get recognizedMatrixTitle => 'Что будет работать';
+
+  @override
+  String get recognizedMatrixNote =>
+      'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.';
+
+  @override
+  String get recognizedFeatureOn => 'работает';
+
+  @override
+  String get recognizedFeatureOff => 'выключено';
+
+  @override
+  String recognizedFeatureBlocker(String requirement) {
+    return 'не хватает: $requirement';
+  }
+
+  @override
+  String get recognizedOpen => 'Открыть спеку';
+
+  @override
+  String get recognizedAnotherSpec => 'Указать другой адрес';
+
+  @override
+  String get partRecognizedSchema => 'Схема артефактов';
+
+  @override
+  String get partRecognizedGrouping => 'Группировка работы';
+
+  @override
+  String get partRecognizedStacks => 'Стеки';
+
+  @override
+  String get partRecognizedStatuses => 'Статусы трекера';
+
+  @override
+  String get partRecognizedCommands => 'Команды спеки';
+
+  @override
+  String get partRecognizedServices => 'Репозитории кода';
+
+  @override
+  String partValueStatuses(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count статусов',
+      few: '$count статуса',
+      one: '$count статус',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String partValueCommands(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count команд',
+      few: '$count команды',
+      one: '$count команда',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String partValueServices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count репозиториев',
+      few: '$count репозитория',
+      one: '$count репозиторий',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get partValueNoStacks => 'без стеков';
+
+  @override
+  String get groupingSprintDir => 'по спринтам';
+
+  @override
+  String get groupingMasterDoc => 'по мастер-спекам';
+
+  @override
+  String get groupingNone => 'плоский список';
+
+  @override
+  String get partialTrackerTitle =>
+      'Статусы трекера недоступны — показаны данные файлов спеки';
+
+  @override
+  String get partialRetry => 'Повторить';
+
+  @override
   String redmineUnavailable(String reason) {
     return 'Статусы Redmine недоступны ($reason) — показаны данные файлов';
   }
@@ -204,6 +339,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get changeSpecOpen => 'Открыть целиком';
 
   @override
+  String get changeSpecExpandHere => 'Развернуть здесь';
+
+  @override
+  String get changeSpecCollapse => 'Свернуть';
+
+  @override
   String get changeMoreActions => 'Ещё действия';
 
   @override
@@ -269,6 +410,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get envRecheck => 'Перепроверить всё';
+
+  @override
+  String get envImportFromFile => 'Импортировать из файла…';
+
+  @override
+  String get envImportHint =>
+      'Возьмём значения из готового .env другого проекта. Скрытые файлы в диалоге показываются по ⌘⇧точка. Значения только подставятся в поля — сохранение по кнопке ниже.';
+
+  @override
+  String envImportResult(int filled) {
+    String _temp0 = intl.Intl.pluralLogic(
+      filled,
+      locale: localeName,
+      other: 'Подставлено $filled значений',
+      few: 'Подставлено $filled значения',
+      one: 'Подставлено $filled значение',
+    );
+    return '$_temp0 — проверьте и сохраните.';
+  }
+
+  @override
+  String envImportEmpty(String keys) {
+    return 'В файле эти ключи пустые — прежние значения оставлены: $keys';
+  }
+
+  @override
+  String envImportExtra(String keys) {
+    return 'Этих ключей спека не спрашивает, они пропущены: $keys';
+  }
+
+  @override
+  String envKeysCommand(String command) {
+    return 'Спека заполняет окружение командой $command — запустить в сессии';
+  }
+
+  @override
+  String get envTaskCommandTooltip =>
+      'Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны';
 
   @override
   String get envKeysSection =>
@@ -377,7 +556,66 @@ class AppLocalizationsRu extends AppLocalizations {
       'Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.';
 
   @override
-  String get setupFieldLabel => 'Путь к репозиторию спеки';
+  String get setupFieldLabel =>
+      'Адрес репозитория спеки или путь к локальной копии';
+
+  @override
+  String get cloneConnect => 'Подключить';
+
+  @override
+  String get cloneTitle => 'Клонируем репозиторий';
+
+  @override
+  String get clonePulling => 'Обновляем уже склонированную спеку';
+
+  @override
+  String cloneTargetHint(String path) {
+    return 'Похоже на git-адрес — склонируем вашим git в $path';
+  }
+
+  @override
+  String get cloneLocalHint =>
+      'Похоже на путь — откроем локальную копию, ничего не скачиваем';
+
+  @override
+  String cloneMeasure(String volume, String speed) {
+    return '$volume · $speed';
+  }
+
+  @override
+  String get cloneDone => 'Спека склонирована — читаем её';
+
+  @override
+  String get cloneFailAccessDenied =>
+      'Git не пустил по ssh-ключу. Проверьте, что ключ этой машины добавлен в ваш профиль на хостинге, или дайте адрес по https.';
+
+  @override
+  String get cloneFailAuth =>
+      'Логин или токен не приняты. Для https нужен personal access token, а не пароль от аккаунта.';
+
+  @override
+  String get cloneFailDirInUse =>
+      'Каталог уже занят другим репозиторием — Spok его не тронет. Уберите каталог или подключите спеку как локальную копию.';
+
+  @override
+  String get cloneFailRepoNotFound =>
+      'По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.';
+
+  @override
+  String get cloneFailNetwork =>
+      'Хостинг не отвечает: нет сети или он недоступен с этой машины.';
+
+  @override
+  String get cloneFailGitMissing =>
+      'На машине не нашлось git — установите его и повторите.';
+
+  @override
+  String get cloneFailCancelled =>
+      'Клонирование отменено, недокачанный каталог убран.';
+
+  @override
+  String get cloneFailUnknown =>
+      'Git не смог склонировать репозиторий. Его сообщение — ниже.';
 
   @override
   String get setupSave => 'Сохранить и продолжить';
@@ -427,6 +665,27 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String handoffReadyCount(int ready, int total) {
     return '$ready из $total change\'ей готовы к передаче';
+  }
+
+  @override
+  String get handoffReadinessUnknown =>
+      'Готовность неизвестна — статусы трекера не опрошены';
+
+  @override
+  String get handoffStatusNoKey =>
+      'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.';
+
+  @override
+  String get handoffStatusUnreachable =>
+      'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.';
+
+  @override
+  String get handoffStatusNotAsked =>
+      'Статусы этих change\'ей не опрошены и в файлах спеки их нет. Готовность не считается.';
+
+  @override
+  String handoffBlockerStatusUnknown(String change, String stack) {
+    return '$change — $stack: статус не опрошен';
   }
 
   @override
@@ -492,6 +751,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get handoffSendButton => 'Отправить спринт тестировщику';
+
+  @override
+  String get handoffSendUnknown =>
+      'недоступно: статусы трекера не опрошены — готовность неизвестна';
 
   @override
   String handoffSendBlocked(int ready, int total) {
@@ -674,7 +937,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get freshStale => 'данные устарели — обновите';
+  String get freshStale => 'данные устарели';
+
+  @override
+  String get freshRefresh => 'Обновить';
 
   @override
   String codeSectionTitle(String stack) {
@@ -865,6 +1131,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sprintCreateChange => 'Создать change';
 
   @override
+  String get sprintOpenMasterDoc => 'Открыть мастер-спеку';
+
+  @override
+  String get sprintCommandPreview => 'Создание запустит команду спеки:';
+
+  @override
   String get changeCreateTitle => 'Новый change в спринте';
 
   @override
@@ -919,8 +1191,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get groupNone => 'Группировки нет — показаны все change’и';
 
   @override
-  String get groupEmptyAll =>
-      'В спеке нет change\'ей.\nСоздайте первый командой /opsx:propose.';
+  String get groupEmptyAll => 'В спеке пока нет change\'ей';
 
   @override
   String get stackWork => 'Работа';
@@ -1020,7 +1291,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get setupCloneHint =>
-      'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>';
+      'Клонируем вашим git: работают ваши ssh-ключи и настройки — пароль приложение не спрашивает.';
 
   @override
   String get groupTitleUngrouped => 'Вне мастер-спек';
@@ -1045,7 +1316,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get envEditSecretNote =>
-      'Секреты пишутся в .env спеки — этот файл нужен её скриптам и агентным сессиям. Системного хранилища (Keychain) пока нет.';
+      'Секреты пишутся и в .env спеки — этот файл нужен её скриптам и агентным сессиям. Файл производный: его можно удалить, значения вернутся из хранилища.';
+
+  @override
+  String get envEditSaving => 'Сохраняем ключи';
+
+  @override
+  String get envEditStoreKeychain => 'Секреты сохраняются в Keychain';
+
+  @override
+  String get envEditStoreLibsecret =>
+      'Секреты сохраняются в связку ключей системы';
+
+  @override
+  String get envEditStoreFile =>
+      'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600';
 
   @override
   String get envEditGitWarning =>
@@ -1149,6 +1434,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get reqChatKeysFilled => 'Ключи мессенджера на этой машине';
+
+  @override
+  String get missingKeyTitle =>
+      'Ключа нет только на этой машине — спека тут не при чём';
+
+  @override
+  String get missingKeyNote =>
+      'Значение уйдёт в хранилище секретов, а не в репозиторий';
 
   @override
   String get gatePersonalTitle => 'Не настроено на этой машине';
@@ -1363,6 +1656,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get docsOpenChange => 'Открыть change';
+
+  @override
+  String get progressCancel => 'Отменить';
+
+  @override
+  String get progressRetry => 'Повторить';
+
+  @override
+  String progressPercent(int percent) {
+    return '$percent %';
+  }
 
   @override
   String get cancel => 'Отмена';

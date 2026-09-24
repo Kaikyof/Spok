@@ -1,9 +1,11 @@
+import '../entities/clone_progress.dart';
 import '../entities/console_snapshot.dart';
 import '../entities/doc_state.dart';
 import '../entities/env_field.dart';
 import '../entities/handoff_recipient.dart';
 import '../entities/issue_comment.dart';
 import '../entities/merge_request_info.dart';
+import '../entities/secret_backend.dart';
 import '../entities/slash_command.dart';
 
 abstract class PlatformRepository {
@@ -50,12 +52,30 @@ abstract class PlatformRepository {
   /// Сохраняет путь к спеке; false — по пути нет openspec/ и workspace.yaml.
   Future<bool> setPlatformDir(String path);
 
+  /// Клонирует спеку по git-URL своим же git человека: работают его
+  /// ssh-ключи и его credential helper. Поток заканчивается либо путём
+  /// клона, либо разобранной причиной отказа.
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''});
+
+  /// Отменяет идущее клонирование: процесс убивается, недокачанный
+  /// каталог убирается.
+  void cancelClone();
+
   /// Подключённые спеки: путь к каждой. Текущая входит в список.
   Future<List<String>> knownSpecs();
 
   /// Форма ключей спеки: поля из `.env.example` со значениями из `.env`.
   Future<EnvForm> envForm();
 
-  /// Сохраняет значения в `.env` спеки.
+  /// Сохраняет значения: секреты — в системное хранилище, остальное —
+  /// в `.env` спеки. Файл пересобирается, он производный.
   Future<void> saveEnv(Map<String, String> values);
+
+  /// Читает `.env`-файл по указанному пути — человек приносит готовый
+  /// файл из другого проекта или из переписки, и перебивать ключи руками
+  /// ему незачем. Файл только читается, ничего не записывается.
+  Future<Map<String, String>> readEnvFile(String path);
+
+  /// Где лежат секреты на этой машине: связка ключей или файл.
+  Future<SecretBackend> secretBackend();
 }

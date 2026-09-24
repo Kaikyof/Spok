@@ -13,6 +13,7 @@ import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
 import 'env_editor_dialog.dart';
+import 'missing_key_block.dart';
 
 /// Выключенная фича не прячется, а объясняет: чеклист требований, где их
 /// искали и что сделать. Природа нехватки важнее самого факта — спеке нужен
@@ -245,6 +246,12 @@ class _PersonalBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    // Имена ключей известны — спрашиваем значение прямо здесь, а не гоняем
+    // человека в форму ключей за одним токеном.
+    if (requirement.keys.isNotEmpty) {
+      return MissingKeyBlock(
+          keys: requirement.keys, lookedIn: requirement.lookedIn);
+    }
     return SectionCard(
       color: AppColors.cardHighlight,
       borderColor: AppColors.accent,

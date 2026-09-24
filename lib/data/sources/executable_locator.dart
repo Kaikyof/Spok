@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../core/platform/app_paths.dart';
+
 /// Поиск внешних утилит по абсолютному пути.
 ///
 /// Приложение, запущенное из Finder (.app из DMG), наследует урезанный
@@ -12,12 +14,16 @@ import 'package:path/path.dart' as p;
 class ExecutableLocator {
   static final _cache = <String, String?>{};
 
+  /// Типовые места установки, которых может не быть в PATH процесса.
+  /// Homebrew — и по пути Apple Silicon, и по старому Intel'овому;
+  /// `/opt/local/bin` — MacPorts; остальное общее для macOS и Linux.
   static const _extraDirectories = [
     '/opt/homebrew/bin',
     '/usr/local/bin',
     '/usr/bin',
     '/bin',
     '/opt/local/bin',
+    '/snap/bin',
   ];
 
   /// Абсолютный путь к [name] или null, если утилита не найдена.
@@ -38,17 +44,23 @@ class ExecutableLocator {
   }
 
   static Iterable<String> _searchPath() sync* {
-    yield* (Platform.environment['PATH'] ?? '').split(':');
+    // Разделитель PATH у Windows свой; каталоги ниже — unix'овые,
+    // на Windows их просто не окажется на диске.
+    yield* (Platform.environment['PATH'] ?? '')
+        .split(Platform.isWindows ? ';' : ':');
     yield* _extraDirectories;
-    final home = Platform.environment['HOME'];
-    if (home == null) return;
+    final home = AppPaths.home();
+    if (home.isEmpty) return;
     yield p.join(home, '.local', 'bin');
     yield p.join(home, '.volta', 'bin');
     yield p.join(home, '.bun', 'bin');
     // nvm и fnm держат по каталогу на версию — берём самые свежие.
     yield* _versionedBins(p.join(home, '.nvm', 'versions', 'node'));
+    // fnm: каталог версий у macOS и Linux разный.
     yield* _versionedBins(
         p.join(home, 'Library', 'Application Support', 'fnm', 'node-versions'));
+    yield* _versionedBins(
+        p.join(home, '.local', 'share', 'fnm', 'node-versions'));
   }
 
   /// Каталоги `bin` версионных менеджеров, от новой версии к старой.

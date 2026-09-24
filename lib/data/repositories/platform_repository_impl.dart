@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/status_semantics.dart';
@@ -17,28 +18,68 @@ import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/entities/spec_recognition.dart';
+import '../../domain/entities/spec_schema.dart';
 import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/find_divergences.dart';
+import '../../domain/usecases/find_env_commands.dart';
 import '../../domain/repositories/platform_repository.dart';
+import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
+import '../sources/env_materializer.dart';
+import '../sources/git_clone_source.dart';
 import '../sources/gitlab_api.dart';
 import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
+import '../sources/secret_store.dart';
+import '../sources/env_file.dart';
 
 class PlatformRepositoryImpl implements PlatformRepository {
   PlatformFilesSource? files;
   final AppConfigSource config;
   final CommandLog? commandLog;
   final FindDivergences findDivergences;
+  final SecretStore secrets;
+  final GitCloneSource cloneSource;
+
+  /// Спеки, `.env` которых уже собран в этом запуске: пересобирать файл
+  /// на каждом обновлении слепка незачем — он меняется только когда
+  /// человек правит ключи.
+  final _materialized = <String>{};
 
   PlatformRepositoryImpl(this.files,
       {AppConfigSource? config,
       this.commandLog,
-      FindDivergences? findDivergences})
+      FindDivergences? findDivergences,
+      SecretStore? secrets,
+      GitCloneSource? cloneSource})
       : config = config ?? AppConfigSource(),
-        findDivergences = findDivergences ?? FindDivergences();
+        findDivergences = findDivergences ?? FindDivergences(),
+        secrets = secrets ?? SecretStore(),
+        cloneSource = cloneSource ?? GitCloneSource();
+
+  /// Сборщик `.env` текущей спеки; null — спека не подключена.
+  EnvMaterializer? get _materializer {
+    final source = files;
+    return source == null ? null : EnvMaterializer(source, secrets: secrets);
+  }
+
+  /// Собирает `.env` спеки из хранилища секретов — один раз на спеку.
+  /// Клон мог быть создан только что: без этого шага скрипты спеки
+  /// стартовали бы без ключей, которые человек уже вводил.
+  Future<void> materializeEnv({bool force = false}) async {
+    final source = files;
+    if (source == null) return;
+    if (!force && !_materialized.add(source.path)) return;
+    try {
+      await _materializer?.materialize();
+    } catch (_) {
+      // Не вышло — ключи всё равно читаются из файла, как раньше.
+      // Ронять загрузку спеки из-за хранилища секретов нельзя.
+    }
+  }
 
   /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
   static Future<PlatformRepositoryImpl> create({CommandLog? commandLog}) async {
@@ -95,8 +136,16 @@ class PlatformRepositoryImpl implements PlatformRepository {
     await config.writePlatformDir(trimmedPath);
     await config.rememberSpec(trimmedPath);
     files = PlatformFilesSource(Directory(trimmedPath), commandLog: commandLog);
+    await materializeEnv();
     return true;
   }
+
+  @override
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
+      cloneSource.clone(url, ref: ref);
+
+  @override
+  void cancelClone() => cloneSource.cancel();
 
   @override
   Future<List<String>> knownSpecs() async {
@@ -114,6 +163,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
   Future<EnvForm> envForm() async {
     final source = files;
     if (source == null) return EnvForm.empty;
+    // Собираем файл до чтения формы: значение из связки ключей должно
+    // попасть в поле, даже если в клоне его ещё нет.
+    await materializeEnv();
     final env = source.loadEnv();
     return EnvForm(
       fields: [
@@ -127,12 +179,26 @@ class PlatformRepositoryImpl implements PlatformRepository {
       ],
       ignoredByGit: await source.envIgnoredByGit(),
       path: source.envPath,
+      backend: await secrets.backend(),
     );
   }
 
   @override
-  Future<void> saveEnv(Map<String, String> values) async =>
-      files?.writeEnv(values);
+  Future<void> saveEnv(Map<String, String> values) async {
+    final materializer = _materializer;
+    if (materializer == null) return;
+    await materializer.save(values);
+  }
+
+  @override
+  Future<Map<String, String>> readEnvFile(String path) async {
+    final file = File(path);
+    if (!await file.exists()) return const {};
+    return EnvFile.parse(await file.readAsString());
+  }
+
+  @override
+  Future<SecretBackend> secretBackend() => secrets.backend();
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async {
@@ -249,6 +315,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
       );
     }
 
+    // Ключи возвращаем в клон до чтения: проверки окружения и трекер
+    // ниже уже рассчитывают на заполненный `.env`.
+    await materializeEnv();
     await source.pullPlatform();
     final changes = source.loadChanges();
     final groups = source.loadGroups(changes);
@@ -323,7 +392,86 @@ class PlatformRepositoryImpl implements PlatformRepository {
         exampleKeys: exampleKeys,
         envValues: envReport,
       ),
+      handoverCommand: _handoverCommand(source),
+      envCommands: const FindEnvCommands()(source.loadSlashCommands()),
+      recognition: _buildRecognition(
+        source: source,
+        schema: schema,
+        grouping: grouping,
+        stacks: ordered,
+        semantics: semantics,
+      ),
     );
+  }
+
+  /// Команда передачи — любая команда спеки, знающая слово handover:
+  /// в avtoto это `/opsx-sprint … handover`, у другой спеки будет своё имя.
+  SlashCommand? _handoverCommand(PlatformFilesSource source) =>
+      source
+          .loadSlashCommands()
+          .where((command) =>
+              command.id.contains('handover') ||
+              command.argumentHint.contains('handover'))
+          .firstOrNull;
+
+  /// Что приложение поняло в спеке. Список честный: «не распознано» —
+  /// такой же результат разбора, как и распознанное, и человек должен
+  /// видеть его до того, как решит, что приложение сломано (борд 19).
+  SpecRecognition _buildRecognition({
+    required PlatformFilesSource source,
+    required SpecSchema schema,
+    required GroupingKind grouping,
+    required List<String> stacks,
+    required StatusSemantics semantics,
+  }) {
+    final commands = source.loadSlashCommands();
+    final services = source.allServices();
+    final schemaFile = source.schemaFile;
+    return SpecRecognition([
+      RecognizedItem(
+        part: RecognizedPart.schema,
+        recognized: !schema.isEmpty,
+        value: schema.name,
+        lookedIn: 'openspec/schemas/*/schema.yaml',
+        sourcePath: schemaFile,
+      ),
+      // Плоский список — тоже разобранная стратегия: у спеки может не быть
+      // ни спринтов, ни мастер-спек, и это не «не понято».
+      RecognizedItem(
+        part: RecognizedPart.grouping,
+        recognized: true,
+        value: grouping.name,
+        lookedIn: 'openspec/doc',
+        sourcePath: source.docDir,
+      ),
+      RecognizedItem(
+        part: RecognizedPart.stacks,
+        recognized: true,
+        value: stacks.join(' · '),
+        lookedIn: 'schema.yaml → tasks-<stack>',
+        sourcePath: schemaFile,
+      ),
+      RecognizedItem(
+        part: RecognizedPart.statuses,
+        recognized: !semantics.isEmpty,
+        value: '${semantics.statuses.length}',
+        lookedIn: 'openspec/redmine.yaml',
+        sourcePath: source.trackerFile,
+      ),
+      RecognizedItem(
+        part: RecognizedPart.commands,
+        recognized: commands.isNotEmpty,
+        value: '${commands.length}',
+        lookedIn: 'schema · .claude · package.json · Makefile',
+      ),
+      RecognizedItem(
+        part: RecognizedPart.services,
+        recognized: services.isNotEmpty,
+        value: '${services.length}',
+        lookedIn: 'workspace.yaml → services',
+        sourcePath: source.workspaceFile,
+      ),
+    ]);
   }
 
   /// Требования фич — то же, что приложение ищет в спеке, но в явном виде:
@@ -343,10 +491,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         .where((group) => group.builds.isNotEmpty)
         .map((group) => group.id)
         .firstOrNull;
-    // Команда передачи — любая команда спеки, знающая слово handover.
-    final handover = source.loadSlashCommands().where((command) =>
-        command.id.contains('handover') ||
-        command.argumentHint.contains('handover'));
+    final handover = [?_handoverCommand(source)];
     final recipients = source.recipientsScript;
     final services = source.allServices();
     final gitlabCheck = envValues.systems
@@ -383,11 +528,14 @@ class PlatformRepositoryImpl implements PlatformRepository {
           optional: true,
           lookedIn: recipients ?? 'scripts/*handover*recipient*',
         ),
+        // Обязательное: команда передачи — то, чем передача вообще
+        // выполняется. Без неё шаги посчитают готовность и подберут
+        // получателей, а отправлять будет нечем, и кнопка отправки
+        // запустила бы команду, которой у спеки нет.
         FeatureRequirement(
           id: RequirementId.handoverCommand,
           scope: RequirementScope.spec,
           satisfied: handover.isNotEmpty,
-          optional: true,
           lookedIn: handover.map((command) => command.invocation).firstOrNull ??
               '.claude/commands, openspec/schemas/*/commands',
         ),
@@ -418,6 +566,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
           scope: RequirementScope.personal,
           satisfied: (env['GITLAB_TOKEN'] ?? '').isNotEmpty,
           lookedIn: 'GITLAB_TOKEN · .env',
+          keys: const ['GITLAB_TOKEN'],
         ),
         FeatureRequirement(
           id: RequirementId.gitlabReachable,
@@ -445,6 +594,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
           satisfied: chatKeys.isNotEmpty &&
               chatKeys.every((key) => (env[key] ?? '').isNotEmpty),
           lookedIn: 'MATTERMOST_* · .env',
+          keys: [
+            for (final key in chatKeys)
+              if ((env[key] ?? '').isEmpty) key,
+          ],
         ),
       ]),
       SpecFeature.multiStack: FeatureGate([
@@ -503,6 +656,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       keys: _checkEnvKeys(source, env),
       repos: await _checkRepos(source),
       systems: await _checkSystems(env),
+      backend: await secrets.backend(),
     );
   }
 

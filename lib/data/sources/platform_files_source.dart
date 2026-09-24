@@ -17,6 +17,7 @@ import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import 'executable_locator.dart';
+import 'env_file.dart';
 
 /// Ключ .env с подсказкой из комментария над строкой в `.env.example`.
 /// `optional` — ключ в примере закомментирован, спека работает и без него.
@@ -63,6 +64,32 @@ class PlatformFilesSource {
   String get path => root.path;
 
   String get specName => p.basename(root.path);
+
+  /// Файлы, по которым приложение разбирает устройство спеки. Нужны экрану
+  /// «Что распознано»: правится устройство в самой спеке, и «изменить»
+  /// открывает тот файл, который решает, а не тот, что похож по имени.
+  /// Пустая строка — файла в этой спеке нет.
+  String get schemaFile {
+    final schemaName = _yamlValue(
+        File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
+    if (schemaName == null) return '';
+    final file = File(
+        p.join(root.path, 'openspec', 'schemas', schemaName, 'schema.yaml'));
+    return file.existsSync() ? file.path : '';
+  }
+
+  String get trackerFile => _existing(p.join(root.path, 'openspec',
+      'redmine.yaml'));
+
+  String get workspaceFile => _existing(p.join(root.path, 'workspace.yaml'));
+
+  String get docDir {
+    final dir = Directory(p.join(root.path, 'openspec', 'doc'));
+    return dir.existsSync() ? dir.path : '';
+  }
+
+  static String _existing(String path) =>
+      File(path).existsSync() ? path : '';
 
   // ─── Схема спеки ───────────────────────────────────────────────────────────
 
@@ -565,12 +592,7 @@ class PlatformFilesSource {
   Map<String, String> loadEnv() {
     final file = File(p.join(root.path, '.env'));
     if (!file.existsSync()) return {};
-    final entryPattern = RegExp(r'^([A-Z0-9_]+)=(.*)$');
-    return {
-      for (final line in file.readAsLinesSync())
-        if (entryPattern.firstMatch(line.trim()) case final match?)
-          match.group(1)!: match.group(2)!,
-    };
+    return EnvFile.parse(file.readAsStringSync());
   }
 
   /// Ключи из `.env.example` целиком, с подсказкой из комментария над строкой:
@@ -799,7 +821,8 @@ class PlatformFilesSource {
       final decoded = jsonDecode(file.readAsStringSync());
       final block = decoded is Map ? decoded['scripts'] : null;
       if (block is! Map) return const [];
-      final runner = File(p.join(root.path, 'pnpm-lock.yaml')).existsSync()
+      final runner = (File(p.join(root.path, 'pnpm-lock.yaml')).existsSync() ||
+              File(p.join(root.path, 'pnpm-workspace.yaml')).existsSync())
           ? 'pnpm'
           : 'npm run';
       for (final entry in block.entries) {

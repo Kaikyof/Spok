@@ -22,6 +22,11 @@ abstract class AppColors {
   static const monospaceText = Color(0xFFC9D4E3);
   static const logBackground = Color(0xFF0C0E12);
 
+  /// Плёнка под курсором: единственная подсветка наведения на всё
+  /// приложение. Светлая и слабая — на тёмном фоне этого хватает, чтобы
+  /// строка «ожила», и не хватает, чтобы перебить её содержимое.
+  static const hoverOverlay = Color(0x14FFFFFF);
+
   // Статусная шкала Redmine — по стадии, не по «хорошо/плохо».
   static const statusNew = Color(0xFF8B93A3);
   static const statusInProgress = Color(0xFF5B9BFF);
