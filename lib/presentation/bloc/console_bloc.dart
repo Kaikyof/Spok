@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/clone_progress.dart';
+import '../../domain/entities/operation_progress.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_node.dart';
@@ -68,11 +70,37 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
           },
         )));
     on<PlatformPathSubmitted>(_onPathSubmitted);
+    on<SpecCloneRequested>(_onCloneRequested);
+    on<SpecCloneCancelled>((event, emit) => repository.cancelClone());
+    on<_CloneProgressed>((event, emit) =>
+        emit(state.copyWith(clone: event.progress, pathRejected: false)));
     on<SpecSwitchRequested>((event, emit) => emit(
         state.copyWith(switchingSpec: event.open, pathRejected: false)));
     on<StackFilterChanged>(
         (event, emit) => emit(state.copyWith(stackFilter: event.stack)));
     add(ConsoleRefreshed());
+  }
+
+  /// Клонирование идёт своим потоком, а его ход показывается по мере
+  /// поступления: человек должен видеть, что git работает, и иметь
+  /// возможность остановить его.
+  Future<void> _onCloneRequested(
+      SpecCloneRequested event, Emitter<ConsoleState> emit) async {
+    final url = event.url.trim();
+    if (url.isEmpty) return;
+    emit(state.copyWith(
+        clone: const CloneProgress(stage: OperationStage.running),
+        pathRejected: false));
+    await for (final progress
+        in repository.cloneSpec(url, ref: event.ref)) {
+      if (isClosed) return;
+      add(_CloneProgressed(progress));
+      // Склонировали — дальше обычная проверка корня: в репозитории может
+      // не оказаться openspec/, и об этом скажет тот же экран.
+      if (progress.isDone && progress.path.isNotEmpty) {
+        add(PlatformPathSubmitted(progress.path));
+      }
+    }
   }
 
   Future<void> _onPathSubmitted(

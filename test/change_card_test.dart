@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/change_unit.dart';
 import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
@@ -165,6 +166,13 @@ class _FakeRepository implements PlatformRepository {
 
   @override
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
+
+  @override
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
+      const Stream.empty();
+
+  @override
+  void cancelClone() {}
 }
 
 Widget _wrap(ConsoleBloc console, SessionsBloc sessions) => MaterialApp(

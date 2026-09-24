@@ -1,3 +1,4 @@
+import '../entities/clone_progress.dart';
 import '../entities/console_snapshot.dart';
 import '../entities/doc_state.dart';
 import '../entities/env_field.dart';
@@ -50,6 +51,15 @@ abstract class PlatformRepository {
 
   /// Сохраняет путь к спеке; false — по пути нет openspec/ и workspace.yaml.
   Future<bool> setPlatformDir(String path);
+
+  /// Клонирует спеку по git-URL своим же git человека: работают его
+  /// ssh-ключи и его credential helper. Поток заканчивается либо путём
+  /// клона, либо разобранной причиной отказа.
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''});
+
+  /// Отменяет идущее клонирование: процесс убивается, недокачанный
+  /// каталог убирается.
+  void cancelClone();
 
   /// Подключённые спеки: путь к каждой. Текущая входит в список.
   Future<List<String>> knownSpecs();

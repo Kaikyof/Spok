@@ -1,12 +1,18 @@
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
 
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
+import '../../data/sources/git_clone_source.dart';
+import '../../domain/entities/clone_progress.dart';
+import '../../domain/entities/operation_progress.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
+import '../localization/text_formatters.dart';
+import '../ui_kit/progress_panel.dart';
 import '../ui_kit/section_card.dart';
 
 /// Настройка спеки: путь к её репозиторию. Показывается, когда спека не
@@ -25,6 +31,9 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   void initState() {
     super.initState();
+    // Подсказка под полем меняется по мере ввода: человек должен видеть,
+    // что именно произойдёт — скачивание или открытие каталога.
+    _pathController.addListener(() => setState(() {}));
     context
         .read<ConsoleBloc>()
         .repository
@@ -46,10 +55,28 @@ class _SetupScreenState extends State<SetupScreen> {
     _submit();
   }
 
+  /// Одно поле на оба случая: человек приносит либо ссылку, которую ему
+  /// дали в команде, либо путь к уже склонированной спеке. Различать их
+  /// умеет сам адрес — спрашивать об этом человека незачем.
   void _submit() {
-    context
-        .read<ConsoleBloc>()
-        .add(PlatformPathSubmitted(_pathController.text));
+    final value = _pathController.text.trim();
+    final console = context.read<ConsoleBloc>();
+    if (GitCloneSource.looksLikeUrl(value)) {
+      console.add(SpecCloneRequested(value));
+    } else {
+      console.add(PlatformPathSubmitted(value));
+    }
+  }
+
+  bool get _isUrl => GitCloneSource.looksLikeUrl(_pathController.text);
+
+  /// Что произойдёт по кнопке — до её нажатия.
+  String _intentHint(AppLocalizations texts) {
+    final value = _pathController.text.trim();
+    if (value.isEmpty) return texts.setupCloneHint;
+    if (!_isUrl) return texts.cloneLocalHint;
+    return texts.cloneTargetHint(
+        p.join(GitCloneSource.defaultRoot().path, GitCloneSource.slugOf(value)));
   }
 
   @override
@@ -96,6 +123,8 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: AppDimens.gapS),
+                Text(_intentHint(texts), style: AppTextStyles.hint),
                 BlocBuilder<ConsoleBloc, ConsoleState>(
                   buildWhen: (previous, current) =>
                       previous.pathRejected != current.pathRejected,
@@ -108,6 +137,7 @@ class _SetupScreenState extends State<SetupScreen> {
                         )
                       : const SizedBox.shrink(),
                 ),
+                _CloneStep(onRetry: _submit),
                 const SizedBox(height: AppDimens.gapL),
                 // Кнопки переносятся: в узком окне строка не влезала.
                 Wrap(
@@ -115,13 +145,20 @@ class _SetupScreenState extends State<SetupScreen> {
                   runSpacing: AppDimens.gapS,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    FilledButton(
-                      onPressed: _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: AppColors.background,
+                    BlocBuilder<ConsoleBloc, ConsoleState>(
+                      buildWhen: (previous, current) =>
+                          previous.clone.isRunning != current.clone.isRunning,
+                      builder: (context, state) => FilledButton(
+                        // Пока git работает, вторая попытка только помешает.
+                        onPressed: state.clone.isRunning ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: AppColors.background,
+                        ),
+                        child: Text(_isUrl
+                            ? texts.cloneConnect
+                            : texts.setupSave),
                       ),
-                      child: Text(texts.setupSave),
                     ),
                     OutlinedButton.icon(
                       onPressed: _pickDirectory,
@@ -148,9 +185,6 @@ class _SetupScreenState extends State<SetupScreen> {
                   ],
                 ),
                 const SizedBox(height: AppDimens.gapM),
-                Text(texts.setupCloneHint,
-                    style: AppTextStyles.hint.copyWith(height: 1.4)),
-                const SizedBox(height: AppDimens.gapXs),
                 if (_configPath.isNotEmpty)
                   Text(texts.setupConfigHint(_configPath),
                       style: AppTextStyles.hint.copyWith(height: 1.4)),
@@ -159,6 +193,56 @@ class _SetupScreenState extends State<SetupScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Шаг клонирования: прогресс с объёмом, отмена рядом и человеческий текст
+/// ошибки вместо кода git (сводный документ, 4.1).
+class _CloneStep extends StatelessWidget {
+  /// Повторить ту же попытку: чаще всего человек успел поправить ключ
+  /// или сеть, и адрес менять ему не нужно.
+  final VoidCallback onRetry;
+
+  const _CloneStep({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    return BlocBuilder<ConsoleBloc, ConsoleState>(
+      buildWhen: (previous, current) => previous.clone != current.clone,
+      builder: (context, state) {
+        final clone = state.clone;
+        if (clone.stage == OperationStage.idle) return const SizedBox.shrink();
+        final failure = clone.failure;
+        return Padding(
+          padding: const EdgeInsets.only(top: AppDimens.gapM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProgressPanel(
+                title: switch (clone.stage) {
+                  OperationStage.done => texts.cloneDone,
+                  OperationStage.failed when failure != null =>
+                    texts.cloneFailureText(failure),
+                  _ => clone.phase == ClonePhase.receiving ||
+                          clone.phase == ClonePhase.starting
+                      ? texts.cloneTitle
+                      : texts.clonePulling,
+                },
+                progress: clone.operation,
+                // Объём и скорость — как их напечатал git.
+                measure: clone.volume.isEmpty
+                    ? ''
+                    : texts.cloneMeasure(clone.volume, clone.speed),
+                onCancel: () =>
+                    context.read<ConsoleBloc>().add(SpecCloneCancelled()),
+                onRetry: onRetry,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

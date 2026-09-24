@@ -1,3 +1,4 @@
+import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/divergence.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_state.dart';
@@ -116,6 +117,20 @@ extension DomainTextFormatters on AppLocalizations {
         CheckOutcome.systemTimeout => checkTimeout,
         CheckOutcome.systemNoConnection => checkNoConnection,
         CheckOutcome.systemNotConfigured => checkNotConfigured,
+      };
+
+  /// Почему клон не удался — человеческим текстом и с подсказкой, что
+  /// делать: код git человеку ничего не говорит, а «нет ssh-ключа»
+  /// и «неверный токен» лечатся по-разному.
+  String cloneFailureText(CloneFailure failure) => switch (failure) {
+        CloneFailure.accessDenied => cloneFailAccessDenied,
+        CloneFailure.authFailed => cloneFailAuth,
+        CloneFailure.directoryInUse => cloneFailDirInUse,
+        CloneFailure.repoNotFound => cloneFailRepoNotFound,
+        CloneFailure.networkUnreachable => cloneFailNetwork,
+        CloneFailure.gitMissing => cloneFailGitMissing,
+        CloneFailure.cancelled => cloneFailCancelled,
+        CloneFailure.unknown => cloneFailUnknown,
       };
 
   /// Что за часть устройства спеки разбиралась.

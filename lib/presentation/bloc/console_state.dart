@@ -38,6 +38,9 @@ class ConsoleState {
   /// Подключённые спеки: между ними переключаются из шапки.
   final List<String> knownSpecs;
 
+  /// Ход клонирования спеки по URL; `idle` — не начинали.
+  final CloneProgress clone;
+
   /// Форма ключей; null — не открыта или ещё читается с диска.
   final EnvForm? envForm;
 
@@ -68,6 +71,7 @@ class ConsoleState {
     this.pathRejected = false,
     this.switchingSpec = false,
     this.knownSpecs = const [],
+    this.clone = CloneProgress.idle,
     this.envForm,
     this.envSaving = false,
     this.stackFilter = '',
@@ -140,6 +144,7 @@ class ConsoleState {
     bool? pathRejected,
     bool? switchingSpec,
     List<String>? knownSpecs,
+    CloneProgress? clone,
     EnvForm? Function()? envForm,
     bool? envSaving,
     String? stackFilter,
@@ -169,6 +174,7 @@ class ConsoleState {
         pathRejected: pathRejected ?? this.pathRejected,
         switchingSpec: switchingSpec ?? this.switchingSpec,
         knownSpecs: knownSpecs ?? this.knownSpecs,
+        clone: clone ?? this.clone,
         envForm: envForm != null ? envForm() : this.envForm,
         envSaving: envSaving ?? this.envSaving,
         stackFilter: stackFilter ?? this.stackFilter,

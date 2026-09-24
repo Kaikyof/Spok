@@ -465,7 +465,66 @@ class AppLocalizationsRu extends AppLocalizations {
       'Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.';
 
   @override
-  String get setupFieldLabel => 'Путь к репозиторию спеки';
+  String get setupFieldLabel =>
+      'Адрес репозитория спеки или путь к локальной копии';
+
+  @override
+  String get cloneConnect => 'Подключить';
+
+  @override
+  String get cloneTitle => 'Клонируем репозиторий';
+
+  @override
+  String get clonePulling => 'Обновляем уже склонированную спеку';
+
+  @override
+  String cloneTargetHint(String path) {
+    return 'Похоже на git-адрес — склонируем вашим git в $path';
+  }
+
+  @override
+  String get cloneLocalHint =>
+      'Похоже на путь — откроем локальную копию, ничего не скачиваем';
+
+  @override
+  String cloneMeasure(String volume, String speed) {
+    return '$volume · $speed';
+  }
+
+  @override
+  String get cloneDone => 'Спека склонирована — читаем её';
+
+  @override
+  String get cloneFailAccessDenied =>
+      'Git не пустил по ssh-ключу. Проверьте, что ключ этой машины добавлен в ваш профиль на хостинге, или дайте адрес по https.';
+
+  @override
+  String get cloneFailAuth =>
+      'Логин или токен не приняты. Для https нужен personal access token, а не пароль от аккаунта.';
+
+  @override
+  String get cloneFailDirInUse =>
+      'Каталог уже занят другим репозиторием — Spok его не тронет. Уберите каталог или подключите спеку как локальную копию.';
+
+  @override
+  String get cloneFailRepoNotFound =>
+      'По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.';
+
+  @override
+  String get cloneFailNetwork =>
+      'Хостинг не отвечает: нет сети или он недоступен с этой машины.';
+
+  @override
+  String get cloneFailGitMissing =>
+      'На машине не нашлось git — установите его и повторите.';
+
+  @override
+  String get cloneFailCancelled =>
+      'Клонирование отменено, недокачанный каталог убран.';
+
+  @override
+  String get cloneFailUnknown =>
+      'Git не смог склонировать репозиторий. Его сообщение — ниже.';
 
   @override
   String get setupSave => 'Сохранить и продолжить';
@@ -1116,7 +1175,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get setupCloneHint =>
-      'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>';
+      'Клонируем вашим git: работают ваши ssh-ключи и настройки — пароль приложение не спрашивает.';
 
   @override
   String get groupTitleUngrouped => 'Вне мастер-спек';

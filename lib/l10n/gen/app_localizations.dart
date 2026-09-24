@@ -829,8 +829,98 @@ abstract class AppLocalizations {
   /// No description provided for @setupFieldLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Путь к репозиторию спеки'**
+  /// **'Адрес репозитория спеки или путь к локальной копии'**
   String get setupFieldLabel;
+
+  /// No description provided for @cloneConnect.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключить'**
+  String get cloneConnect;
+
+  /// No description provided for @cloneTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клонируем репозиторий'**
+  String get cloneTitle;
+
+  /// No description provided for @clonePulling.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновляем уже склонированную спеку'**
+  String get clonePulling;
+
+  /// No description provided for @cloneTargetHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похоже на git-адрес — склонируем вашим git в {path}'**
+  String cloneTargetHint(String path);
+
+  /// No description provided for @cloneLocalHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Похоже на путь — откроем локальную копию, ничего не скачиваем'**
+  String get cloneLocalHint;
+
+  /// No description provided for @cloneMeasure.
+  ///
+  /// In ru, this message translates to:
+  /// **'{volume} · {speed}'**
+  String cloneMeasure(String volume, String speed);
+
+  /// No description provided for @cloneDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спека склонирована — читаем её'**
+  String get cloneDone;
+
+  /// No description provided for @cloneFailAccessDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Git не пустил по ssh-ключу. Проверьте, что ключ этой машины добавлен в ваш профиль на хостинге, или дайте адрес по https.'**
+  String get cloneFailAccessDenied;
+
+  /// No description provided for @cloneFailAuth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Логин или токен не приняты. Для https нужен personal access token, а не пароль от аккаунта.'**
+  String get cloneFailAuth;
+
+  /// No description provided for @cloneFailDirInUse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталог уже занят другим репозиторием — Spok его не тронет. Уберите каталог или подключите спеку как локальную копию.'**
+  String get cloneFailDirInUse;
+
+  /// No description provided for @cloneFailRepoNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.'**
+  String get cloneFailRepoNotFound;
+
+  /// No description provided for @cloneFailNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хостинг не отвечает: нет сети или он недоступен с этой машины.'**
+  String get cloneFailNetwork;
+
+  /// No description provided for @cloneFailGitMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'На машине не нашлось git — установите его и повторите.'**
+  String get cloneFailGitMissing;
+
+  /// No description provided for @cloneFailCancelled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Клонирование отменено, недокачанный каталог убран.'**
+  String get cloneFailCancelled;
+
+  /// No description provided for @cloneFailUnknown.
+  ///
+  /// In ru, this message translates to:
+  /// **'Git не смог склонировать репозиторий. Его сообщение — ниже.'**
+  String get cloneFailUnknown;
 
   /// No description provided for @setupSave.
   ///
@@ -1896,7 +1986,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupCloneHint.
   ///
   /// In ru, this message translates to:
-  /// **'Спека ещё не склонирована? Сначала склонируйте репозиторий: git clone <url>'**
+  /// **'Клонируем вашим git: работают ваши ssh-ключи и настройки — пароль приложение не спрашивает.'**
   String get setupCloneHint;
 
   /// No description provided for @groupTitleUngrouped.

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/clone_progress.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/status_semantics.dart';
@@ -25,6 +26,7 @@ import '../../domain/repositories/platform_repository.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
 import '../sources/env_materializer.dart';
+import '../sources/git_clone_source.dart';
 import '../sources/gitlab_api.dart';
 import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
@@ -38,6 +40,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
   final CommandLog? commandLog;
   final FindDivergences findDivergences;
   final SecretStore secrets;
+  final GitCloneSource cloneSource;
 
   /// Спеки, `.env` которых уже собран в этом запуске: пересобирать файл
   /// на каждом обновлении слепка незачем — он меняется только когда
@@ -48,10 +51,12 @@ class PlatformRepositoryImpl implements PlatformRepository {
       {AppConfigSource? config,
       this.commandLog,
       FindDivergences? findDivergences,
-      SecretStore? secrets})
+      SecretStore? secrets,
+      GitCloneSource? cloneSource})
       : config = config ?? AppConfigSource(),
         findDivergences = findDivergences ?? FindDivergences(),
-        secrets = secrets ?? SecretStore();
+        secrets = secrets ?? SecretStore(),
+        cloneSource = cloneSource ?? GitCloneSource();
 
   /// Сборщик `.env` текущей спеки; null — спека не подключена.
   EnvMaterializer? get _materializer {
@@ -132,6 +137,13 @@ class PlatformRepositoryImpl implements PlatformRepository {
     await materializeEnv();
     return true;
   }
+
+  @override
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
+      cloneSource.clone(url, ref: ref);
+
+  @override
+  void cancelClone() => cloneSource.cancel();
 
   @override
   Future<List<String>> knownSpecs() async {

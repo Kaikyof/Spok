@@ -60,6 +60,21 @@ class PlatformPathSubmitted extends ConsoleEvent {
   PlatformPathSubmitted(this.path);
 }
 
+/// Склонировать спеку по git-URL: у человека есть ссылка, а не каталог.
+class SpecCloneRequested extends ConsoleEvent {
+  final String url;
+  final String ref;
+  SpecCloneRequested(this.url, {this.ref = ''});
+}
+
+/// Человек нажал «Отменить» у клонирования.
+class SpecCloneCancelled extends ConsoleEvent {}
+
+class _CloneProgressed extends ConsoleEvent {
+  final CloneProgress progress;
+  _CloneProgressed(this.progress);
+}
+
 /// Открыть форму ключей: значения читаются с диска при каждом открытии.
 class EnvFormRequested extends ConsoleEvent {}
 
