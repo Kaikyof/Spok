@@ -341,7 +341,7 @@ MR). Для проекта на оригинальном OpenSpec это шум:
 | Передача | экран с гейтом | целиком в `sprints`, появляется только при уликах |
 | Сессии | роли `apply · newChange · newGroup · handover` | роли ядра `apply · newChange · archive`; `newGroup`, `handover` — вклад `sprints` |
 | Настройки проекта | нет (очередь 3 `design-plan.md`) | раздел «Расширения»: активно / не активно, улики, требования, шаблон, агент |
-| Локализация | один `app_ru.arb`, 27 строк с Redmine/GitLab/Mattermost | у каждого пакета свой `l10n` (gen-l10n это умеет); строки ядра говорят «трекер», имя подставляет расширение |
+| Локализация | один `app_ru.arb`, 31 строка с Redmine/GitLab/Mattermost | у каждого пакета свой `l10n` (gen-l10n это умеет); строки ядра говорят «трекер», имя подставляет расширение |
 
 ### 4.6. Пакеты и проверка границы
 
@@ -686,6 +686,6 @@ sed -n '898,905p' lib/data/sources/platform_files_source.dart   # id из name
 
 # насколько глубоко трекер и хостинг вросли в код — то, что режет этап 4
 grep -rli "redmine" lib --include=*.dart | grep -v l10n/gen | wc -l    # 26 файлов
-grep -ci "redmine\|gitlab\|mattermost" lib/l10n/app_ru.arb              # 27 строк
+grep -ci "redmine\|gitlab\|mattermost" lib/l10n/app_ru.arb              # 31 строка
 grep -n "SpecFeature\." lib/presentation/shell.dart lib/presentation/screens/*.dart
 ```
