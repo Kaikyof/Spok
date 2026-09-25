@@ -30,6 +30,11 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 20
 
+    # По умолчанию GITHUB_TOKEN на приватном репозитории может быть
+    # read-only; для публикации в Release нужно явно разрешить запись.
+    permissions:
+      contents: write
+
     steps:
       # Полная история, а не shallow-клон по умолчанию: номер сборки ниже
       # считается по числу коммитов, с depth=1 их всегда было бы ровно 1.
@@ -69,12 +74,13 @@ jobs:
       - name: Упаковка DMG
         run: ./scripts/build_dmg.sh --skip-build
 
-      # Артефакт нужен для ручной проверки: DMG можно скачать и
-      # смонтировать, не поднимая среду сборки.
-      - name: Выложить сборку
-        uses: actions/upload-artifact@v4
+      # Артефакт GitHub Actions отдаётся только вместе с логом прогона —
+      # чтобы скачать сборку, нужно искать нужный run. Release-ассет вместо
+      # этого лежит на постоянной странице релиза по тегу и не истекает.
+      # linux.yml публикует в тот же релиз (по тегу) свой zip — действие
+      # находит существующий релиз и дополняет его, а не создаёт новый.
+      - name: Выложить в Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: spok-macos-arm64-${{ github.ref_name }}
-          path: dist/*.dmg
-          retention-days: 7
-          if-no-files-found: error
+          files: dist/*.dmg
+          fail_on_unmatched_files: true

@@ -28,6 +28,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # По умолчанию GITHUB_TOKEN на приватном репозитории может быть
+    # read-only; для публикации в Release нужно явно разрешить запись.
+    permissions:
+      contents: write
+
     steps:
       # Полная история, а не shallow-клон по умолчанию: номер сборки ниже
       # считается по числу коммитов, с depth=1 их всегда было бы ровно 1.
@@ -66,12 +71,18 @@ jobs:
       - name: Сборка
         run: flutter build linux --release --build-number="$BUILD_NUMBER"
 
-      # Артефакт нужен для ручной проверки GUI: собранное приложение можно
-      # скачать и запустить в виртуалке, не поднимая там среду сборки.
-      - name: Выложить сборку
-        uses: actions/upload-artifact@v4
+      # Артефакт GitHub Actions отдаётся только вместе с логом прогона —
+      # чтобы скачать сборку, нужно искать нужный run. Release-ассет вместо
+      # этого лежит на постоянной странице релиза по тегу и не истекает.
+      - name: Архив сборки
+        run: |
+          mkdir -p dist
+          (cd build/linux/x64/release/bundle && zip -r "$GITHUB_WORKSPACE/dist/spok-linux-x64-${{ github.ref_name }}.zip" .)
+
+      # macos.yml публикует в тот же релиз (по тегу) свой DMG — действие
+      # находит существующий релиз и дополняет его, а не создаёт новый.
+      - name: Выложить в Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: spok-linux-x64-${{ github.ref_name }}
-          path: build/linux/x64/release/bundle
-          retention-days: 7
-          if-no-files-found: error
+          files: dist/spok-linux-x64-${{ github.ref_name }}.zip
+          fail_on_unmatched_files: true
