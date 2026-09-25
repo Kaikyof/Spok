@@ -11,7 +11,7 @@
 # собирает артефакт под версией, а не дублирует checks.yml
 # (симметрично macos.yml, где так же).
 #
-# workflow_call — чтобы dev_build.yml (кнопка «Run workflow» в Actions) мог
+# workflow_call — чтобы build.yml (кнопка «Run workflow» в Actions) мог
 # вызвать эту сборку напрямую для только что созданного dev-тега, не
 # дожидаясь отдельного push-события: GITHUB_TOKEN его не порождает
 # (защита от рекурсии), поэтому цепочка «создали тег → он сам всё собрал»
@@ -46,7 +46,7 @@ jobs:
       contents: write
 
     # При обычном push тега github.ref_name уже равен тегу; при вызове из
-    # dev_build.yml тег приходит как input — единый TAG сверху устраняет
+    # build.yml тег приходит как input — единый TAG сверху устраняет
     # ветвление в шагах ниже.
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
@@ -101,7 +101,7 @@ jobs:
       # macos.yml публикует в тот же релиз (по тегу) свой DMG — действие
       # находит существующий релиз и дополняет его, а не создаёт новый.
       # tag_name — явно: при вызове через workflow_call github.ref_name
-      # указывает на ветку-инициатор dev_build.yml, а не на созданный тег.
+      # указывает на ветку-инициатор build.yml, а не на созданный тег.
       - name: Выложить в Release
         uses: softprops/action-gh-release@v2
         with:
