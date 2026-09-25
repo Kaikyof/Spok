@@ -1,14 +1,20 @@
-# Кнопка «Run workflow» в Actions: тег для dev-сборки (v{версия}-dev.N)
-# считается и пушится здесь же, без локального scripts/tag_dev_build.sh —
-# полезно, когда нужна сборка, а под рукой нет git/доступа в терминал.
-# version в pubspec.yaml не трогается — та же логика, что и в скрипте.
+# Кнопка «Run workflow» в Actions: тег v{версия}-dev.N считается и
+# пушится здесь же, без локального scripts/tag_dev_build.sh — полезно,
+# когда нужна сборка, а под рукой нет git/доступа в терминал. version в
+# pubspec.yaml не трогается — та же логика, что и в скрипте.
+#
+# Раньше рядом был отдельный release_build.yml для тега без -dev.N — но
+# версии пока не поднимаются осознанно на каждую сборку, и вторая кнопка
+# ради того же результата с другим именем тега смысла не добавляла.
+# Вернуть release-вариант стоит, когда версии начнут что-то значить сами
+# по себе — например, появятся внешние пользователи сборок.
 #
 # linux.yml/macos.yml вызываются напрямую как под-джобы (workflow_call), а
 # не через push тега: GITHUB_TOKEN не порождает push-событий для других
 # workflow (защита от рекурсии), так что тег, запушенный им, сам по себе
 # ничего бы не собрал.
 
-name: Dev build
+name: Build
 
 on:
   workflow_dispatch:
@@ -46,11 +52,18 @@ jobs:
   build-linux:
     needs: tag
     uses: ./.github/workflows/linux.yml
+    # Вызывающая джоба ограничивает права вызванного workflow сверху —
+    # без явного contents: write здесь linux.yml получил бы только read
+    # и не смог бы опубликовать Release, даже указав write у себя.
+    permissions:
+      contents: write
     with:
       tag: ${{ needs.tag.outputs.tag }}
 
   build-macos:
     needs: tag
     uses: ./.github/workflows/macos.yml
+    permissions:
+      contents: write
     with:
       tag: ${{ needs.tag.outputs.tag }}
