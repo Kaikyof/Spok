@@ -46,11 +46,18 @@ jobs:
   build-linux:
     needs: tag
     uses: ./.github/workflows/linux.yml
+    # Вызывающая джоба ограничивает права вызванного workflow сверху —
+    # без явного contents: write здесь linux.yml получил бы только read
+    # и не смог бы опубликовать Release, даже указав write у себя.
+    permissions:
+      contents: write
     with:
       tag: ${{ needs.tag.outputs.tag }}
 
   build-macos:
     needs: tag
     uses: ./.github/workflows/macos.yml
+    permissions:
+      contents: write
     with:
       tag: ${{ needs.tag.outputs.tag }}
