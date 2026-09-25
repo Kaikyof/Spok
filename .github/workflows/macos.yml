@@ -3,10 +3,10 @@
 # незнакомая среда: раннер уже содержит Xcode и CocoaPods, поэтому шага
 # системных зависимостей нет.
 #
-# Ценность этого пайплайна не в проверке непривычных веток кода (как на
-# Linux), а в том, что здесь `flutter test` и сборка идут на той же
-# платформе, что и у разработчиков, — регресс, который не воспроизводится
-# локально, здесь тоже не должен воспроизводиться незамеченным.
+# Триггер — только тег вида v*, а не каждый push/PR: репозиторий приватный,
+# а macOS-раннер списывает минуты с множителем ×10 к обычным (Linux — ×1).
+# Оба пайплайна (macOS и linux.yml) теперь релизные: собирают артефакт под
+# тегом версии. Анализ и тесты на каждый коммит — в checks.yml.
 #
 # App Sandbox отключён (macos/Runner/Release.entitlements), поэтому сборка
 # для CI не требует profile для подписи: Xcode подписывает бинарник ad-hoc
@@ -16,9 +16,8 @@
 name: macOS
 
 on:
-  pull_request:
   push:
-    branches: [develop, main]
+    tags: ["v*"]
 
 # Слот раннера общий: устаревший прогон по той же ветке отменяем, чтобы
 # не занимать очередь ради результата, который уже никому не нужен.
@@ -45,12 +44,9 @@ jobs:
       - name: Зависимости проекта
         run: flutter pub get
 
-      - name: Анализ
-        run: flutter analyze
-
-      - name: Тесты
-        run: flutter test
-
+      # Анализ и тесты — в checks.yml на каждый PR/push (там же дешёвый
+      # ubuntu-latest); здесь, в релизном прогоне по тегу, дублировать
+      # их незачем.
       - name: Сборка
         run: flutter build macos --release
 
@@ -68,7 +64,7 @@ jobs:
       - name: Выложить сборку
         uses: actions/upload-artifact@v4
         with:
-          name: spok-macos-arm64
+          name: spok-macos-arm64-${{ github.ref_name }}
           path: dist/*.dmg
           retention-days: 7
           if-no-files-found: error
