@@ -154,8 +154,13 @@ void main() {
     /// тестовые 800×600 не отражают реальную раскладку.
     /// Bloc создаётся внутри теста: созданный в setUp, он живёт вне
     /// фейкового времени, и его события не доходят до перерисовки.
-    Future<void> pumpScreen(WidgetTester tester) async {
-      bloc = SessionsBloc(_FakePlatformRepository());
+    /// [cliAvailable] задаётся явно: иначе блок спрашивает машину, есть ли
+    /// на ней Claude Code, и тест проверяет установку инструмента, а не
+    /// экран. На чистой машине и в CI такой тест падает.
+    Future<void> pumpScreen(WidgetTester tester,
+        {bool cliAvailable = true}) async {
+      bloc = SessionsBloc(_FakePlatformRepository(),
+          cliAvailable: cliAvailable);
       addTearDown(bloc.close);
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1;
@@ -264,6 +269,16 @@ void main() {
       expect(find.text('/opsx-sprint'), findsOneWidget);
       // Ролей «новый change» и «новая группа» у этой спеки нет.
       expect(find.text('Новый change'), findsNothing);
+    });
+
+    testWidgets('без CLI экран объясняет нехватку, а не показывает пустоту',
+        (tester) async {
+      await pumpScreen(tester, cliAvailable: false);
+
+      expect(find.textContaining('Claude Code CLI не найден'), findsOneWidget);
+      // Управление не показываем: нажимать было бы нечем.
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('Все команды спеки'), findsNothing);
     });
   });
 }
