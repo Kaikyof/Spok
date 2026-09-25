@@ -31,7 +31,11 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      # Полная история, а не shallow-клон по умолчанию: номер сборки ниже
+      # считается по числу коммитов, с depth=1 их всегда было бы ровно 1.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Версия прибита к той, на которой ведётся разработка: «последняя
       # stable» превращает чужой релиз Flutter в красный пайплайн у нас.
@@ -44,11 +48,17 @@ jobs:
       - name: Зависимости проекта
         run: flutter pub get
 
+      # Число коммитов до текущего тега, а не github.run_number: у linux.yml
+      # и macos.yml разные счётчики запусков, а число коммитов — свойство
+      # исходников, одинаковое для обеих платформ на одном теге.
+      - name: Номер сборки
+        run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
+
       # Анализ и тесты — в checks.yml на каждый PR/push (там же дешёвый
       # ubuntu-latest); здесь, в релизном прогоне по тегу, дублировать
       # их незачем.
       - name: Сборка
-        run: flutter build macos --release
+        run: flutter build macos --release --build-number="$BUILD_NUMBER"
 
       # Упаковка в DMG тем же скриптом, что и для ручного релиза — CI и
       # разработчик получают идентичный артефакт. --skip-build: .app уже
