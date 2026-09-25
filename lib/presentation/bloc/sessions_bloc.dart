@@ -18,9 +18,17 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
   final AppConfigSource config;
   final Map<String, AgentCliSource> _runningSources = {};
 
-  SessionsBloc(this.repository, {this.commandLog, AppConfigSource? config})
-      : config = config ?? AppConfigSource(),
-        super(_initialState(repository)) {
+  /// [cliAvailable] — есть ли на машине бинарь агента. По умолчанию блок
+  /// спрашивает саму машину, но тест обязан задавать значение явно: иначе
+  /// он проверяет не экран, а установлен ли Claude Code у того, кто его
+  /// запускает, и падает на чистой машине и в CI.
+  SessionsBloc(
+    this.repository, {
+    this.commandLog,
+    AppConfigSource? config,
+    bool? cliAvailable,
+  })  : config = config ?? AppConfigSource(),
+        super(_initialState(repository, cliAvailable)) {
     on<SessionMessageSent>(_onMessageSent);
     on<SessionCreated>(_onCreated);
     on<SessionDeleted>(_onDeleted);
@@ -160,10 +168,11 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     add(SessionMessageSent(event.command));
   }
 
-  static SessionsState _initialState(PlatformRepository repository) {
+  static SessionsState _initialState(
+      PlatformRepository repository, bool? cliAvailable) {
     final values = repository.argumentValues();
     return SessionsState(
-      cliAvailable: AgentCliSource.locateBinary() != null,
+      cliAvailable: cliAvailable ?? AgentCliSource.locateBinary() != null,
       commands: repository.slashCommands(),
       changeIds: values.changeIds,
       groupIds: values.groupIds,
