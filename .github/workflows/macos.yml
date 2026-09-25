@@ -1,15 +1,17 @@
-# Прогон под Linux. На машинах разработки приложение собирается только под
-# macOS, поэтому линуксовые ветки кода — раскладка XDG, запасное хранилище
-# секретов, `xdg-open` — иначе не исполняются никогда. Анализ и тесты (в том
-# числе ветка «keyring недоступен, значения уходят в файл 0600», которую на
-# маке с Keychain не увидеть) гоняются на каждый PR/push в checks.yml —
-# тоже на ubuntu-latest, так что то же безголовое окружение. Запуск GUI и
-# работу с gnome-keyring проверяют руками на живой системе, CI их не
-# заменяет.
+# Прогон под macOS — платформой, на которой ведётся разработка и куда
+# целится основная сборка. В отличие от linux.yml, здесь не воссоздаётся
+# незнакомая среда: раннер уже содержит Xcode и CocoaPods, поэтому шага
+# системных зависимостей нет.
 #
-# Триггер — только тег вида v*, а не каждый push/PR: пайплайн — релизный,
-# собирает артефакт под версией, а не дублирует checks.yml
-# (симметрично macos.yml, где так же).
+# Триггер — только тег вида v*, а не каждый push/PR: репозиторий приватный,
+# а macOS-раннер списывает минуты с множителем ×10 к обычным (Linux — ×1).
+# Оба пайплайна (macOS и linux.yml) теперь релизные: собирают артефакт под
+# тегом версии. Анализ и тесты на каждый коммит — в checks.yml.
+#
+# App Sandbox отключён (macos/Runner/Release.entitlements), поэтому сборка
+# для CI не требует profile для подписи: Xcode подписывает бинарник ad-hoc
+# автоматически. Тесты используют SecretStore.inFile и в реальную связку
+# ключей раннера не пишут.
 #
 # workflow_call — чтобы dev_build.yml (кнопка «Run workflow» в Actions) мог
 # вызвать эту сборку напрямую для только что созданного dev-тега, не
@@ -18,7 +20,7 @@
 # через push не работает без PAT. Вызов джобой из одного workflow-запуска
 # этого не требует.
 
-name: Linux
+name: macOS
 
 on:
   push:
@@ -32,12 +34,12 @@ on:
 # Слот раннера общий: устаревший прогон по той же ветке отменяем, чтобы
 # не занимать очередь ради результата, который уже никому не нужен.
 concurrency:
-  group: linux-${{ inputs.tag || github.ref }}
+  group: macos-${{ inputs.tag || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 20
 
     # По умолчанию GITHUB_TOKEN на приватном репозитории может быть
@@ -67,15 +69,6 @@ jobs:
           channel: stable
           cache: true
 
-      # Десктопная сборка Flutter под Linux тянет GTK и ninja; clang, cmake
-      # и pkg-config в образе есть, но перечислены явно — образ меняется,
-      # а ошибка от их отсутствия выглядит как непонятный сбой cmake.
-      - name: Системные зависимости
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang cmake ninja-build pkg-config libgtk-3-dev
-
       - name: Зависимости проекта
         run: flutter pub get
 
@@ -85,20 +78,25 @@ jobs:
       - name: Номер сборки
         run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> "$GITHUB_ENV"
 
-      # Анализ и тесты — в checks.yml на каждый PR/push; здесь, в релизном
-      # прогоне по тегу, дублировать их незачем.
+      # Анализ и тесты — в checks.yml на каждый PR/push (там же дешёвый
+      # ubuntu-latest); здесь, в релизном прогоне по тегу, дублировать
+      # их незачем.
       - name: Сборка
-        run: flutter build linux --release --build-number="$BUILD_NUMBER"
+        run: flutter build macos --release --build-number="$BUILD_NUMBER"
+
+      # Упаковка в DMG тем же скриптом, что и для ручного релиза — CI и
+      # разработчик получают идентичный артефакт. --skip-build: .app уже
+      # собран шагом выше, пересобирать его ещё раз незачем.
+      # CODESIGN_IDENTITY не задан: сертификата Developer ID в CI нет,
+      # скрипт сам оставляет ad-hoc подпись Xcode — как и при обычной
+      # локальной сборке без переменной.
+      - name: Упаковка DMG
+        run: ./scripts/build_dmg.sh --skip-build
 
       # Артефакт GitHub Actions отдаётся только вместе с логом прогона —
       # чтобы скачать сборку, нужно искать нужный run. Release-ассет вместо
       # этого лежит на постоянной странице релиза по тегу и не истекает.
-      - name: Архив сборки
-        run: |
-          mkdir -p dist
-          (cd build/linux/x64/release/bundle && zip -r "$GITHUB_WORKSPACE/dist/spok-linux-x64-${TAG}.zip" .)
-
-      # macos.yml публикует в тот же релиз (по тегу) свой DMG — действие
+      # linux.yml публикует в тот же релиз (по тегу) свой zip — действие
       # находит существующий релиз и дополняет его, а не создаёт новый.
       # tag_name — явно: при вызове через workflow_call github.ref_name
       # указывает на ветку-инициатор dev_build.yml, а не на созданный тег.
@@ -106,5 +104,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
-          files: dist/spok-linux-x64-${{ env.TAG }}.zip
+          files: dist/*.dmg
           fail_on_unmatched_files: true
