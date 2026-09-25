@@ -1,0 +1,47 @@
+# Быстрая обратная связь на каждый PR и push в develop/main: анализ и тесты
+# без сборки. linux.yml и macos.yml теперь релизные — гоняются только по
+# тегу v* — поэтому без этого workflow баг долетал бы до CI лишь в момент
+# тегирования релиза.
+#
+# Раннер — Linux (ubuntu-latest), а не macOS: список минут ×1 против ×10
+# у macOS, а для `flutter analyze`/`flutter test` не нужна платформенная
+# сборка — только Dart VM. Про Linux-специфичные ветки (secret-tool,
+# fallback-хранилище) и полноценную сборку смотри отдельно в linux.yml.
+
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+# Слот раннера общий: устаревший прогон по той же ветке отменяем, чтобы
+# не занимать очередь ради результата, который уже никому не нужен.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Версия прибита к той, на которой ведётся разработка: «последняя
+      # stable» превращает чужой релиз Flutter в красный пайплайн у нас.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Зависимости проекта
+        run: flutter pub get
+
+      - name: Анализ
+        run: flutter analyze
+
+      - name: Тесты
+        run: flutter test
