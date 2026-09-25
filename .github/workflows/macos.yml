@@ -1,0 +1,74 @@
+# Прогон под macOS — платформой, на которой ведётся разработка и куда
+# целится основная сборка. В отличие от linux.yml, здесь не воссоздаётся
+# незнакомая среда: раннер уже содержит Xcode и CocoaPods, поэтому шага
+# системных зависимостей нет.
+#
+# Ценность этого пайплайна не в проверке непривычных веток кода (как на
+# Linux), а в том, что здесь `flutter test` и сборка идут на той же
+# платформе, что и у разработчиков, — регресс, который не воспроизводится
+# локально, здесь тоже не должен воспроизводиться незамеченным.
+#
+# App Sandbox отключён (macos/Runner/Release.entitlements), поэтому сборка
+# для CI не требует profile для подписи: Xcode подписывает бинарник ad-hoc
+# автоматически. Тесты используют SecretStore.inFile и в реальную связку
+# ключей раннера не пишут.
+
+name: macOS
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+# Слот раннера общий: устаревший прогон по той же ветке отменяем, чтобы
+# не занимать очередь ради результата, который уже никому не нужен.
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Версия прибита к той, на которой ведётся разработка: «последняя
+      # stable» превращает чужой релиз Flutter в красный пайплайн у нас.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.1
+          channel: stable
+          cache: true
+
+      - name: Зависимости проекта
+        run: flutter pub get
+
+      - name: Анализ
+        run: flutter analyze
+
+      - name: Тесты
+        run: flutter test
+
+      - name: Сборка
+        run: flutter build macos --release
+
+      # Упаковка в DMG тем же скриптом, что и для ручного релиза — CI и
+      # разработчик получают идентичный артефакт. --skip-build: .app уже
+      # собран шагом выше, пересобирать его ещё раз незачем.
+      # CODESIGN_IDENTITY не задан: сертификата Developer ID в CI нет,
+      # скрипт сам оставляет ad-hoc подпись Xcode — как и при обычной
+      # локальной сборке без переменной.
+      - name: Упаковка DMG
+        run: ./scripts/build_dmg.sh --skip-build
+
+      # Артефакт нужен для ручной проверки: DMG можно скачать и
+      # смонтировать, не поднимая среду сборки.
+      - name: Выложить сборку
+        uses: actions/upload-artifact@v4
+        with:
+          name: spok-macos-arm64
+          path: dist/*.dmg
+          retention-days: 7
+          if-no-files-found: error
