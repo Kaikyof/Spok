@@ -12,17 +12,29 @@
 # для CI не требует profile для подписи: Xcode подписывает бинарник ad-hoc
 # автоматически. Тесты используют SecretStore.inFile и в реальную связку
 # ключей раннера не пишут.
+#
+# workflow_call — чтобы dev_build.yml (кнопка «Run workflow» в Actions) мог
+# вызвать эту сборку напрямую для только что созданного dev-тега, не
+# дожидаясь отдельного push-события: GITHUB_TOKEN его не порождает
+# (защита от рекурсии), поэтому цепочка «создали тег → он сам всё собрал»
+# через push не работает без PAT. Вызов джобой из одного workflow-запуска
+# этого не требует.
 
 name: macOS
 
 on:
   push:
     tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 # Слот раннера общий: устаревший прогон по той же ветке отменяем, чтобы
 # не занимать очередь ради результата, который уже никому не нужен.
 concurrency:
-  group: macos-${{ github.ref }}
+  group: macos-${{ inputs.tag || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,11 +47,18 @@ jobs:
     permissions:
       contents: write
 
+    # При обычном push тега github.ref_name уже равен тегу; при вызове из
+    # dev_build.yml тег приходит как input — единый TAG сверху устраняет
+    # ветвление в шагах ниже.
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+
     steps:
       # Полная история, а не shallow-клон по умолчанию: номер сборки ниже
       # считается по числу коммитов, с depth=1 их всегда было бы ровно 1.
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.TAG }}
           fetch-depth: 0
 
       # Версия прибита к той, на которой ведётся разработка: «последняя
@@ -79,8 +98,11 @@ jobs:
       # этого лежит на постоянной странице релиза по тегу и не истекает.
       # linux.yml публикует в тот же релиз (по тегу) свой zip — действие
       # находит существующий релиз и дополняет его, а не создаёт новый.
+      # tag_name — явно: при вызове через workflow_call github.ref_name
+      # указывает на ветку-инициатор dev_build.yml, а не на созданный тег.
       - name: Выложить в Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           files: dist/*.dmg
           fail_on_unmatched_files: true
