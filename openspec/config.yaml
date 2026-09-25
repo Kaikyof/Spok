@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Language: Russian
+  All artifacts must be written in Russian.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Проект: Spok — десктопное приложение на Flutter (macOS, Linux), оболочка над
+  спекой разработки (openspec-репозиторием). Ничего не хранит и не вычисляет
+  само: читает файлы спеки, опрашивает API трекера и хостинга, спрашивает git.
+  Действия — запуск существующих команд спеки в агентной сессии (claude -p).
+
+  Архитектура: Clean Architecture — lib/core (ресурсы, тема, платформа),
+  lib/domain (сущности, контракты репозиториев, usecases), lib/data (sources,
+  repositories), lib/presentation (bloc, screens, ui_kit, widgets), lib/l10n.
+  Стек: flutter_bloc, dio, get_it, intl, path, yaml, flutter_markdown_plus,
+  window_manager. Flutter 3.47, Dart ^3.13.
+
+  Правила стиля (README): тексты интерфейса — только через локализацию
+  (домен возвращает структуры, форматирует presentation); подписка на блок —
+  BlocBuilder; виджеты — классами; каждый класс — отдельный файл (кроме
+  приватных виджетов); переиспользуемые компоненты — в presentation/ui_kit.
+  Комментарии в коде — по-русски, объясняют «почему», а не «что».
+
+  Проверка: flutter analyze, flutter test, смоук без UI —
+  dart run tool/smoke.dart (SPEC_PLATFORM_DIR=<путь к спеке>).
+  Проверочные спеки: avtoto-platform (спринты, 2 стека, Redmine, GitLab,
+  Mattermost), avelacom-platform (мастер-спеки, 1 стек), клон
+  Fission-AI/OpenSpec (оригинальный OpenSpec без трекера).
+
+  Сводный план: docs/openspec-upstream-plan.md — change'и в openspec/changes
+  соответствуют его этапам 0–10 и ссылаются на них.
+
+rules:
+  proposal:
+    - Указывать этап сводного плана (docs/openspec-upstream-plan.md), которому соответствует change, и от каких change'ей он зависит
+    - Приёмка — наблюдаемое поведение на трёх проверочных спеках, не внутренние структуры
+  specs:
+    - Требования описывают поведение приложения на файлах спеки, а не классы Dart
+    - Каждый сценарий — конкретная спека или фикстура (avtoto, avelacom, upstream)
+  design:
+    - Называть файлы и классы, которые меняются, с путями от корня репозитория
+    - Отдельно перечислять, что для avtoto и avelacom не меняется
+  tasks:
+    - Каждая задача заканчивается тем, как её проверить — тест, смоук или наблюдаемое поведение
+    - Тесты и локализация — внутри группы, а не в последней
+
+operations:
+  apply:
+    guidance:
+      - Перед правкой прогнать flutter test и смоуки на эталонных спеках, сохранить вывод как эталон «до»
+      - Не ронять чтение спеки из-за неожиданной формы YAML — это состояние «не распознано», а не исключение
