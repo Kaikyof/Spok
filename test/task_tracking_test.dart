@@ -80,6 +80,17 @@ void main() {
     expect(tasks[3].title, 'Нумерованный маркер');
   });
 
+  test('номер с буквой ревизии — тоже номер, не порядковый', () {
+    write('openspec/changes/a/tasks.md', '''
+- [x] 2.3 Основная
+- [x] 2.3a (ревизия заказчика) Дополнение
+- [ ] 2.3b Ещё одно
+''');
+    final tasks = singleStack().tasks;
+    expect(tasks.map((task) => task.number), ['2.3', '2.3a', '2.3b']);
+    expect(tasks[1].title, '(ревизия заказчика) Дополнение');
+  });
+
   test('CRLF: задачи посчитаны, текст без \\r', () {
     write(
       'openspec/changes/a/tasks.md',
