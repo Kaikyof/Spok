@@ -1,3 +1,5 @@
+import 'change_metadata.dart';
+import 'spec_schema.dart';
 import 'stack_state.dart';
 
 /// Change — единица работы: спека, задачи, код, тест-кейсы.
@@ -18,6 +20,13 @@ class ChangeUnit {
   /// null — change в работе. Сам id при этом хранится очищенным.
   final DateTime? archivedAt;
 
+  /// Схема этого change'а: своя из `.openspec.yaml`, иначе схема спеки.
+  /// Пустая — схема не найдена; экраны берут встроенную `spec-driven`.
+  final SpecSchema schema;
+
+  /// Метаданные `.openspec.yaml`; у спек команды файла нет — `none`.
+  final ChangeMetadata meta;
+
   const ChangeUnit({
     required this.id,
     required this.title,
@@ -27,6 +36,8 @@ class ChangeUnit {
     this.dependsOn = const [],
     this.formatWarning = '',
     this.archivedAt,
+    this.schema = SpecSchema.empty,
+    this.meta = ChangeMetadata.none,
   });
 
   bool get archived => archivedAt != null;

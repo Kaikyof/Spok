@@ -647,8 +647,14 @@ class _StackCell extends StatelessWidget {
                     ? texts.statusFromCacheHint
                     : '',
                 child: StatusBadge(
+                  // Задачи трекера у стека нет вовсе — «нет доступа» было бы
+                  // ложью: доступа не к чему. Показываем прогресс по файлам.
                   text: status == null
-                      ? texts.statusUnavailable
+                      ? (stackState.issueId == null &&
+                              stackState.tasks.isNotEmpty
+                          ? texts.statusFromTasks(
+                              stackState.doneCount, stackState.tasks.length)
+                          : texts.statusUnavailable)
                       : stackState.statusFromCache
                           ? '$status · ${texts.statusFromCache}'
                           : status,

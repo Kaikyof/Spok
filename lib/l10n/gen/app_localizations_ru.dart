@@ -277,6 +277,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statusUnavailable => 'нет доступа';
 
   @override
+  String statusFromTasks(int done, int total) {
+    return '$done из $total задач';
+  }
+
+  @override
   String marksOpenTask(String num) {
     return 'открыта $num';
   }
@@ -360,6 +365,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get artifactMissing => 'объявлен схемой, файла нет';
+
+  @override
+  String get artifactSkipped => 'пропущен по .openspec.yaml';
 
   @override
   String get codeOffSpec => 'Эта спека не настроена на работу с MR';
@@ -949,6 +957,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get codeSprintBranch => 'ветка спринта';
+
+  @override
+  String get codeBranchNotDeclared => 'спека не объявляет имя ветки';
 
   @override
   String get codeNoBranch => 'ветка спринта не задана в sprint.yaml';

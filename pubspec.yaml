@@ -16,6 +16,7 @@ dependencies:
     sdk: flutter
   flutter_markdown_plus: ^1.0.12
   get_it: ^9.2.1
+  glob: ^2.2.0
   intl: ^0.20.3
   path: ^1.9.1
   url_launcher: ^6.3.2
@@ -30,3 +31,5 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+  assets:
+    - assets/openspec/schemas/spec-driven/schema.yaml
