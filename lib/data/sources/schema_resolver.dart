@@ -121,13 +121,16 @@ class SchemaResolver {
     );
   }
 
-  /// Имя ветки change'а, если схема его объявила в apply.instruction:
-  /// `git checkout -B features/<change-name>`. Не объявила — null: ветку
-  /// за спеку не выдумываем.
+  /// Имя ветки change'а, если схема его объявила в apply.instruction.
+  /// Форма у спек разная: у avelacom `git checkout -B features/<change-name>`,
+  /// у avtoto заголовок шага ``**Branches `features/<change-name>`**``.
+  /// Общее у них — путь со слешем и `<change…>` внутри; его и ищем.
+  /// Не объявила — null: ветку за спеку не выдумываем.
   static String? branchTemplateOf(String? applyInstruction) {
     if (applyInstruction == null) return null;
-    return RegExp(r'checkout\s+-B\s+(\S*<change[^\s`]*>)')
-        .firstMatch(applyInstruction)
-        ?.group(1);
+    final template = RegExp(
+      r"""(?:^|[\s`"'(])([\w.\-]+/[\w.\-/]*<change[^\s`>]*>[\w.\-/]*)""",
+    );
+    return template.firstMatch(applyInstruction)?.group(1);
   }
 }

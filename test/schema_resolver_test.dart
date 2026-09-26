@@ -99,6 +99,41 @@ void main() {
     });
   });
 
+  group('шаблон ветки из apply.instruction', () {
+    test('avelacom: git checkout -B features/<change-name>', () {
+      expect(
+        SchemaResolver.branchTemplateOf(
+          '3. Branches: `git fetch && git checkout -B features/<change-name>`',
+        ),
+        'features/<change-name>',
+      );
+    });
+
+    test('avtoto: заголовок шага **Branches `features/<change-name>`**', () {
+      const instruction = '''
+    2. **Redmine → В работе** (agent runs):
+       `pnpm openspec:redmine set-status --change <name> --stack <stack>`
+
+    3. **Branches `features/<change-name>`**:
+       - avtoto-platform: create from current `origin/main`;
+''';
+      expect(
+        SchemaResolver.branchTemplateOf(instruction),
+        'features/<change-name>',
+      );
+    });
+
+    test('ветка не объявлена — null, --change <name> не сбивает', () {
+      expect(
+        SchemaResolver.branchTemplateOf(
+          'Run `openspec instructions apply --change <name> --json`.',
+        ),
+        isNull,
+      );
+      expect(SchemaResolver.branchTemplateOf(null), isNull);
+    });
+  });
+
   group('цепочка change → конфиг → умолчание', () {
     test('конфига нет — spec-driven', () {
       write('openspec/changes/a/proposal.md', '## Why\n');
