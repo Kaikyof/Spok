@@ -130,4 +130,11 @@ flutter run -d macos
 ```bash
 dart run tool/smoke.dart
 SPEC_PLATFORM_DIR=~/avelacom-platform dart run tool/smoke.dart
+SPEC_PLATFORM_DIR=~/OpenSpec dart run tool/smoke.dart   # клон Fission-AI/OpenSpec
 ```
+
+Третий сценарий — проект на оригинальном OpenSpec (без трекера, стеков и
+`workspace.yaml`); что на нём ожидается, зафиксировано в
+`test/upstream_clone_test.dart`, а закоммиченный образец такого проекта лежит
+в `test/fixtures/upstream-sample/`. Эталон вывода смоука на живой спеке и
+сравнение с ним после правок — `tool/compare_smoke.sh <spec> [--save]`.
