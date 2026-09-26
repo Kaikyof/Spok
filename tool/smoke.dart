@@ -19,7 +19,9 @@ Future<void> main() async {
   );
   // Поля следующих этапов печатаются уже сейчас, чтобы формат вывода —
   // и эталоны, снятые с него, — не менялись по мере их реализации.
-  print('источник схемы: не реализовано');
+  print(
+    'источник схемы: ${source?.defaultSchemaResolution?.source.name ?? 'не найдена'}',
+  );
   print('расширения: не реализовано');
   print('группировка: ${profile.grouping.name}');
   for (final feature in SpecFeature.values) {

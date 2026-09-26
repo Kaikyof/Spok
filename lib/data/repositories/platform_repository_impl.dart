@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/clone_progress.dart';
@@ -26,6 +27,7 @@ import '../../domain/usecases/find_env_commands.dart';
 import '../../domain/repositories/platform_repository.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
+import '../sources/builtin_schemas.dart';
 import '../sources/env_materializer.dart';
 import '../sources/git_clone_source.dart';
 import '../sources/gitlab_api.dart';
@@ -33,6 +35,7 @@ import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_api.dart';
+import '../sources/schema_resolver.dart';
 import '../sources/secret_store.dart';
 import '../sources/env_file.dart';
 
@@ -257,11 +260,20 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final targets = stackServices.isEmpty ? services : stackServices;
     if (targets.isEmpty) return const [];
 
+    final changes = source.loadChanges();
     final group = source
-        .loadGroups(source.loadChanges())
+        .loadGroups(changes)
         .where((candidate) => candidate.id == groupId)
         .firstOrNull;
-    final sourceBranch = source.loadSchema().branchFor(changeId);
+    // Ветка — из схемы самого change'а; схема её не объявляет — искать
+    // MR не по чему, и выдумывать ветку за спеку нельзя.
+    final change =
+        changes.where((candidate) => candidate.id == changeId).firstOrNull;
+    final schema = change == null || change.schema.isEmpty
+        ? source.loadSchema()
+        : change.schema;
+    final sourceBranch = schema.branchFor(changeId);
+    if (sourceBranch == null) return const [];
     final api = GitLabApi(baseUrl, token);
     final results = await Future.wait(targets.map((service) async {
       final projectPath = GitLabApi.projectPathFromRepo(service.repo);
@@ -427,12 +439,25 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final commands = source.loadSlashCommands();
     final services = source.allServices();
     final schemaFile = source.schemaFile;
+    final resolution = source.defaultSchemaResolution;
+    final schemaName = source.configuredSchemaName ?? defaultSchemaName;
     return SpecRecognition([
+      // Схема есть у любого проекта на OpenSpec — хотя бы встроенная
+      // копия upstream; «не распознано» только когда конфиг назвал схему,
+      // которой нет ни в проекте, ни у пользователя, ни во встроенных.
       RecognizedItem(
         part: RecognizedPart.schema,
-        recognized: !schema.isEmpty,
-        value: schema.name,
-        lookedIn: 'openspec/schemas/*/schema.yaml',
+        recognized: resolution != null,
+        value: schemaName,
+        lookedIn: switch (resolution?.source) {
+          SchemaSource.project =>
+            p.relative(resolution!.path, from: source.path),
+          SchemaSource.user => resolution!.path,
+          SchemaSource.builtin =>
+            'assets/openspec/schemas/$schemaName/schema.yaml',
+          null =>
+            'openspec/schemas/$schemaName · ~/.local/share/openspec/schemas/$schemaName',
+        },
         sourcePath: schemaFile,
       ),
       // Плоский список — тоже разобранная стратегия: у спеки может не быть
