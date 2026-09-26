@@ -21,19 +21,30 @@ mode="${2:-}"
 
 here="$(cd "$(dirname "$0")" && pwd)"
 baseline_dir="$here/../test/fixtures/baseline"
-baseline="$baseline_dir/$name.txt"
+baseline="${baseline_dir}/${name}.txt"
 
+# Те же типовые пути, по которым спеку ищет само приложение
+# (`PlatformFilesSource.locate`), плюс SPEC_PLATFORM_DIR первым.
+# Переменные — только в фигурных скобках: bash 3.2 на macOS путает
+# `$name` вплотную к не-ASCII символу с несуществующей переменной.
 resolve_spec_dir() {
   if [[ -n "${SPEC_PLATFORM_DIR:-}" ]]; then
-    echo "$SPEC_PLATFORM_DIR"
-  elif [[ -d "$HOME/$name-platform" ]]; then
-    echo "$HOME/$name-platform"
-  elif [[ -d "$HOME/$name" ]]; then
-    echo "$HOME/$name"
-  else
-    echo "спека «$name» не найдена: задайте SPEC_PLATFORM_DIR" >&2
-    exit 2
+    echo "${SPEC_PLATFORM_DIR}"
+    return
   fi
+  local candidate
+  for candidate in \
+    "${HOME}/webAnt-poject/${name}-platform" \
+    "${HOME}/webant-project/${name}-platform" \
+    "${HOME}/${name}-platform" \
+    "${HOME}/${name}"; do
+    if [[ -d "${candidate}" ]]; then
+      echo "${candidate}"
+      return
+    fi
+  done
+  echo "спека \"${name}\" не найдена: задайте SPEC_PLATFORM_DIR" >&2
+  exit 2
 }
 
 normalize() {
@@ -57,8 +68,8 @@ if [[ "$mode" == "--save" ]]; then
 fi
 
 if diff -u "$baseline" <(printf '%s\n' "$current"); then
-  echo "совпадает с эталоном: $name"
+  echo "совпадает с эталоном: ${name}"
 else
-  echo "расхождение с эталоном: $name" >&2
+  echo "расхождение с эталоном: ${name}" >&2
   exit 1
 fi
