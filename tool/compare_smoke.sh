@@ -27,23 +27,37 @@ baseline="${baseline_dir}/${name}.txt"
 # (`PlatformFilesSource.locate`), плюс SPEC_PLATFORM_DIR первым.
 # Переменные — только в фигурных скобках: bash 3.2 на macOS путает
 # `$name` вплотную к не-ASCII символу с несуществующей переменной.
+is_spec_root() {
+  [[ -d "${1}/openspec" || -f "${1}/workspace.yaml" ]]
+}
+
 resolve_spec_dir() {
+  # Явный путь обязан быть спекой: смоук при негодном SPEC_PLATFORM_DIR
+  # молча ищет спеку сам, и эталон снялся бы неизвестно с чего.
   if [[ -n "${SPEC_PLATFORM_DIR:-}" ]]; then
-    echo "${SPEC_PLATFORM_DIR}"
-    return
+    if is_spec_root "${SPEC_PLATFORM_DIR}"; then
+      echo "${SPEC_PLATFORM_DIR}"
+      return
+    fi
+    echo "SPEC_PLATFORM_DIR=${SPEC_PLATFORM_DIR} — не корень спеки (нет openspec/ и workspace.yaml)" >&2
+    exit 2
   fi
+  # Переменная спеки в стиле AVTOTO_PLATFORM_DIR — её же читает приложение.
+  local var="$(echo "${name}" | tr '[:lower:]-' '[:upper:]_')_PLATFORM_DIR"
+  local from_var="${!var:-}"
   local candidate
   for candidate in \
+    "${from_var}" \
     "${HOME}/webAnt-poject/${name}-platform" \
     "${HOME}/webant-project/${name}-platform" \
     "${HOME}/${name}-platform" \
     "${HOME}/${name}"; do
-    if [[ -d "${candidate}" ]]; then
+    if [[ -n "${candidate}" ]] && is_spec_root "${candidate}"; then
       echo "${candidate}"
       return
     fi
   done
-  echo "спека \"${name}\" не найдена: задайте SPEC_PLATFORM_DIR" >&2
+  echo "спека \"${name}\" не найдена: задайте SPEC_PLATFORM_DIR или ${var}" >&2
   exit 2
 }
 
@@ -58,6 +72,7 @@ if [[ "$mode" != "--save" && ! -f "$baseline" ]]; then
 fi
 
 spec_dir="$(resolve_spec_dir)"
+echo "спека: ${spec_dir}"
 current="$(cd "$here/.." && SPEC_PLATFORM_DIR="$spec_dir" dart run tool/smoke.dart | normalize)"
 
 if [[ "$mode" == "--save" ]]; then
