@@ -13,47 +13,73 @@ Future<void> main() async {
   final snapshot = await repository.load();
   final profile = snapshot.profile;
 
-  print('schema: ${profile.schema.name} · стеки: ${profile.stacks} · '
-      'ветка change: ${profile.schema.branchFor('<change>')}');
+  print(
+    'schema: ${profile.schema.name} · стеки: ${profile.stacks} · '
+    'ветка change: ${profile.schema.branchFor('<change>')}',
+  );
+  // Поля следующих этапов печатаются уже сейчас, чтобы формат вывода —
+  // и эталоны, снятые с него, — не менялись по мере их реализации.
+  print('источник схемы: не реализовано');
+  print('расширения: не реализовано');
   print('группировка: ${profile.grouping.name}');
   for (final feature in SpecFeature.values) {
     final gate = profile.gate(feature);
-    print('фича ${feature.name}: '
-        '${gate.available ? 'доступна' : 'недоступна'} '
-        '(${gate.satisfiedCount}/${gate.requirements.length})');
+    print(
+      'фича ${feature.name}: '
+      '${gate.available ? 'доступна' : 'недоступна'} '
+      '(${gate.satisfiedCount}/${gate.requirements.length})',
+    );
     for (final requirement in gate.requirements) {
-      print('    ${requirement.satisfied ? '✓' : '○'} '
-          '${requirement.id.name} [${requirement.scope.name}'
-          '${requirement.optional ? ', необязательное' : ''}] '
-          '${requirement.lookedIn}');
+      print(
+        '    ${requirement.satisfied ? '✓' : '○'} '
+        '${requirement.id.name} [${requirement.scope.name}'
+        '${requirement.optional ? ', необязательное' : ''}] '
+        '${requirement.lookedIn}',
+      );
     }
   }
-  print('статусы: работа=${profile.statuses.workingStatuses} · '
-      'передача=${profile.statuses.handoffStatus}');
+  print(
+    'статусы: работа=${profile.statuses.workingStatuses} · '
+    'передача=${profile.statuses.handoffStatus}',
+  );
   for (final group in snapshot.groups) {
-    print('группа ${group.id.isEmpty ? '(вне групп)' : group.id} '
-        '[${group.kind.name}] «${group.title}» '
-        'changes=${group.changeIds.length} ветки=${group.branches} '
-        'сборки=${group.builds.keys.toList()}');
+    print(
+      'группа ${group.id.isEmpty ? '(вне групп)' : group.id} '
+      '[${group.kind.name}] «${group.title}» '
+      'changes=${group.changeIds.length} ветки=${group.branches} '
+      'сборки=${group.builds.keys.toList()}',
+    );
   }
   print('role: ${repository.role} (${repository.roleKey})');
-  print('redmineProblem: ${snapshot.redmineProblem.name} '
-      '${snapshot.redmineProblemDetail}');
+  print(
+    'redmineProblem: ${snapshot.redmineProblem.name} '
+    '${snapshot.redmineProblemDetail}',
+  );
   for (final change in snapshot.changes) {
     final stacks = change.stacks
-        .map((stack) => '${stack.stack}=${stack.doneCount}/${stack.tasks.length}'
-            '(#${stack.issueId},${stack.redmineStatus}'
-            '${stack.statusFromCache ? ',из файла' : ''})')
+        .map(
+          (stack) =>
+              '${stack.stack}=${stack.doneCount}/${stack.tasks.length}'
+              '(#${stack.issueId},${stack.redmineStatus}'
+              '${stack.statusFromCache ? ',из файла' : ''})',
+        )
         .join(' ');
-    print('  ${change.id}: «${change.title}» $stacks deps=${change.dependsOn}');
+    print(
+      '  ${change.id}: «${change.title}» $stacks deps=${change.dependsOn} '
+      'стадия=не реализовано',
+    );
   }
-  print('divergences: ${snapshot.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.kind.name} open=${d.openTaskNumbers}').join(' | ')}');
+  print(
+    'divergences: ${snapshot.divergences.map((d) => '${d.changeId}/${d.stack}: ${d.kind.name} open=${d.openTaskNumbers}').join(' | ')}',
+  );
   print('документы:');
   void printDocs(DocNode node, String indent) {
-    print('$indent${node.id.isEmpty ? '(вне групп)' : node.id} '
-        '[${node.kind.name}] «${node.title}» '
-        '${node.presentCount}/${node.declaredCount}'
-        '${node.archivedAt == null ? '' : ' архив ${node.archivedAt}'}');
+    print(
+      '$indent${node.id.isEmpty ? '(вне групп)' : node.id} '
+      '[${node.kind.name}] «${node.title}» '
+      '${node.presentCount}/${node.declaredCount}'
+      '${node.archivedAt == null ? '' : ' архив ${node.archivedAt}'}',
+    );
     for (final doc in node.docs) {
       print('$indent  ${doc.exists ? '✓' : '○'} ${doc.fileName} [${doc.id}]');
     }
@@ -68,7 +94,9 @@ Future<void> main() async {
   print('commands: ${repository.slashCommands().length}');
   print('env problems: ${snapshot.env.problemCount}');
   for (final check in snapshot.env.all) {
-    print('  [${check.level.name}] ${check.name} · ${check.subtitle} · '
-        '${check.outcome.name}(${check.count}${check.param})');
+    print(
+      '  [${check.level.name}] ${check.name} · ${check.subtitle} · '
+      '${check.outcome.name}(${check.count}${check.param})',
+    );
   }
 }

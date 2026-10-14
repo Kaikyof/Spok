@@ -52,3 +52,7 @@ app.*.map.json
 
 # Сборка описания экранов (генерируется docs/build-single.py)
 docs/platform-console-mvp-single.html
+
+# Эталоны вывода смоука на живых спеках (tool/compare_smoke.sh --save):
+# в них внутренние имена и номера задач команды
+/test/fixtures/baseline/
