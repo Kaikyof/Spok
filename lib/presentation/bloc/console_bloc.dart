@@ -161,7 +161,9 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     if (change == null) return;
     // Главный текст карточки — спека изменения, а не список задач:
     // сначала «что меняем и зачем», потом «что осталось сделать».
-    final specPath = state.profile.schema.specPathFor(change.dir);
+    final schema =
+        change.schema.isEmpty ? state.profile.schema : change.schema;
+    final specPath = schema.specPathFor(change.dir);
     if (specPath != null) {
       unawaited(repository.readDoc(specPath).then((content) {
         if (isClosed || state.selectedChange?.id != change.id) return;

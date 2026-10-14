@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import '../../domain/entities/build_info.dart';
+import '../../domain/entities/change_metadata.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_node.dart';
@@ -16,8 +17,10 @@ import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
+import 'builtin_schemas.dart';
 import 'executable_locator.dart';
 import 'env_file.dart';
+import 'schema_resolver.dart';
 
 /// Ключ .env с подсказкой из комментария над строкой в `.env.example`.
 /// `optional` — ключ в примере закомментирован, спека работает и без него.
@@ -69,14 +72,8 @@ class PlatformFilesSource {
   /// «Что распознано»: правится устройство в самой спеке, и «изменить»
   /// открывает тот файл, который решает, а не тот, что похож по имени.
   /// Пустая строка — файла в этой спеке нет.
-  String get schemaFile {
-    final schemaName = _yamlValue(
-        File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
-    if (schemaName == null) return '';
-    final file = File(
-        p.join(root.path, 'openspec', 'schemas', schemaName, 'schema.yaml'));
-    return file.existsSync() ? file.path : '';
-  }
+  /// У встроенной схемы файла в спеке нет — открывать нечего.
+  String get schemaFile => defaultSchemaResolution?.path ?? '';
 
   String get trackerFile => _existing(p.join(root.path, 'openspec',
       'redmine.yaml'));
@@ -93,49 +90,60 @@ class PlatformFilesSource {
 
   // ─── Схема спеки ───────────────────────────────────────────────────────────
 
-  SpecSchema? _schemaCache;
+  SchemaResolver? _resolver;
 
-  /// Схема из `openspec/config.yaml` → `openspec/schemas/<name>/schema.yaml`.
-  /// Её нет — вернётся пустая схема, работает эвристика по именам файлов.
-  SpecSchema loadSchema() => _schemaCache ??= _readSchema();
+  SchemaResolver get _schemas => _resolver ??= SchemaResolver(root);
 
-  SpecSchema _readSchema() {
-    final schemaName = _yamlValue(
-        File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
-    if (schemaName == null) return SpecSchema.empty;
-    final file = File(p.join(
-        root.path, 'openspec', 'schemas', schemaName, 'schema.yaml'));
-    if (!file.existsSync()) return SpecSchema.empty;
-    final yaml = loadYaml(file.readAsStringSync());
-    final artifacts = yaml['artifacts'];
-    return SpecSchema(
-      name: schemaName,
-      artifacts: [
-        if (artifacts is YamlList)
-          for (final artifact in artifacts)
-            SchemaArtifact(
-              id: artifact['id'].toString(),
-              generates: artifact['generates']?.toString() ?? '',
-              description: artifact['description']?.toString() ?? '',
-              requires: [
-                if (artifact['requires'] is YamlList)
-                  for (final required in artifact['requires'])
-                    required.toString(),
-              ],
-            ),
-      ],
-      branchTemplate:
-          _branchTemplate(yaml['apply']?['instruction']?.toString()),
-    );
+  /// Имя схемы из `openspec/config.yaml`; null — конфиг схему не называет
+  /// (или его нет вовсе), и действует умолчание upstream.
+  String? get configuredSchemaName => _yamlValue(
+      File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
+
+  bool _defaultResolved = false;
+  ResolvedSchema? _defaultSchema;
+
+  /// Схема спеки по умолчанию с источником: имя из конфига, иначе
+  /// `spec-driven`; ищется в проекте, у пользователя, во встроенных.
+  /// null — конфиг назвал схему, которой нет нигде.
+  ResolvedSchema? get defaultSchemaResolution {
+    if (!_defaultResolved) {
+      _defaultResolved = true;
+      _defaultSchema =
+          _schemas.resolve(configuredSchemaName ?? defaultSchemaName);
+    }
+    return _defaultSchema;
   }
 
-  /// Имя ветки change'а объявлено в apply.instruction схемы:
-  /// `git checkout -B features/<change-name>`.
-  String _branchTemplate(String? applyInstruction) {
-    if (applyInstruction == null) return 'features/<change>';
-    final match = RegExp(r'checkout\s+-B\s+(\S*<change[^\s`]*>)')
-        .firstMatch(applyInstruction);
-    return match?.group(1) ?? 'features/<change>';
+  /// Схема спеки по умолчанию. Не найдена — пустая; тогда работает
+  /// эвристика по именам файлов, а экран распознавания говорит об этом.
+  SpecSchema loadSchema() =>
+      defaultSchemaResolution?.schema ?? SpecSchema.empty;
+
+  /// Схема конкретного change'а по цепочке upstream: `.openspec.yaml`
+  /// change'а → конфиг → `spec-driven`.
+  SpecSchema _schemaFor(ChangeMetadata meta) {
+    final own = meta.schemaName;
+    final resolved = own != null && own.isNotEmpty
+        ? _schemas.resolve(own)
+        : defaultSchemaResolution;
+    // Названная схема не найдена — change всё равно надо прочитать: берём
+    // встроенную `spec-driven`. Экран распознавания при этом честно
+    // говорит, что схемы спеки нет (`defaultSchemaResolution == null`).
+    return (resolved ?? _schemas.resolve(defaultSchemaName))?.schema ??
+        SpecSchema.empty;
+  }
+
+  /// `.openspec.yaml` change'а — метаданные формата upstream. Файла нет
+  /// или форма неожиданная — `ChangeMetadata.none`, без исключений.
+  ChangeMetadata _loadMetadata(Directory changeDir) {
+    final yaml = _yamlOf(File(p.join(changeDir.path, '.openspec.yaml')));
+    if (yaml is! YamlMap) return ChangeMetadata.none;
+    return ChangeMetadata(
+      schemaName: yaml['schema']?.toString(),
+      created: DateTime.tryParse(yaml['created']?.toString() ?? ''),
+      goal: yaml['goal']?.toString(),
+      skipSpecs: yaml['skip_specs'] == true,
+    );
   }
 
   // ─── Статусы трекера ───────────────────────────────────────────────────────
@@ -400,7 +408,9 @@ class PlatformFilesSource {
         id: change.id,
         title: change.title,
         kind: change.archived ? DocNodeKind.archivedChange : DocNodeKind.change,
-        branch: change.archived ? '' : loadSchema().branchFor(change.id),
+        branch: change.archived
+            ? ''
+            : _docSchemaOf(change).branchFor(change.id) ?? '',
         archivedAt: change.archivedAt,
         docs: _changeDocs(change),
       );
@@ -409,8 +419,12 @@ class PlatformFilesSource {
   /// плюс markdown, которого схема не знает, — он всё равно документ.
   /// У архивного change'а ненаписанных артефактов не показываем: работа
   /// сдана, и «чего в ней не хватает» — уже не вопрос.
+  /// Схема change'а для документов: своя, иначе схема спеки.
+  SpecSchema _docSchemaOf(ChangeUnit change) =>
+      change.schema.isEmpty ? loadSchema() : change.schema;
+
   List<DocArtifact> _changeDocs(ChangeUnit change) {
-    final schema = loadSchema();
+    final schema = _docSchemaOf(change);
     final declared = [
       for (final artifact in schema.artifacts)
         if (artifact.isSingleFile &&
@@ -451,22 +465,30 @@ class PlatformFilesSource {
 
   ChangeUnit _loadChange(String changeId, Directory changeDir) {
     final links = _loadRedmineLinks(changeDir);
+    final meta = _loadMetadata(changeDir);
+    final schema = _schemaFor(meta);
     final stackStates = <String, StackState>{};
     String? titleFromTasks;
-    for (final (stack, file) in _taskFilesOf(changeDir)) {
+    for (final (stack, file) in _taskFilesOf(changeDir, schema)) {
       final (tasks, redmineTitle) = _loadTasksFile(file);
-      if (tasks.isEmpty) continue;
+      // Стек без задач не показываем; единственный файл работы — иное:
+      // пустой `tasks.md` всё равно объявляет единицу работы.
+      if (tasks.isEmpty &&
+          !(stack == StackState.singleWorkStack && file.existsSync())) {
+        continue;
+      }
       titleFromTasks ??= redmineTitle;
       final cached = links.stacks[_normalizedStack(stack, links.stacks.keys)];
       stackStates[stack] = StackState(
         stack: stack,
-        issueId: cached?.issueId,
+        issueId: cached?.issueId ??
+            (stack == StackState.singleWorkStack ? links.groupIssueId : null),
         tasks: tasks,
         cachedStatus: cached?.statusName,
       );
     }
-    // Стеков нет — работа всё равно есть: один «стек работы» с задачей
-    // change'а, иначе экран показал бы пустоту вместо статуса.
+    // Ни стеков, ни файла задач, но есть задача трекера на change —
+    // работа всё же есть: один «стек работы» с этой задачей.
     if (stackStates.isEmpty && links.groupIssueId != null) {
       stackStates[StackState.singleWorkStack] = StackState(
         stack: StackState.singleWorkStack,
@@ -484,26 +506,39 @@ class PlatformFilesSource {
       dependsOn:
           links.members.takeWhile((member) => member != changeId).toList(),
       formatWarning: links.formatWarning,
+      schema: schema,
+      meta: meta,
     );
   }
 
-  /// Файлы задач change'а: имена берутся из схемы, иначе — по маске
-  /// `tasks_*.md` (запасной путь для спек без схемы).
-  List<(String, File)> _taskFilesOf(Directory changeDir) {
-    final schema = loadSchema();
-    if (!schema.isEmpty) {
+  /// Файлы задач change'а. Стеки — артефакты `tasks-<stack>` схемы; их
+  /// нет — единственный файл из `apply.tracks` (у upstream `tasks.md`),
+  /// и это одна единица работы независимо от трекера. Файла нет — маска
+  /// `tasks_*.md`: запасной путь для спек, устроенных не по OpenSpec.
+  List<(String, File)> _taskFilesOf(Directory changeDir, SpecSchema schema) {
+    if (schema.stacks.isNotEmpty) {
       return [
         for (final stack in schema.stacks)
           if (schema.tasksFileFor(stack) case final fileName?)
             (stack, File(p.join(changeDir.path, fileName))),
       ];
     }
+    final single = schema.singleTasksFile == null
+        ? null
+        : File(p.join(changeDir.path, schema.singleTasksFile!));
+    if (single != null && single.existsSync()) {
+      return [(StackState.singleWorkStack, single)];
+    }
     final pattern = RegExp(r'^tasks[_-](.+)\.md$');
-    return [
+    final byMask = [
       for (final entry in changeDir.listSync().whereType<File>())
         if (pattern.firstMatch(p.basename(entry.path)) case final match?)
           (match.group(1)!, entry),
     ];
+    if (byMask.isNotEmpty || single == null) return byMask;
+    // Файла нет ни по схеме, ни по маске — единица работы объявлена, но
+    // не написана; `_loadChange` покажет её только с задачей трекера.
+    return [(StackState.singleWorkStack, single)];
   }
 
   /// `tasks_ios` · `tasks-ios` · `tasksIos` · `ios` — один и тот же стек.
@@ -559,18 +594,37 @@ class PlatformFilesSource {
     );
   }
 
+  /// Строка задачи — по правилам upstream (`task-progress.ts`): любой
+  /// маркер списка (`-`, `*`, `+`, `1.`, `1)`), отступ, в скобках не больше
+  /// одного символа. `x`/`X` — сделано, всё остальное (` `, `~`, пусто) —
+  /// нет: неизвестная отметка должна считаться открытой работой, а не
+  /// исчезать из счёта. За скобкой не может идти `(` или `[` — это ссылка
+  /// `- [x](…)`, а не задача. Конец строки не привязан ради CRLF.
+  static final _taskLinePattern = RegExp(
+      r'^\s*(?:[-*+]|\d{1,9}[.)])\s*\[(?:\s*([^\]\s]?)\s*\](?![(\[])|\s+\])\s*(.*)');
+
+  /// Номер задачи в начале текста: `1.2 Текст` → («1.2», «Текст»).
+  /// Буква после номера — ревизия (`2.3a`), у команды так помечают
+  /// задачи, добавленные после согласования; это тоже номер.
+  static final _taskNumberPattern =
+      RegExp(r'^(\d+(?:\.\d+)*[a-zа-я]?)\.?\s+(.*)$');
+
   /// Возвращает (задачи, redmine_title из финального front-matter блока).
+  /// Номер задачи берётся из текста; его нет — порядковый по файлу.
   (List<TaskItem>, String?) _loadTasksFile(File file) {
     if (!file.existsSync()) return (const [], null);
     final tasks = <TaskItem>[];
     String? redmineTitle;
-    final checkboxPattern = RegExp(r'^-\s*\[( |x)\]\s*(\d+\.\d+)\s+(.+)$');
     final titlePattern = RegExp(r'^redmine_title:\s*(.+)$');
     for (final line in file.readAsLinesSync()) {
-      final checkbox = checkboxPattern.firstMatch(line);
+      final checkbox = _taskLinePattern.firstMatch(line);
       if (checkbox != null) {
-        tasks.add(TaskItem(
-            checkbox.group(2)!, checkbox.group(3)!, checkbox.group(1) == 'x'));
+        final done = (checkbox.group(1) ?? '').toLowerCase() == 'x';
+        final text = (checkbox.group(2) ?? '').trim();
+        final numbered = _taskNumberPattern.firstMatch(text);
+        tasks.add(numbered == null
+            ? TaskItem('${tasks.length + 1}', text, done)
+            : TaskItem(numbered.group(1)!, numbered.group(2)!.trim(), done));
       }
       redmineTitle =
           titlePattern.firstMatch(line)?.group(1)?.trim() ?? redmineTitle;
@@ -578,13 +632,21 @@ class PlatformFilesSource {
     return (tasks, redmineTitle);
   }
 
+  /// Заголовок из `proposal.md`: первый H1 без префикса `Proposal:`.
+  /// Шаблон upstream начинается с `## Why` — тогда null, и заголовком
+  /// станет id change'а.
   String? _proposalTitle(Directory changeDir) {
     final file = File(p.join(changeDir.path, 'proposal.md'));
     if (!file.existsSync()) return null;
     final heading = file
         .readAsLinesSync()
         .firstWhere((line) => line.startsWith('# '), orElse: () => '');
-    return heading.isEmpty ? null : heading.substring(2).trim();
+    if (heading.isEmpty) return null;
+    final title = heading
+        .substring(2)
+        .replaceFirst(RegExp(r'^proposal\s*:\s*', caseSensitive: false), '')
+        .trim();
+    return title.isEmpty ? null : title;
   }
 
   // ─── Окружение ─────────────────────────────────────────────────────────────

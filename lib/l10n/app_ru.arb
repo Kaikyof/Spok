@@ -169,6 +169,10 @@
   "stackIos": "iOS",
   "stackAndroid": "Android",
   "statusUnavailable": "нет доступа",
+  "statusFromTasks": "{done} из {total} задач",
+  "@statusFromTasks": {
+    "placeholders": { "done": { "type": "int" }, "total": { "type": "int" } }
+  },
   "marksOpenTask": "открыта {num}",
   "@marksOpenTask": {
     "placeholders": {
@@ -233,6 +237,7 @@
   },
   "artifactReady": "можно писать",
   "artifactMissing": "объявлен схемой, файла нет",
+  "artifactSkipped": "пропущен по .openspec.yaml",
   "codeOffSpec": "Эта спека не настроена на работу с MR",
   "codeOffPersonal": "Чтобы видеть MR, введите свой токен GitLab",
   "codeOffRuntime": "Хостинг кода не ответил или отклонил ключ",
@@ -650,6 +655,7 @@
     }
   },
   "codeSprintBranch": "ветка спринта",
+  "codeBranchNotDeclared": "спека не объявляет имя ветки",
   "codeNoBranch": "ветка спринта не задана в sprint.yaml",
   "commentsTitle": "Комментарии Redmine",
   "commentsEmpty": "комментариев нет",

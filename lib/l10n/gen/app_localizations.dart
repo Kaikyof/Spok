@@ -508,6 +508,12 @@ abstract class AppLocalizations {
   /// **'нет доступа'**
   String get statusUnavailable;
 
+  /// No description provided for @statusFromTasks.
+  ///
+  /// In ru, this message translates to:
+  /// **'{done} из {total} задач'**
+  String statusFromTasks(int done, int total);
+
   /// No description provided for @marksOpenTask.
   ///
   /// In ru, this message translates to:
@@ -651,6 +657,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'объявлен схемой, файла нет'**
   String get artifactMissing;
+
+  /// No description provided for @artifactSkipped.
+  ///
+  /// In ru, this message translates to:
+  /// **'пропущен по .openspec.yaml'**
+  String get artifactSkipped;
 
   /// No description provided for @codeOffSpec.
   ///
@@ -1580,6 +1592,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'ветка спринта'**
   String get codeSprintBranch;
+
+  /// No description provided for @codeBranchNotDeclared.
+  ///
+  /// In ru, this message translates to:
+  /// **'спека не объявляет имя ветки'**
+  String get codeBranchNotDeclared;
 
   /// No description provided for @codeNoBranch.
   ///

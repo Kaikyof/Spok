@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -20,6 +18,7 @@ import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
+import '../../domain/usecases/list_change_artifacts.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
@@ -190,64 +189,38 @@ class _ChangeCard extends StatelessWidget {
   /// (у avelacom это ещё `test_case.md` и `specs/<capability>/spec.md`).
   /// `requires` из схемы задаёт порядок и подсказку «чего не хватает»:
   /// артефакт, у которого предшественники пусты, писать ещё рано.
+  /// Схема карточки: своя у change'а (слой данных подставляет встроенную
+  /// `spec-driven`, когда схемы в проекте нет), иначе схема спеки.
+  /// Констант с именами файлов в коде больше нет.
+  SpecSchema get _schema =>
+      change.schema.isEmpty ? state.profile.schema : change.schema;
+
   List<_ArtifactState> _artifacts(AppLocalizations texts) {
-    final schema = state.profile.schema;
-    final declared = schema.isEmpty
-        ? const [
-            SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-            SchemaArtifact(
-                id: 'design', generates: 'design.md', requires: ['proposal']),
-          ]
-        : schema.artifacts;
-    final single = [
-      for (final artifact in declared)
-        if (artifact.isSingleFile) artifact,
-    ];
-    final exists = {
-      for (final artifact in single)
-        artifact.id:
-            File(p.join(change.dir, artifact.generates)).existsSync(),
-    };
+    final states = const ListChangeArtifacts()(change, _schema);
     final labels = {
-      for (final artifact in single)
-        artifact.id: _artifactLabel(texts, artifact),
+      for (final artifactState in states)
+        artifactState.artifact.id:
+            _artifactLabel(texts, artifactState.artifact),
     };
     return [
-      for (final artifact in _inRequiredOrder(single))
+      for (final artifactState in states)
         _ArtifactState(
           doc: DocArtifact(
-            labels[artifact.id]!,
-            artifact.generates,
-            p.join(change.dir, artifact.generates),
-            exists[artifact.id]!,
+            labels[artifactState.artifact.id]!,
+            artifactState.artifact.generates,
+            // У маски открывается первая дельта; ненаписанному — нечего.
+            artifactState.firstFile ??
+                p.join(change.dir, artifactState.artifact.generates),
+            artifactState.exists,
+            id: artifactState.artifact.id,
           ),
-          // Ждём только тех предшественников, которых схема знает сама.
+          skipped: artifactState.skipped,
           waitingFor: [
-            for (final required in artifact.requires)
-              if (exists[required] == false) labels[required] ?? required,
+            for (final required in artifactState.waitingFor)
+              labels[required] ?? required,
           ],
         ),
     ];
-  }
-
-  /// Артефакты по порядку зависимостей: сначала те, от кого зависят.
-  /// Схема обычно уже перечисляет их верно — порядок объявления сохраняем.
-  List<SchemaArtifact> _inRequiredOrder(List<SchemaArtifact> artifacts) {
-    final placed = <String>{};
-    final ordered = <SchemaArtifact>[];
-    final pending = [...artifacts];
-    while (pending.isNotEmpty) {
-      final ready = pending.where((artifact) => artifact.requires.every(
-          (required) =>
-              placed.contains(required) ||
-              !artifacts.any((other) => other.id == required)));
-      // Цикл в схеме не должен ронять экран — выкладываем как объявлено.
-      final next = ready.firstOrNull ?? pending.first;
-      ordered.add(next);
-      placed.add(next.id);
-      pending.remove(next);
-    }
-    return ordered;
   }
 
   String _artifactLabel(AppLocalizations texts, SchemaArtifact artifact) =>
@@ -266,7 +239,9 @@ class _ChangeCard extends StatelessWidget {
         .where((stack) => state.allowsStack(stack.stack))
         .toList();
     final artifacts = _artifacts(texts);
-    final filledArtifacts = artifacts.where((a) => a.doc.exists).length;
+    // Пропущенные по `skip_specs` в счёт не входят: их не ждут.
+    final counted = artifacts.where((a) => !a.skipped).toList();
+    final filledArtifacts = counted.where((a) => a.doc.exists).length;
     return ListView(
       padding: AppDimens.screenPadding,
       children: [
@@ -362,7 +337,7 @@ class _ChangeCard extends StatelessWidget {
                             ),
                             Text(
                                 texts.artifactsProgress(
-                                    '$filledArtifacts', '${artifacts.length}'),
+                                    '$filledArtifacts', '${counted.length}'),
                                 style: AppTextStyles.captionMuted),
                           ],
                         ),
@@ -410,14 +385,21 @@ class _CodeCard extends StatelessWidget {
 
   String? _branchFor(String stack) => state.group?.branchFor(stack);
 
+  /// Схема change'а, открытого на карточке; пустая — веток не будет.
+  SpecSchema get _changeSchema =>
+      state.selectedChange?.schema ?? SpecSchema.empty;
+
   MergeRequestInfo? _mrFor(String stack) =>
       mergeRequests?.where((mr) => mr.stack == stack).firstOrNull;
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
-    // Имя ветки объявлено схемой спеки (apply.instruction).
-    final sourceBranch = state.profile.schema.branchFor(changeId);
+    // Имя ветки объявлено схемой спеки (apply.instruction); не объявлено —
+    // так и говорим: ни MR, ни ссылки без ветки быть не может.
+    final schema =
+        state.profile.schema.isEmpty ? _changeSchema : state.profile.schema;
+    final sourceBranch = schema.branchFor(changeId);
     final mrEnabled = state.profile.enabled(SpecFeature.mergeRequests);
 
     return SectionCard(
@@ -433,11 +415,15 @@ class _CodeCard extends StatelessWidget {
             Text(texts.codeSectionTitle(texts.stackLabel(stackState.stack)),
                 style: AppTextStyles.sectionTitle),
             const SizedBox(height: 8),
-            _CodeRow(label: texts.codeChangeBranch, value: sourceBranch),
+            _CodeRow(
+                label: texts.codeChangeBranch,
+                value: sourceBranch ?? texts.codeBranchNotDeclared),
             if (_branchFor(stackState.stack) case final branch?)
               _CodeRow(label: texts.codeSprintBranch, value: branch),
             const SizedBox(height: 8),
-            if (mrEnabled)
+            if (sourceBranch == null)
+              const SizedBox.shrink()
+            else if (mrEnabled)
               _MergeRequestRow(
                 mergeRequest: _mrFor(stackState.stack),
                 loading: mergeRequests == null,
@@ -447,7 +433,9 @@ class _CodeCard extends StatelessWidget {
               _CodeDisabledRow(
                   gate: state.profile.gate(SpecFeature.mergeRequests)),
             // Даже без токена человек может сходить в GitLab руками.
-            if (state.profile.branchUrl(stackState.stack, sourceBranch)
+            if (sourceBranch == null
+                ? null
+                : state.profile.branchUrl(stackState.stack, sourceBranch)
                 case final gitlabUrl?) ...[
               const SizedBox(height: 6),
               Tappable(
@@ -832,7 +820,11 @@ class _ArtifactState {
   final DocArtifact doc;
   final List<String> waitingFor;
 
-  const _ArtifactState({required this.doc, required this.waitingFor});
+  /// Пропущен по `skip_specs` — не ненаписан, а нарочно отсутствует.
+  final bool skipped;
+
+  const _ArtifactState(
+      {required this.doc, required this.waitingFor, this.skipped = false});
 }
 
 /// Спека изменения — главный текст карточки. Не написана — говорим об этом
@@ -960,9 +952,11 @@ class _ArtifactHint extends StatelessWidget {
     final texts = AppLocalizations.of(context);
     final waiting = state.waitingFor;
     return Text(
-      waiting.isEmpty
-          ? texts.artifactMissing
-          : texts.artifactWaits(waiting.join(', ')),
+      state.skipped
+          ? texts.artifactSkipped
+          : waiting.isEmpty
+              ? texts.artifactMissing
+              : texts.artifactWaits(waiting.join(', ')),
       style: AppTextStyles.hint,
     );
   }
