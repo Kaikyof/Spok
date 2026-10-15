@@ -4,8 +4,8 @@
 
 | Этап плана | Change | Зависит от | Объём |
 |---|---|---|---|
-| 0 | `add-upstream-test-bench` | — | S |
-| 1 | `resolve-schema-like-upstream` | 0 | M |
+| 0 | `add-upstream-test-bench` ✓ в архиве | — | S |
+| 1 | `resolve-schema-like-upstream` ✓ в архиве | 0 | M |
 | 2 | `add-work-stage-and-tracker-port` | 1 | M |
 | 3 | `support-upstream-commands` | 1 (стадия — 2) | M |
 | 4 | `add-extension-registry` | 2, 3 | L |
@@ -26,4 +26,4 @@
 `/opsx:archive` в Claude Code (файлы в `.claude/`), или CLI:
 `openspec status --change <id>`, `openspec validate --changes --strict`.
 Этап 4 нельзя начинать без живых спек avtoto и avelacom и эталонов «до»
-(задача 2.3 в `add-upstream-test-bench`).
+(задача 2.3 в `archive/2026-10-15-add-upstream-test-bench`, сделана).
