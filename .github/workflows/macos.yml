@@ -61,6 +61,14 @@ jobs:
           ref: ${{ env.TAG }}
           fetch-depth: 0
 
+      # Описание релиза — из CHANGELOG.ru.md/CHANGELOG.md (раздел версии,
+      # для dev-тега — [Unreleased]). Сразу после checkout, а не перед
+      # публикацией: тег без раздела в журнале должен падать за секунды,
+      # а не после сборки. Тот же шаг есть в linux.yml — кто выложится в
+      # релиз первым, не важно, текст у обеих сборок одинаковый.
+      - name: Описание релиза
+        run: ./scripts/release_notes.sh "$TAG" > "$RUNNER_TEMP/release_notes.md"
+
       # Версия прибита к той, на которой ведётся разработка: «последняя
       # stable» превращает чужой релиз Flutter в красный пайплайн у нас.
       - uses: subosito/flutter-action@v2
@@ -104,5 +112,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
+          body_path: ${{ runner.temp }}/release_notes.md
           files: dist/*.dmg
           fail_on_unmatched_files: true
