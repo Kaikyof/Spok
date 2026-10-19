@@ -65,4 +65,4 @@ RU="$(section_or_fail CHANGELOG.ru.md '_Заметных изменений не
 
 # Пустые строки вокруг тела <details> обязательны: без них GitHub
 # показывает markdown внутри блока как сырой текст.
-printf '%s\n\n<details>\n<summary>🇷🇺 Русский</summary>\n\n%s\n\n</details>\n' "$EN" "$RU"
+printf '%s\n\n<details>\n<summary>Русский</summary>\n\n%s\n\n</details>\n' "$EN" "$RU"
