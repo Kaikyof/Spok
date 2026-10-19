@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Описание GitHub Release из CHANGELOG.md и CHANGELOG.ru.md (формат
 # Keep a Changelog): вырезает раздел версии из обоих файлов и печатает
-# их одно под другим — сначала английский, потом русский.
+# английский текст открытым, а русский — под свёрнутым <details>.
+# Переключателя языка в markdown GitHub нет (JS и формы вырезаются),
+# сворачиваемый блок — ближайшая замена.
 #
 #   ./scripts/release_notes.sh v0.2.0        — раздел [0.2.0]
 #   ./scripts/release_notes.sh v0.2.0-dev.3  — раздел [Unreleased]
@@ -61,4 +63,6 @@ section_or_fail() {
 EN="$(section_or_fail CHANGELOG.md '_No notable changes._')"
 RU="$(section_or_fail CHANGELOG.ru.md '_Заметных изменений нет._')"
 
-printf '## English\n\n%s\n\n## Русский\n\n%s\n' "$EN" "$RU"
+# Пустые строки вокруг тела <details> обязательны: без них GitHub
+# показывает markdown внутри блока как сырой текст.
+printf '%s\n\n<details>\n<summary>Русский</summary>\n\n%s\n\n</details>\n' "$EN" "$RU"
