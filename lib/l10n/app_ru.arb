@@ -1018,6 +1018,7 @@
   "@sessionNextStepCommand": {
     "placeholders": { "command": { "type": "String" } }
   },
+  "sessionNextStepContinue": "Продолжить планирование",
   "sessionNextStepOpenChange": "Открыть change",
   "sessionNextStepOpenChangeHint": "посмотреть, что осталось",
   "sessionTerminalHeightTooltip": "высота терминала — тяните границу",
@@ -1027,6 +1028,7 @@
   "sessionDoneChecklist": "ВЫПОЛНЕНО ПО ХОДУ",
   "commandSourceSchema": "канон схемы",
   "commandSourceClaude": ".claude",
+  "commandSourceSkill": "скилл",
   "commandSourceMirror": "зеркало",
   "commandSourcePackage": "package.json",
   "commandSourceMake": "Makefile",
@@ -1034,6 +1036,7 @@
   "roleNewChange": "Новый change",
   "roleNewGroup": "Новая группа",
   "roleHandover": "Передача",
+  "roleArchive": "Архивировать",
   "navDocs": "Документы",
   "docsTitle": "ДОКУМЕНТЫ СПЕКИ",
   "docsTreeCount": "{present} из {declared}",

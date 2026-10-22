@@ -67,8 +67,13 @@ class SessionsState {
   /// Команды с ролями — выделенные кнопки быстрого запуска.
   Map<CommandRole, SlashCommand> get roles => resolveCommandRoles(commands);
 
-  AgentSession? get selected =>
-      sessions.where((session) => session.id == selectedSessionId).firstOrNull;
+  AgentSession? get selected => sessions.where((session) => session.id == selectedSessionId).firstOrNull;
+
+  /// Change сессии — первый аргумент её первой реплики, совпавший с id
+  /// change'а: «/opsx:apply add-dark-mode …». Нет такого — сессия общая,
+  /// и следующие шаги по стадии не предлагаются.
+  String? changeOf(AgentSession session) =>
+      session.title.split(RegExp(r'\s+')).skip(1).where(changeIds.contains).firstOrNull;
 
   SessionsState copyWith({
     List<AgentSession>? sessions,
@@ -86,22 +91,21 @@ class SessionsState {
     bool? paletteOpen,
     String? draft,
     int? revision,
-  }) =>
-      SessionsState(
-        sessions: sessions ?? this.sessions,
-        selectedSessionId: selectedSessionId ?? this.selectedSessionId,
-        model: model ?? this.model,
-        models: models ?? this.models,
-        effort: effort ?? this.effort,
-        permissionMode: permissionMode ?? this.permissionMode,
-        cliAvailable: cliAvailable ?? this.cliAvailable,
-        commands: commands ?? this.commands,
-        changeIds: changeIds ?? this.changeIds,
-        groupIds: groupIds ?? this.groupIds,
-        workingDirectory: workingDirectory ?? this.workingDirectory,
-        terminalHeight: terminalHeight ?? this.terminalHeight,
-        paletteOpen: paletteOpen ?? this.paletteOpen,
-        draft: draft ?? this.draft,
-        revision: revision ?? this.revision,
-      );
+  }) => SessionsState(
+    sessions: sessions ?? this.sessions,
+    selectedSessionId: selectedSessionId ?? this.selectedSessionId,
+    model: model ?? this.model,
+    models: models ?? this.models,
+    effort: effort ?? this.effort,
+    permissionMode: permissionMode ?? this.permissionMode,
+    cliAvailable: cliAvailable ?? this.cliAvailable,
+    commands: commands ?? this.commands,
+    changeIds: changeIds ?? this.changeIds,
+    groupIds: groupIds ?? this.groupIds,
+    workingDirectory: workingDirectory ?? this.workingDirectory,
+    terminalHeight: terminalHeight ?? this.terminalHeight,
+    paletteOpen: paletteOpen ?? this.paletteOpen,
+    draft: draft ?? this.draft,
+    revision: revision ?? this.revision,
+  );
 }

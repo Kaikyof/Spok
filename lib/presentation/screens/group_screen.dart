@@ -708,9 +708,7 @@ class _NextStepSection extends StatelessWidget {
         texts.nextStepApplyReason,
         invocation(CommandRole.apply),
       ),
-      // Роль архивирования появится вместе с командами upstream; до неё
-      // шаг называется, но команды у него нет.
-      DoneStage() => (texts.nextStepArchive, texts.nextStepArchiveReason, null),
+      DoneStage() => (texts.nextStepArchive, texts.nextStepArchiveReason, invocation(CommandRole.archive)),
       ArchivedStage() => (null, null, null),
     };
     if (title == null) return const SizedBox.shrink();

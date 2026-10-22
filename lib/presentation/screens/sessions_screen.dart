@@ -10,6 +10,7 @@ import '../../domain/entities/agent_session.dart';
 import '../../domain/entities/command_run.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/repositories/command_log.dart';
+import '../../domain/usecases/plan_next_steps.dart';
 import '../../domain/usecases/suggest_command_arguments.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
@@ -71,18 +72,16 @@ class _QuickLaunch extends StatelessWidget {
 
   const _QuickLaunch({required this.roles});
 
-  static String label(AppLocalizations texts, CommandRole role) =>
-      switch (role) {
-        CommandRole.apply => texts.roleApply,
-        CommandRole.newChange => texts.roleNewChange,
-        CommandRole.newGroup => texts.roleNewGroup,
-        CommandRole.handover => texts.roleHandover,
-      };
+  static String label(AppLocalizations texts, CommandRole role) => switch (role) {
+    CommandRole.apply => texts.roleApply,
+    CommandRole.newChange => texts.roleNewChange,
+    CommandRole.newGroup => texts.roleNewGroup,
+    CommandRole.handover => texts.roleHandover,
+    CommandRole.archive => texts.roleArchive,
+  };
 
   /// Главной становится «реализовать»; нет её — первая, что нашлась.
-  CommandRole get _primary => roles.containsKey(CommandRole.apply)
-      ? CommandRole.apply
-      : roles.keys.first;
+  CommandRole get _primary => roles.containsKey(CommandRole.apply) ? CommandRole.apply : roles.keys.first;
 
   @override
   Widget build(BuildContext context) {
@@ -105,8 +104,7 @@ class _QuickLaunch extends StatelessWidget {
           PopupMenuButton<CommandRole>(
             tooltip: texts.sessionQuickLaunch,
             color: AppColors.cardHighlight,
-            onSelected: (role) =>
-                terminalKey.currentState?.insertCommand(roles[role]!),
+            onSelected: (role) => terminalKey.currentState?.insertCommand(roles[role]!),
             itemBuilder: (_) => [
               for (final role in rest)
                 PopupMenuItem(
@@ -234,9 +232,7 @@ class _SessionSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final session = state.selected;
-    final title = session == null || session.title.isEmpty
-        ? texts.sessionNew
-        : session.title;
+    final title = session == null || session.title.isEmpty ? texts.sessionNew : session.title;
     return PopupMenuButton<String>(
       tooltip: texts.sessionsListTitle,
       color: AppColors.cardHighlight,
@@ -383,10 +379,7 @@ class _SessionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final session = state.selected;
-    final finished =
-        session != null &&
-        !session.isEmpty &&
-        session.status == AgentSessionStatus.done;
+    final finished = session != null && !session.isEmpty && session.status == AgentSessionStatus.done;
     return SectionCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -394,9 +387,7 @@ class _SessionPanel extends StatelessWidget {
           _PanelHeader(state: state, session: session),
           const Divider(height: 1),
           Expanded(
-            child: session == null || session.isEmpty
-                ? _EmptySession(texts: texts)
-                : _Transcript(session: session),
+            child: session == null || session.isEmpty ? _EmptySession(texts: texts) : _Transcript(session: session),
           ),
           if (finished) _NextSteps(state: state),
         ],
@@ -423,25 +414,36 @@ class _EmptySession extends StatelessWidget {
   );
 }
 
-/// Следующие шаги после завершения: кнопки собираются из команд спеки,
-/// применимых к change'у, и подписаны её же словами — приложение не
-/// придумывает за спеку, что делать дальше.
+/// Следующие шаги после завершения. Если сессия шла по change'у, шаг
+/// выбирается по его стадии: сделан — архивировать, в планировании —
+/// продолжить, готов — реализовать. Иначе — команды спеки, применимые к
+/// change'у, подписанные её же словами: приложение не придумывает за спеку,
+/// что делать дальше.
 class _NextSteps extends StatelessWidget {
   final SessionsState state;
 
   const _NextSteps({required this.state});
 
-  List<SlashCommand> get _steps => [
+  List<SlashCommand> get _changeCommands => [
     for (final command in state.commands)
-      if (command.scope == CommandScope.change &&
-          state.roles[CommandRole.apply]?.id != command.id)
-        command,
+      if (command.scope == CommandScope.change && state.roles[CommandRole.apply]?.id != command.id) command,
   ].take(3).toList();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => BlocBuilder<ConsoleBloc, ConsoleState>(
+    builder: (context, console) {
+      final session = state.selected;
+      final changeId = session == null ? null : state.changeOf(session);
+      final change = console.snapshot?.changes.where((change) => change.id == changeId).firstOrNull;
+      final byStage = change == null
+          ? const <NextStep>[]
+          : const PlanNextSteps()(stage: change.stage, changeId: change.id, commands: state.commands);
+      return _buildSteps(context, byStage);
+    },
+  );
+
+  Widget _buildSteps(BuildContext context, List<NextStep> byStage) {
     final texts = AppLocalizations.of(context);
-    final steps = _steps;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
@@ -461,12 +463,23 @@ class _NextSteps extends StatelessWidget {
             spacing: AppDimens.gapS,
             runSpacing: AppDimens.gapS,
             children: [
-              for (final command in steps)
+              for (final step in byStage)
                 _NextStepButton(
-                  label: command.description,
-                  hint: texts.sessionNextStepCommand(command.invocation),
-                  onTap: () => terminalKey.currentState?.insertCommand(command),
+                  label: switch (step.kind) {
+                    NextStepKind.continuePlanning => texts.sessionNextStepContinue,
+                    NextStepKind.apply => texts.roleApply,
+                    NextStepKind.archive => texts.roleArchive,
+                  },
+                  hint: texts.sessionNextStepCommand(step.line),
+                  onTap: () => terminalKey.currentState?.insertLine(step.line),
                 ),
+              if (byStage.isEmpty)
+                for (final command in _changeCommands)
+                  _NextStepButton(
+                    label: command.description,
+                    hint: texts.sessionNextStepCommand(command.invocation),
+                    onTap: () => terminalKey.currentState?.insertCommand(command),
+                  ),
               _NextStepButton(
                 label: texts.sessionNextStepOpenChange,
                 hint: texts.sessionNextStepOpenChangeHint,
@@ -550,17 +563,14 @@ class _PanelHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SessionSelector(state: state),
-                if ((session?.messageCount ?? 0) > 1)
-                  Text(texts.sessionContinues, style: AppTextStyles.hint),
+                if ((session?.messageCount ?? 0) > 1) Text(texts.sessionContinues, style: AppTextStyles.hint),
               ],
             ),
           ),
-          if (state.roles.isNotEmpty)
-            Flexible(flex: 2, child: _QuickLaunch(roles: state.roles)),
+          if (state.roles.isNotEmpty) Flexible(flex: 2, child: _QuickLaunch(roles: state.roles)),
           if (running)
             TextButton(
-              onPressed: () =>
-                  context.read<SessionsBloc>().add(SessionStopRequested()),
+              onPressed: () => context.read<SessionsBloc>().add(SessionStopRequested()),
               child: Text(
                 texts.sessionStop,
                 style: const TextStyle(fontSize: 12, color: AppColors.danger),
@@ -598,8 +608,7 @@ class _Transcript extends StatelessWidget {
               ),
             ),
           ),
-        for (final event in session.events.reversed)
-          _TranscriptEntry(event: event, session: session, texts: texts),
+        for (final event in session.events.reversed) _TranscriptEntry(event: event, session: session, texts: texts),
       ],
     );
   }
@@ -715,8 +724,7 @@ class Terminal extends StatefulWidget {
   /// Сколько высоты экрана терминал может занять в самом развёрнутом виде.
   final double maxHeight;
 
-  Terminal({required this.state, this.maxHeight = double.infinity})
-    : super(key: terminalKey);
+  Terminal({required this.state, this.maxHeight = double.infinity}) : super(key: terminalKey);
 
   @override
   State<Terminal> createState() => TerminalState();
@@ -750,8 +758,7 @@ class TerminalState extends State<Terminal> {
     if (draft.isEmpty || draft == _appliedDraft) return;
     _appliedDraft = draft;
     _setText(draft);
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _focusNode.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 
   @override
@@ -766,8 +773,11 @@ class TerminalState extends State<Terminal> {
     _suppressed = false;
   });
 
-  void insertCommand(SlashCommand command) {
-    _setText('${command.invocation} ');
+  void insertCommand(SlashCommand command) => insertLine(command.invocation);
+
+  /// Вызов с уже известными аргументами — задание человек допишет сам.
+  void insertLine(String line) {
+    _setText('$line ');
     _closePalette();
     _focusNode.requestFocus();
   }
@@ -790,9 +800,7 @@ class TerminalState extends State<Terminal> {
     final input = _promptController.text;
     if (!input.startsWith('/')) return null;
     final head = input.split(' ').first.substring(1);
-    return widget.state.commands
-        .where((command) => command.id == head)
-        .firstOrNull;
+    return widget.state.commands.where((command) => command.id == head).firstOrNull;
   }
 
   /// Отбор палитры: то, что набрано до первого пробела.
@@ -826,10 +834,7 @@ class TerminalState extends State<Terminal> {
     final parts = _promptController.text.split(' ');
     final typedArguments = parts.length < 2
         ? const <String>[]
-        : parts
-              .sublist(1, parts.length - 1)
-              .where((argument) => argument.isNotEmpty)
-              .toList();
+        : parts.sublist(1, parts.length - 1).where((argument) => argument.isNotEmpty).toList();
     final currentPrefix = parts.length < 2 ? '' : parts.last;
     final suggester = SuggestCommandArguments(
       changeIds: widget.state.changeIds,
@@ -872,14 +877,10 @@ class TerminalState extends State<Terminal> {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
-    final optionCount = _paletteCommands.isNotEmpty
-        ? _paletteCommands.length
-        : _argumentSuggestions.length;
+    final optionCount = _paletteCommands.isNotEmpty ? _paletteCommands.length : _argumentSuggestions.length;
     final hasOptions = optionCount > 0;
 
-    void accept() => _paletteCommands.isNotEmpty
-        ? _acceptPalette(_activeIndex)
-        : _acceptArgument(_activeIndex);
+    void accept() => _paletteCommands.isNotEmpty ? _acceptPalette(_activeIndex) : _acceptArgument(_activeIndex);
 
     switch (event.logicalKey) {
       case LogicalKeyboardKey.arrowDown when hasOptions:
@@ -920,9 +921,7 @@ class TerminalState extends State<Terminal> {
   /// Высота идёт за курсором пиксель в пиксель; у самого низа вывод
   /// сворачивается целиком, чтобы не оставлять бесполезную полоску.
   void _onDrag(double delta) {
-    final available = widget.maxHeight.isFinite
-        ? widget.maxHeight - _chromeHeight
-        : double.infinity;
+    final available = widget.maxHeight.isFinite ? widget.maxHeight - _chromeHeight : double.infinity;
     var next = widget.state.terminalHeight - delta;
     if (next < TerminalHeights.collapseThreshold) next = 0;
     if (available.isFinite && next > available) next = available;
@@ -1044,9 +1043,7 @@ class TerminalState extends State<Terminal> {
                 decoration: InputDecoration(
                   // Команда подставлена — подсказываем дописать задание
                   // словами: «как есть» её запускают редко.
-                  hintText: command != null
-                      ? texts.sessionInputCommandHint
-                      : texts.sessionInputEmptyHint,
+                  hintText: command != null ? texts.sessionInputCommandHint : texts.sessionInputEmptyHint,
                   hintStyle: AppTextStyles.captionMuted,
                   filled: true,
                   fillColor: AppColors.background,
@@ -1074,8 +1071,7 @@ class TerminalState extends State<Terminal> {
           if (running) ...[
             const SizedBox(width: AppDimens.gapS),
             TextButton(
-              onPressed: () =>
-                  context.read<SessionsBloc>().add(SessionStopRequested()),
+              onPressed: () => context.read<SessionsBloc>().add(SessionStopRequested()),
               child: Text(
                 texts.sessionStop,
                 style: const TextStyle(fontSize: 12, color: AppColors.danger),
@@ -1188,16 +1184,13 @@ class _Output extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.monospace(
                         11.5,
-                        color: run == null
-                            ? AppColors.textMuted
-                            : AppColors.monospaceText,
+                        color: run == null ? AppColors.textMuted : AppColors.monospaceText,
                       ),
                     ),
                   ),
                   if (run != null && run.output.isNotEmpty)
                     TextButton(
-                      onPressed: () =>
-                          Clipboard.setData(ClipboardData(text: run.output)),
+                      onPressed: () => Clipboard.setData(ClipboardData(text: run.output)),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         minimumSize: const Size(0, 26),
@@ -1216,14 +1209,10 @@ class _Output extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   child: SelectableText(
-                    run == null || run.output.isEmpty
-                        ? texts.launchNoOutput
-                        : run.output,
+                    run == null || run.output.isEmpty ? texts.launchNoOutput : run.output,
                     style: AppTextStyles.monospace(
                       11.5,
-                      color: run == null || run.output.isEmpty
-                          ? AppColors.textMuted
-                          : AppColors.monospaceText,
+                      color: run == null || run.output.isEmpty ? AppColors.textMuted : AppColors.monospaceText,
                     ).copyWith(height: 1.5),
                   ),
                 ),
@@ -1253,14 +1242,14 @@ class _PaletteView extends StatelessWidget {
     required this.onSelected,
   });
 
-  static String sourceLabel(AppLocalizations texts, CommandSource source) =>
-      switch (source) {
-        CommandSource.schema => texts.commandSourceSchema,
-        CommandSource.claude => texts.commandSourceClaude,
-        CommandSource.mirror => texts.commandSourceMirror,
-        CommandSource.packageScript => texts.commandSourcePackage,
-        CommandSource.makeTarget => texts.commandSourceMake,
-      };
+  static String sourceLabel(AppLocalizations texts, CommandSource source) => switch (source) {
+    CommandSource.schema => texts.commandSourceSchema,
+    CommandSource.claude => texts.commandSourceClaude,
+    CommandSource.skill => texts.commandSourceSkill,
+    CommandSource.mirror => texts.commandSourceMirror,
+    CommandSource.packageScript => texts.commandSourcePackage,
+    CommandSource.makeTarget => texts.commandSourceMake,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -1371,21 +1360,17 @@ class _PaletteRow extends StatelessWidget {
               child: Text(
                 // Без сигнатуры команда не пропадает: это нормальный исход,
                 // и его надо показать, а не спрятать.
-                command.argumentHint.isEmpty
-                    ? texts.sessionNoArguments
-                    : command.argumentHint,
+                command.argumentHint.isEmpty ? texts.sessionNoArguments : command.argumentHint,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.monospace(
                   11,
-                  color: command.argumentHint.isEmpty
-                      ? AppColors.textMuted
-                      : AppColors.textSecondary,
+                  color: command.argumentHint.isEmpty ? AppColors.textMuted : AppColors.textSecondary,
                 ),
               ),
             ),
             const SizedBox(width: AppDimens.gapS),
-            _SourceBadge(source: command.source),
+            _SourceBadge(sources: command.sources),
           ],
         ),
       ),
@@ -1393,10 +1378,11 @@ class _PaletteRow extends StatelessWidget {
   }
 }
 
+/// Источники команды: у склеенной пары upstream — «.claude · скилл».
 class _SourceBadge extends StatelessWidget {
-  final CommandSource source;
+  final List<CommandSource> sources;
 
-  const _SourceBadge({required this.source});
+  const _SourceBadge({required this.sources});
 
   @override
   Widget build(BuildContext context) {
@@ -1409,7 +1395,7 @@ class _SourceBadge extends StatelessWidget {
         border: Border.all(color: AppColors.borderSoft),
       ),
       child: Text(
-        _PaletteView.sourceLabel(texts, source),
+        sources.map((source) => _PaletteView.sourceLabel(texts, source)).join(' · '),
         style: AppTextStyles.monospace(10, color: AppColors.textMuted),
       ),
     );
@@ -1529,8 +1515,7 @@ class _ModelPicker extends StatelessWidget {
             child: Text(texts.cancel),
           ),
           TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
             child: Text(texts.confirm),
           ),
         ],
@@ -1577,12 +1562,11 @@ class _PermissionPicker extends StatelessWidget {
 
   const _PermissionPicker({required this.mode, required this.enabled});
 
-  String _label(AppLocalizations texts, AgentPermissionMode value) =>
-      switch (value) {
-        AgentPermissionMode.ask => texts.permissionAsk,
-        AgentPermissionMode.acceptEdits => texts.permissionAcceptEdits,
-        AgentPermissionMode.bypass => texts.permissionBypass,
-      };
+  String _label(AppLocalizations texts, AgentPermissionMode value) => switch (value) {
+    AgentPermissionMode.ask => texts.permissionAsk,
+    AgentPermissionMode.acceptEdits => texts.permissionAcceptEdits,
+    AgentPermissionMode.bypass => texts.permissionBypass,
+  };
 
   @override
   Widget build(BuildContext context) {

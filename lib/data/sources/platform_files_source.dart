@@ -783,29 +783,73 @@ class PlatformFilesSource {
   // ─── Команды платформы ─────────────────────────────────────────────────────
 
   /// Команды спеки из всех источников по приоритету: схема (канон) →
-  /// `.claude/commands` → зеркала для других агентов → скрипты сборки.
-  /// Дедуп по basename: в зеркалах лежат копии тех же файлов.
+  /// `.claude` → каталоги других агентов → скрипты сборки. Дубли склеиваются
+  /// по нормализованному id: в зеркалах лежат копии тех же команд.
   List<SlashCommand> loadSlashCommands() {
-    final byName = <String, SlashCommand>{};
+    final byKey = <String, SlashCommand>{};
+    final skillKeys = <String>{};
     for (final (dir, source) in _commandDirs()) {
+      final skills = p.basename(dir.path) == 'skills';
       for (final file in _markdownFiles(dir)) {
-        final command = _loadSlashCommand(file, source);
+        // В каталоге скилла кроме SKILL.md лежат его справочники — не команды.
+        if (skills && p.basename(file.path) != 'SKILL.md') continue;
+        final command = _loadSlashCommand(file, dir, source);
         if (command == null) continue;
-        byName.putIfAbsent(_commandKey(file), () => command);
+        final key = _commandKey(command.id);
+        if (byKey.containsKey(key)) continue;
+        byKey[key] = command;
+        if (skills) skillKeys.add(key);
       }
     }
-    final commands = byName.values.toList();
+    _attachSkillsToCommands(byKey, skillKeys);
+    final commands = byKey.values.toList();
     commands.sort((a, b) => a.id.compareTo(b.id));
     // Скрипты сборки — тоже команды спеки: у avelacom там opsx:new,
     // openspec:redmine и workspace-init. Имена с командами не пересекаются.
     return [...commands, ..._packageScripts(), ..._makeTargets()];
   }
 
-  /// Ключ дедупа: имя файла, а у навыков — имя каталога, иначе все
-  /// `SKILL.md` схлопнулись бы в одну команду.
-  String _commandKey(File file) {
-    final name = p.basenameWithoutExtension(file.path);
-    return name.toUpperCase() == 'SKILL' ? p.basename(file.parent.path) : name;
+  /// Ключ дедупа: `opsx-apply`, `/opsx:apply` и `opsx/apply.md` — одна
+  /// команда, разложенная разными инструментами по-своему.
+  String _commandKey(String id) => id.toLowerCase().replaceAll(RegExp(r'[:/]'), '-');
+
+  /// Upstream пишет в скилл «Also use when the user says "opsx propose"» —
+  /// по этой фразе скилл приклеивается к своей команде, а не висит в палитре
+  /// вторым `/openspec-propose`. Без пары скилл остаётся командой.
+  void _attachSkillsToCommands(Map<String, SlashCommand> byKey, Set<String> skillKeys) {
+    final phrase = RegExp(r'\bopsx ([a-z][a-z-]*)');
+    for (final skillKey in skillKeys) {
+      final skill = byKey[skillKey]!;
+      final target = phrase.firstMatch(skill.description.toLowerCase());
+      if (target == null) continue;
+      final commandKey = _commandKey('opsx-${target.group(1)}');
+      final command = byKey[commandKey];
+      if (command == null || skillKeys.contains(commandKey)) continue;
+      byKey[commandKey] = SlashCommand(
+        id: command.id,
+        description: command.description,
+        argumentHint: command.argumentHint,
+        sources: {...command.sources, skill.source}.toList(),
+        runLine: command.runLine,
+      );
+      byKey.remove(skillKey);
+    }
+  }
+
+  /// `name` из frontmatter — вызов, только если похож на него: upstream
+  /// пишет туда заголовок «OPSX: Propose», а спеки команды — `/opsx-apply`.
+  static bool looksLikeInvocation(String name) =>
+      name.isNotEmpty && (name.startsWith('/') || !RegExp(r'[\sA-Z]').hasMatch(name));
+
+  /// Вызов по пути файла, как его регистрирует Claude Code:
+  /// `commands/opsx/propose.md` → `opsx:propose`, `skills/<имя>/SKILL.md` →
+  /// `<имя>`, `prompts/opsx-apply.prompt.md` → `opsx-apply`.
+  String _invocationFromPath(File file, Directory dir) {
+    final name = p.basename(file.path);
+    if (name == 'SKILL.md') return p.basename(file.parent.path);
+    final id = name.replaceFirst(RegExp(r'(\.prompt)?\.md$'), '');
+    final folders = p.split(p.relative(file.parent.path, from: dir.path));
+    return folders.first == '.' ? id : '${folders.first}:$id';
   }
 
   List<(Directory, CommandSource)> _commandDirs() {
@@ -814,11 +858,15 @@ class PlatformFilesSource {
       if (schemaName.isNotEmpty)
         (p.join(root.path, 'openspec', 'schemas', schemaName, 'commands'), CommandSource.schema),
       (p.join(root.path, '.claude', 'commands'), CommandSource.claude),
-      (p.join(root.path, '.claude', 'skills'), CommandSource.claude),
-      for (final mirror in const ['.codex', '.cursor', '.kilocode', '.windsurf']) ...[
+      (p.join(root.path, '.claude', 'skills'), CommandSource.skill),
+      // Каталоги, которые `openspec init` создаёт для других инструментов.
+      // У Gemini команды в `.toml` — их отсеивает чтение только `.md`.
+      (p.join(root.path, '.agents', 'skills'), CommandSource.mirror),
+      for (final mirror in const ['.codex', '.cursor', '.kilocode', '.windsurf', '.opencode', '.gemini']) ...[
         (p.join(root.path, mirror, 'commands'), CommandSource.mirror),
         (p.join(root.path, mirror, 'prompts'), CommandSource.mirror),
       ],
+      (p.join(root.path, '.github', 'prompts'), CommandSource.mirror),
     ];
     return [
       for (final (dir, source) in candidates)
@@ -845,7 +893,7 @@ class PlatformFilesSource {
           SlashCommand(
             id: entry.key.toString(),
             description: entry.value.toString(),
-            source: CommandSource.packageScript,
+            sources: [CommandSource.packageScript],
             runLine: '$runner ${entry.key}',
           ),
         );
@@ -878,7 +926,7 @@ class PlatformFilesSource {
       final name = match.group(1)!;
       if (name == '.PHONY') continue;
       targets.add(
-        SlashCommand(id: name, description: comment ?? '', source: CommandSource.makeTarget, runLine: 'make $name'),
+        SlashCommand(id: name, description: comment ?? '', sources: [CommandSource.makeTarget], runLine: 'make $name'),
       );
       comment = null;
     }
@@ -888,7 +936,7 @@ class PlatformFilesSource {
   Iterable<File> _markdownFiles(Directory dir) =>
       dir.listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.md'));
 
-  SlashCommand? _loadSlashCommand(File file, CommandSource source) {
+  SlashCommand? _loadSlashCommand(File file, Directory dir, CommandSource source) {
     final lines = file.readAsLinesSync();
     final frontmatter = <String, String>{};
     var insideFrontmatter = false;
@@ -910,43 +958,50 @@ class PlatformFilesSource {
       }
     }
     // Имя команды пишет сама спека: файл opsx-apply.md, а зовётся она
-    // /opsx:apply — нормализовать разделитель за спеку нельзя.
-    final id = (frontmatter['name'] ?? frontmatter['id'] ?? p.basenameWithoutExtension(file.path)).replaceFirst(
-      RegExp(r'^/'),
-      '',
-    );
+    // /opsx:apply — нормализовать разделитель за спеку нельзя. Но имя,
+    // не похожее на вызов, — заголовок, и тогда вызов берётся из пути.
+    final id =
+        ([frontmatter['name'], frontmatter['id']].whereType<String>().where(looksLikeInvocation).firstOrNull ??
+                _invocationFromPath(file, dir))
+            .replaceFirst(RegExp(r'^/'), '');
     final description = frontmatter['description'] ?? '';
     if (description.isEmpty) return null;
     return SlashCommand(
       id: id,
       description: description,
-      source: source,
+      sources: [source],
       argumentHint: frontmatter['argument-hint'] ?? _argumentHintFromBody(lines.skip(frontmatterEnd)),
     );
   }
 
-  /// Спеки без `argument-hint` описывают аргументы разделом «**Input**»:
-  /// строкой вызова `/opsx:apply <change> [<change>...]` либо прозой.
-  /// Разбираем её в те же слоты, что и подсказка терминала.
+  /// Спеки без `argument-hint` описывают аргументы разделом «**Input**».
+  /// Слоты даёт только строка вызова: `/opsx:apply <change>` в начале строки
+  /// или в обратных кавычках, у скиллов — `<change> <stack>`. Проза слотов
+  /// не даёт: «change name» в описании propose делал команду создания
+  /// change'а действием над готовым.
   String _argumentHintFromBody(Iterable<String> body) {
     const slots = ['change', 'sprint', 'group', 'doc'];
     final lines = body.toList();
     final start = lines.indexWhere((line) => line.trimLeft().startsWith('**Input**'));
     if (start < 0) return '';
-    final section = lines.skip(start).take(12).toList();
-    final usage = section.where((line) => line.trimLeft().startsWith('/')).firstOrNull;
-    if (usage != null) {
-      return [
-        for (final slot in slots)
-          if (usage.contains('<$slot') || usage.contains('[$slot')) '[$slot]',
-      ].join(' ');
-    }
-    // Сигнатуры нет — берём упоминание сущности из текста раздела.
-    final prose = section.join(' ').toLowerCase();
+    final usage = _usageLine(lines.skip(start).take(12));
+    if (usage == null) return '';
     return [
       for (final slot in slots)
-        if (prose.contains(slot)) '[$slot]',
-    ].take(1).join();
+        if (usage.contains('<$slot') || usage.contains('[$slot')) '[$slot]',
+    ].join(' ');
+  }
+
+  /// Первая строка вызова раздела; null — в разделе только проза.
+  String? _usageLine(Iterable<String> section) {
+    final quoted = RegExp(r'`([/<][^`]*)`');
+    for (final line in section) {
+      final text = line.trimLeft().replaceFirst(RegExp(r'^[-*]\s+'), '');
+      if (text.startsWith('/')) return text;
+      final match = quoted.firstMatch(text);
+      if (match != null) return match.group(1);
+    }
+    return null;
   }
 
   // ─── Git ───────────────────────────────────────────────────────────────────

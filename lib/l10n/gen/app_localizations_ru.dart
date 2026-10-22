@@ -84,8 +84,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get sprintEmpty =>
-      'Нет активного спринта.\nСоздайте его командой /opsx:doc.';
+  String get sprintEmpty => 'Нет активного спринта.\nСоздайте его командой /opsx:doc.';
 
   @override
   String unrecognizedTitle(int done, int total) {
@@ -129,8 +128,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recognizedMatrixTitle => 'Что будет работать';
 
   @override
-  String get recognizedMatrixNote =>
-      'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.';
+  String get recognizedMatrixNote => 'Выключенная фича не прячет экран: он останется и объяснит, чего не хватает.';
 
   @override
   String get recognizedFeatureOn => 'работает';
@@ -222,12 +220,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get schemaSourceUser => 'схема пользователя';
 
   @override
-  String get schemaSourceBuiltin =>
-      'встроенная схема upstream — в спеке её нет';
+  String get schemaSourceBuiltin => 'встроенная схема upstream — в спеке её нет';
 
   @override
-  String get partialTrackerTitle =>
-      'Статусы трекера недоступны — показаны данные файлов спеки';
+  String get partialTrackerTitle => 'Статусы трекера недоступны — показаны данные файлов спеки';
 
   @override
   String get partialRetry => 'Повторить';
@@ -308,8 +304,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stageArchived => 'в архиве';
 
   @override
-  String get stageTooltip =>
-      'Стадия работы — из файлов change’а: артефакты схемы и отметки задач';
+  String get stageTooltip => 'Стадия работы — из файлов change’а: артефакты схемы и отметки задач';
 
   @override
   String marksOpenTask(String num) {
@@ -330,8 +325,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get nextStepReason =>
-      'иначе спринт не пройдёт проверку готовности при передаче';
+  String get nextStepReason => 'иначе спринт не пройдёт проверку готовности при передаче';
 
   @override
   String get nextStepCommand => 'открыть tasks_*.md в change\'ах';
@@ -342,8 +336,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get nextStepPlanningReason =>
-      'без этого артефакта change нельзя реализовать';
+  String get nextStepPlanningReason => 'без этого артефакта change нельзя реализовать';
 
   @override
   String nextStepApply(String change) {
@@ -354,8 +347,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nextStepApplyReason => 'артефакты написаны, задачи ещё открыты';
 
   @override
-  String get nextStepArchive =>
-      'Следующий шаг: сдать change’и в архив — все задачи закрыты';
+  String get nextStepArchive => 'Следующий шаг: сдать change’и в архив — все задачи закрыты';
 
   @override
   String get nextStepArchiveReason =>
@@ -519,8 +511,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Команда спеки для этого раздела — уйдёт в сессию, вывод и код возврата будут видны';
 
   @override
-  String get envKeysSection =>
-      'Ключи в .env — показывается только наличие, не значения';
+  String get envKeysSection => 'Ключи в .env — показывается только наличие, не значения';
 
   @override
   String get envReposSection => 'Репозитории';
@@ -529,8 +520,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envSystemsSection => 'Внешние системы';
 
   @override
-  String get envKeysNotDeclared =>
-      'Спека не объявляет ключей — нет .env.example, заполнять нечего';
+  String get envKeysNotDeclared => 'Спека не объявляет ключей — нет .env.example, заполнять нечего';
 
   @override
   String get envHintGitlabUrl => 'адрес GitLab';
@@ -548,8 +538,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envHintMattermostDevChannel => 'канал разработчиков';
 
   @override
-  String get envHintMattermostTeamChannel =>
-      'канал команды — уведомление о передаче';
+  String get envHintMattermostTeamChannel => 'канал команды — уведомление о передаче';
 
   @override
   String get envHintRole => 'роль машины';
@@ -615,8 +604,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionsTitle => 'Агентные сессии';
 
   @override
-  String get sessionsNote =>
-      'Диалоги Claude Code в headless-режиме появятся после экранов состояния.';
+  String get sessionsNote => 'Диалоги Claude Code в headless-режиме появятся после экранов состояния.';
 
   @override
   String get loaderMessage => 'Читаю состояние платформы…';
@@ -629,8 +617,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Консоль читает файлы спеки — openspec-репозитория команды (workspace.yaml, openspec/, .env). Укажите путь к локальной копии: подойдёт любая спека, не только avtoto-platform.';
 
   @override
-  String get setupFieldLabel =>
-      'Адрес репозитория спеки или путь к локальной копии';
+  String get setupFieldLabel => 'Адрес репозитория спеки или путь к локальной копии';
 
   @override
   String get cloneConnect => 'Подключить';
@@ -647,8 +634,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get cloneLocalHint =>
-      'Похоже на путь — откроем локальную копию, ничего не скачиваем';
+  String get cloneLocalHint => 'Похоже на путь — откроем локальную копию, ничего не скачиваем';
 
   @override
   String cloneMeasure(String volume, String speed) {
@@ -675,27 +661,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'По этому адресу репозитория нет или он вам не открыт. Проверьте адрес и доступ к проекту.';
 
   @override
-  String get cloneFailNetwork =>
-      'Хостинг не отвечает: нет сети или он недоступен с этой машины.';
+  String get cloneFailNetwork => 'Хостинг не отвечает: нет сети или он недоступен с этой машины.';
 
   @override
-  String get cloneFailGitMissing =>
-      'На машине не нашлось git — установите его и повторите.';
+  String get cloneFailGitMissing => 'На машине не нашлось git — установите его и повторите.';
 
   @override
-  String get cloneFailCancelled =>
-      'Клонирование отменено, недокачанный каталог убран.';
+  String get cloneFailCancelled => 'Клонирование отменено, недокачанный каталог убран.';
 
   @override
-  String get cloneFailUnknown =>
-      'Git не смог склонировать репозиторий. Его сообщение — ниже.';
+  String get cloneFailUnknown => 'Git не смог склонировать репозиторий. Его сообщение — ниже.';
 
   @override
   String get setupSave => 'Сохранить и продолжить';
 
   @override
-  String get setupError =>
-      'По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки';
+  String get setupError => 'По этому пути нет openspec/ или workspace.yaml — укажите корень репозитория спеки';
 
   @override
   String setupConfigHint(String path) {
@@ -743,8 +724,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get handoffReadinessUnknown =>
-      'Готовность неизвестна — статусы трекера не опрошены';
+  String get handoffReadinessUnknown => 'Готовность неизвестна — статусы трекера не опрошены';
 
   @override
   String handoffStatusNoKey(String tracker) {
@@ -831,8 +811,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get handoffSendButton => 'Отправить спринт тестировщику';
 
   @override
-  String get handoffSendUnknown =>
-      'недоступно: статусы трекера не опрошены — готовность неизвестна';
+  String get handoffSendUnknown => 'недоступно: статусы трекера не опрошены — готовность неизвестна';
 
   @override
   String handoffSendBlocked(int ready, int total) {
@@ -840,8 +819,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get handoffSendNotImplemented =>
-      'отправка появится в следующем этапе — через скрипты платформы';
+  String get handoffSendNotImplemented => 'отправка появится в следующем этапе — через скрипты платформы';
 
   @override
   String get handoverMsgTitle => 'Спринт передан на тестирование';
@@ -873,12 +851,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get handoverMsgOrder => 'Порядок проверки';
 
   @override
-  String handoverMsgTaskLine(
-    String issue,
-    String title,
-    String status,
-    String marks,
-  ) {
+  String handoverMsgTaskLine(String issue, String title, String status, String marks) {
     return '  $issue — $title — $status; задачи $marks';
   }
 
@@ -924,8 +897,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get sessionCliMissing =>
-      'Claude Code CLI не найден. Установите его и перезапустите приложение.';
+  String get sessionCliMissing => 'Claude Code CLI не найден. Установите его и перезапустите приложение.';
 
   @override
   String sessionWorkingDir(String dir) {
@@ -936,8 +908,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionCommandsTitle => 'Команды платформы';
 
   @override
-  String get sessionCommandsHint =>
-      'наберите / для подсказок — список и описания те же, что в терминале';
+  String get sessionCommandsHint => 'наберите / для подсказок — список и описания те же, что в терминале';
 
   @override
   String get sessionNewTooltip => 'Новая сессия';
@@ -970,8 +941,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionContinues => 'диалог продолжается — агент помнит контекст';
 
   @override
-  String get sessionKeyboardHint =>
-      '↑↓ — выбор, Tab — вставить, Enter — отправить, Esc — скрыть';
+  String get sessionKeyboardHint => '↑↓ — выбор, Tab — вставить, Enter — отправить, Esc — скрыть';
 
   @override
   String sessionArgumentsFor(String command) {
@@ -1108,8 +1078,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get handoffPickStack =>
-      'выберите стек в фильтре: передача идёт по одному стеку';
+  String get handoffPickStack => 'выберите стек в фильтре: передача идёт по одному стеку';
 
   @override
   String get handoffRecipientsResolve => 'Подобрать получателей';
@@ -1120,8 +1089,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get handoffRecipientsHint =>
-      'получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача';
+  String get handoffRecipientsHint => 'получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача';
 
   @override
   String handoffRecipientsSource(String tracker) {
@@ -1174,8 +1142,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sprintCreateTitle => 'Новый спринт';
 
   @override
-  String get sprintCreateNameLabel =>
-      'Идентификатор спринта (латиницей, через дефис)';
+  String get sprintCreateNameLabel => 'Идентификатор спринта (латиницей, через дефис)';
 
   @override
   String get sprintCreateBriefLabel => 'ТЗ: вставьте текст или приложите файл';
@@ -1192,12 +1159,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sprintCreateRun => 'Создать спринт';
 
   @override
-  String get sprintCreateHint =>
-      'Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.';
+  String get sprintCreateHint => 'Запустится /opsx-doc — агент составит мастер-спеку и файлы спринта в openspec/doc.';
 
   @override
-  String get sprintCreateNameError =>
-      'нужен идентификатор латиницей: например profile-v2';
+  String get sprintCreateNameError => 'нужен идентификатор латиницей: например profile-v2';
 
   @override
   String get sprintCreateBriefError => 'нужен текст ТЗ или приложенный файл';
@@ -1227,12 +1192,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get changeCreateTitle => 'Новый change в спринте';
 
   @override
-  String get changeCreateNameLabel =>
-      'Идентификатор change\'а (латиницей, через дефис)';
+  String get changeCreateNameLabel => 'Идентификатор change\'а (латиницей, через дефис)';
 
   @override
-  String get changeCreateBriefLabel =>
-      'Что нужно сделать — коротко или подробно';
+  String get changeCreateBriefLabel => 'Что нужно сделать — коротко или подробно';
 
   @override
   String get changeCreateHint =>
@@ -1299,8 +1262,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statusFromCache => 'из файла';
 
   @override
-  String get statusFromCacheHint =>
-      'Статус взят из файла change’а — трекер не опрошен';
+  String get statusFromCacheHint => 'Статус взят из файла change’а — трекер не опрошен';
 
   @override
   String changeFormatWarning(String detail) {
@@ -1328,8 +1290,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'спека не группирует change’и: нет спринтов (openspec/doc/<id>/sprint.yaml) и мастер-спек';
 
   @override
-  String get featureReasonNoBuildsFile =>
-      'спека не ведёт сборки — нет builds.yaml у группы';
+  String get featureReasonNoBuildsFile => 'спека не ведёт сборки — нет builds.yaml у группы';
 
   @override
   String get featureReasonNoStatusSemantics =>
@@ -1339,12 +1300,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featureReasonNoHandoverCommand => 'нет команды с ролью handover';
 
   @override
-  String get featureReasonNoRecipientsScript =>
-      'нет скрипта подбора получателей';
+  String get featureReasonNoRecipientsScript => 'нет скрипта подбора получателей';
 
   @override
-  String get featureReasonKeyNotInExample =>
-      'эта спека не настроена на работу с MR — GITLAB_TOKEN нет в .env.example';
+  String get featureReasonKeyNotInExample => 'эта спека не настроена на работу с MR — GITLAB_TOKEN нет в .env.example';
 
   @override
   String get featureReasonKeyEmpty => 'токен GitLab не заполнен на этой машине';
@@ -1412,16 +1371,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envEditStoreKeychain => 'Секреты сохраняются в Keychain';
 
   @override
-  String get envEditStoreLibsecret =>
-      'Секреты сохраняются в связку ключей системы';
+  String get envEditStoreLibsecret => 'Секреты сохраняются в связку ключей системы';
 
   @override
-  String get envEditStoreFile =>
-      'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600';
+  String get envEditStoreFile => 'Связки ключей на этой машине нет — секреты лежат в файле приложения с правами 0600';
 
   @override
-  String get envEditGitWarning =>
-      '.env не закрыт .gitignore — секреты могут уехать в репозиторий';
+  String get envEditGitWarning => '.env не закрыт .gitignore — секреты могут уехать в репозиторий';
 
   @override
   String envEditPath(String path) {
@@ -1448,29 +1404,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get featureBuildsTitle => 'Сборки';
 
   @override
-  String get featureBuildsWhy =>
-      'Показывает последнюю сборку каждого стека и предупреждает, когда её забыли записать.';
+  String get featureBuildsWhy => 'Показывает последнюю сборку каждого стека и предупреждает, когда её забыли записать.';
 
   @override
   String get featureMergeRequestsTitle => 'Код и merge request’ы';
 
   @override
-  String get featureMergeRequestsWhy =>
-      'Показывает MR change’а рядом с фактом влития коммита в целевую ветку.';
+  String get featureMergeRequestsWhy => 'Показывает MR change’а рядом с фактом влития коммита в целевую ветку.';
 
   @override
   String get featureChatTitle => 'Сообщения команде';
 
   @override
-  String get featureChatWhy =>
-      'Отправляет уведомление о передаче в канал команды после предпросмотра.';
+  String get featureChatWhy => 'Отправляет уведомление о передаче в канал команды после предпросмотра.';
 
   @override
   String get featureMultiStackTitle => 'Несколько стеков';
 
   @override
-  String get featureMultiStackWhy =>
-      'Разделяет задачи change’а по стекам и даёт переключатель стеков.';
+  String get featureMultiStackWhy => 'Разделяет задачи change’а по стекам и даёт переключатель стеков.';
 
   @override
   String gateProgress(String done, String total) {
@@ -1523,19 +1475,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reqChatKeysFilled => 'Ключи мессенджера на этой машине';
 
   @override
-  String get missingKeyTitle =>
-      'Ключа нет только на этой машине — спека тут не при чём';
+  String get missingKeyTitle => 'Ключа нет только на этой машине — спека тут не при чём';
 
   @override
-  String get missingKeyNote =>
-      'Значение уйдёт в хранилище секретов, а не в репозиторий';
+  String get missingKeyNote => 'Значение уйдёт в хранилище секретов, а не в репозиторий';
 
   @override
   String get gatePersonalTitle => 'Не настроено на этой машине';
 
   @override
-  String get gatePersonalNote =>
-      'Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.';
+  String get gatePersonalNote => 'Спека это поддерживает, а у вас ключ пустой. Полминуты — и фича заработает.';
 
   @override
   String get gatePersonalFill => 'Заполнить';
@@ -1586,8 +1535,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionPaletteTitle => 'КОМАНДЫ СПЕКИ';
 
   @override
-  String get sessionPaletteFooter =>
-      '↑↓ выбрать · Tab вставить в строку · Esc закрыть';
+  String get sessionPaletteFooter => '↑↓ выбрать · Tab вставить в строку · Esc закрыть';
 
   @override
   String sessionPaletteFilter(String filter, int shown, int total) {
@@ -1611,14 +1559,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get sessionNextStepContinue => 'Продолжить планирование';
+
+  @override
   String get sessionNextStepOpenChange => 'Открыть change';
 
   @override
   String get sessionNextStepOpenChangeHint => 'посмотреть, что осталось';
 
   @override
-  String get sessionTerminalHeightTooltip =>
-      'высота терминала — тяните границу';
+  String get sessionTerminalHeightTooltip => 'высота терминала — тяните границу';
 
   @override
   String get sessionCustomModel => 'Указать модель…';
@@ -1627,8 +1577,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionCustomModelTitle => 'Модель для сессии';
 
   @override
-  String get sessionCustomModelHint =>
-      'имя модели или псевдоним — уйдёт в --model как есть';
+  String get sessionCustomModelHint => 'имя модели или псевдоним — уйдёт в --model как есть';
 
   @override
   String get sessionDoneChecklist => 'ВЫПОЛНЕНО ПО ХОДУ';
@@ -1638,6 +1587,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get commandSourceClaude => '.claude';
+
+  @override
+  String get commandSourceSkill => 'скилл';
 
   @override
   String get commandSourceMirror => 'зеркало';
@@ -1659,6 +1611,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get roleHandover => 'Передача';
+
+  @override
+  String get roleArchive => 'Архивировать';
 
   @override
   String get navDocs => 'Документы';
@@ -1720,8 +1675,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get docsOpenInIde => 'Открыть в IDE';
 
   @override
-  String get docsOpenInIdeFailed =>
-      'Не нашли, чем открыть файл: установите редактор или откройте его вручную';
+  String get docsOpenInIdeFailed => 'Не нашли, чем открыть файл: установите редактор или откройте его вручную';
 
   @override
   String docsBranchClean(String branch) {

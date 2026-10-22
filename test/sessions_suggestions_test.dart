@@ -147,6 +147,15 @@ void main() {
       final suggestions = suggester(command, const ['biometric-opt-in'], '');
       expect(suggestions, isEmpty);
     });
+
+    test('opsx:apply без сигнатуры — change\'и по роли, propose — текст', () {
+      const apply = SlashCommand(id: 'opsx:apply', description: '');
+      expect(suggester(apply, const [], '').map((s) => s.value),
+          ['biometric-opt-in', 'pin-setup-flow']);
+      expect(suggester(apply, const ['biometric-opt-in'], ''), isEmpty);
+      const propose = SlashCommand(id: 'opsx:propose', description: '');
+      expect(suggester(propose, const [], ''), isEmpty);
+    });
   });
 
   group('Экран сессий', () {
