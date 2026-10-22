@@ -67,6 +67,7 @@ artifacts:
   write('openspec/changes/mtm-03/proposal.md', '## Зачем\n\nПисьма должны уходить всем.\n');
   write('openspec/changes/mtm-03/redmine.yaml', 'version: 3\nstacks: {}\n');
   write('openspec/changes/archive/2026-07-31-mtm-01/proposal.md', '## Что сделали\n\nПервый заход.\n');
+  write('openspec/specs/mailing/spec.md', '# Рассылка писем\n\n## Purpose\nПисьма уходят всем подписчикам.\n');
   return root;
 }
 
@@ -252,6 +253,8 @@ void main() {
 
       expect(find.text('Локальный вход'), findsOneWidget);
       expect(find.text('Рассылка'), findsNothing); // чужой спеки здесь нет
+      expect(find.text('Спецификации'), findsOneWidget);
+      expect(find.text('Рассылка писем'), findsOneWidget);
       expect(find.text('Архив'), findsOneWidget);
       expect(find.text('в архиве с 31 июля 2026'), findsOneWidget);
     });
@@ -313,6 +316,16 @@ void main() {
             .color,
         isNull,
       );
+    });
+
+    testWidgets('спецификация проекта открывается тем же просмотром', (tester) async {
+      await openScreen(tester);
+
+      await tester.tap(find.text('Спецификация'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Письма уходят всем подписчикам'), findsOneWidget);
+      expect(console.state.openedDoc?.path, endsWith(p.join('openspec', 'specs', 'mailing', 'spec.md')));
     });
 
     testWidgets('«Открыть в IDE» отдаёт редактору путь к файлу', (tester) async {

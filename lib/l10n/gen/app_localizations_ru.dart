@@ -414,6 +414,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get artifactMissing => 'объявлен схемой, файла нет';
 
   @override
+  String get artifactMissingFiles => 'объявлен схемой, файлов нет';
+
+  @override
   String get artifactSkipped => 'пропущен по .openspec.yaml';
 
   @override
@@ -1628,6 +1631,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get docsArchiveTitle => 'Архив';
+
+  @override
+  String get docsSpecsTitle => 'Спецификации';
+
+  @override
+  String get docsSpecFile => 'Спецификация';
 
   @override
   String docsArchivedAt(String date) {

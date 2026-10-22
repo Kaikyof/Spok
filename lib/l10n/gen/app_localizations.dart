@@ -739,6 +739,12 @@ abstract class AppLocalizations {
   /// **'объявлен схемой, файла нет'**
   String get artifactMissing;
 
+  /// No description provided for @artifactMissingFiles.
+  ///
+  /// In ru, this message translates to:
+  /// **'объявлен схемой, файлов нет'**
+  String get artifactMissingFiles;
+
   /// No description provided for @artifactSkipped.
   ///
   /// In ru, this message translates to:
@@ -2820,6 +2826,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Архив'**
   String get docsArchiveTitle;
+
+  /// No description provided for @docsSpecsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спецификации'**
+  String get docsSpecsTitle;
+
+  /// No description provided for @docsSpecFile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спецификация'**
+  String get docsSpecFile;
 
   /// No description provided for @docsArchivedAt.
   ///

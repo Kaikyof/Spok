@@ -29,6 +29,7 @@ Russian version: [CHANGELOG.ru.md](CHANGELOG.ru.md).
 - Work stage of a change derived from the spec files — planning, ready to apply, in progress, done, archived — in the group table and the change card header; for a spec without stacks the next step follows the stage.
 - After a session on a change, the next step follows its stage: archive a done change, continue planning, or apply a ready one. The next-step banner of a done change now carries the archive command.
 - Commands and skills are also read from other tools' directories — `.agents/skills`, `.opencode`, `.github/prompts`; copies of the same command appear once.
+- Docs screen: a "Specifications" node with `openspec/specs/` by directory, and change deltas — each `specs/**` file on its own row marked ADDED, MODIFIED, REMOVED or RENAMED.
 
 ### Changed
 
