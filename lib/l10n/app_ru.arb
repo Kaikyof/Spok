@@ -255,6 +255,7 @@
   },
   "artifactReady": "можно писать",
   "artifactMissing": "объявлен схемой, файла нет",
+  "artifactMissingFiles": "объявлен схемой, файлов нет",
   "artifactSkipped": "пропущен по .openspec.yaml",
   "codeOffSpec": "Эта спека не настроена на работу с MR",
   "codeOffPersonal": "Чтобы видеть MR, введите свой токен GitLab",
@@ -1047,6 +1048,8 @@
     }
   },
   "docsArchiveTitle": "Архив",
+  "docsSpecsTitle": "Спецификации",
+  "docsSpecFile": "Спецификация",
   "docsArchivedAt": "в архиве с {date}",
   "@docsArchivedAt": {
     "placeholders": { "date": { "type": "String" } }

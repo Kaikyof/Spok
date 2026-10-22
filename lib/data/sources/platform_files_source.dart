@@ -337,7 +337,8 @@ class PlatformFilesSource {
 
   /// Дерево документов: группа → её change'и → файлы артефактов схемы.
   /// Мастер-спека, лежащая одним файлом, — это документ самой группы,
-  /// у неё нет каталога. Архив идёт отдельным узлом в конце.
+  /// у неё нет каталога. После групп — спецификации проекта, источник
+  /// правды upstream; архив идёт отдельным узлом в конце.
   List<DocNode> loadDocTree(List<Group> groups, List<ChangeUnit> changes, {List<ChangeUnit> archived = const []}) {
     final nodes = [
       for (final group in groups)
@@ -361,6 +362,7 @@ class PlatformFilesSource {
           ],
         ),
     ];
+    nodes.addAll([?_specsNode()]);
     if (archived.isNotEmpty) {
       nodes.add(
         DocNode(
@@ -376,6 +378,53 @@ class PlatformFilesSource {
 
   /// Идентификатор узла архива — заголовок ему даёт слой представления.
   static const archiveNodeId = '::archive';
+
+  /// Идентификатор узла спецификаций — заголовок тоже от представления.
+  static const specsNodeId = '::specs';
+
+  /// Узел `openspec/specs/`; null — спецификаций нет, и узла в дереве нет.
+  DocNode? _specsNode() {
+    final dir = Directory(p.join(root.path, 'openspec', 'specs'));
+    if (!dir.existsSync()) return null;
+    final children = _specDirNodes(dir, dir);
+    if (children.isEmpty) return null;
+    return DocNode(id: specsNodeId, title: '', kind: DocNodeKind.specs, children: children);
+  }
+
+  /// Каталоги спецификаций по вложенности: `identity/user-auth/spec.md` —
+  /// узел `identity` с ребёнком `user-auth`. Каталог без `spec.md` где-либо
+  /// внутри в дерево не попадает.
+  List<DocNode> _specDirNodes(Directory dir, Directory specsRoot) {
+    final subdirs = dir.listSync().whereType<Directory>().toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
+    return [
+      for (final subdir in subdirs) ?_specDirNode(subdir, specsRoot),
+    ];
+  }
+
+  /// Первый заголовок первого уровня; нет его — null, а не первая строка:
+  /// у спецификации без H1 имя ей даёт каталог.
+  String? _h1Of(File file) {
+    final heading = file.readAsLinesSync().where((line) => line.startsWith('# ')).firstOrNull;
+    final title = heading?.substring(2).trim() ?? '';
+    return title.isEmpty ? null : title;
+  }
+
+  DocNode? _specDirNode(Directory dir, Directory specsRoot) {
+    final spec = File(p.join(dir.path, 'spec.md'));
+    final children = _specDirNodes(dir, specsRoot);
+    if (!spec.existsSync() && children.isEmpty) return null;
+    final name = p.basename(dir.path);
+    return DocNode(
+      id: p.relative(dir.path, from: specsRoot.path),
+      title: (spec.existsSync() ? _h1Of(spec) : null) ?? name,
+      kind: DocNodeKind.specs,
+      docs: [
+        if (spec.existsSync()) DocArtifact('spec.md', 'spec.md', spec.path, true, id: DocArtifact.specFileId),
+      ],
+      children: children,
+    );
+  }
 
   DocNode _changeDocNode(ChangeUnit change) => DocNode(
     id: change.id,
@@ -397,7 +446,9 @@ class PlatformFilesSource {
     final schema = _docSchemaOf(change);
     final declared = [
       for (final artifact in schema.artifacts)
-        if (artifact.isSingleFile && (!change.archived || File(p.join(change.dir, artifact.generates)).existsSync()))
+        if (!artifact.isSingleFile)
+          ..._maskDocs(change, artifact)
+        else if (!change.archived || File(p.join(change.dir, artifact.generates)).existsSync())
           DocArtifact(
             artifact.description.isEmpty ? artifact.id : artifact.description,
             artifact.generates,
@@ -414,6 +465,44 @@ class PlatformFilesSource {
           DocArtifact(p.basenameWithoutExtension(p.basename(entry.path)), p.basename(entry.path), entry.path, true),
     ]..sort((a, b) => a.fileName.compareTo(b.fileName));
     return [...declared, ...extra];
+  }
+
+  /// Артефакт-маска (`specs/**/*.md`) — по строке на каждый файл с путём
+  /// от каталога change'а. Файлов нет — одна строка «не написан» у
+  /// активного change'а; у архивного её нет: работа сдана.
+  List<DocArtifact> _maskDocs(ChangeUnit change, SchemaArtifact artifact) {
+    final files = artifact.filesIn(change.dir);
+    if (files.isEmpty) {
+      if (change.archived) return const [];
+      final label = artifact.description.isEmpty ? artifact.id : artifact.description;
+      final base = artifact.generates.split('*').first;
+      return [DocArtifact(label, artifact.generates, p.join(change.dir, base), false, id: artifact.id)];
+    }
+    return [
+      for (final path in files)
+        DocArtifact(
+          p.relative(path, from: change.dir),
+          p.relative(path, from: change.dir),
+          path,
+          true,
+          id: '${artifact.id}:${p.relative(path, from: change.dir)}',
+          operations: _deltaOperations(File(path)),
+        ),
+    ];
+  }
+
+  /// Операции дельты по заголовкам `## ADDED Requirements` и подобным —
+  /// в порядке появления, без повторов.
+  List<String> _deltaOperations(File file) {
+    final heading = RegExp(r'^##\s+(ADDED|MODIFIED|REMOVED|RENAMED)\b');
+    final operations = <String>[];
+    for (final line in file.readAsLinesSync()) {
+      final match = heading.firstMatch(line);
+      if (match != null && !operations.contains(match.group(1))) {
+        operations.add(match.group(1)!);
+      }
+    }
+    return operations;
   }
 
   /// Порядок сдачи задан списком group.members — он общий у всех change'ей.

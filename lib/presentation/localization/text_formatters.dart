@@ -42,6 +42,8 @@ extension DomainTextFormatters on AppLocalizations {
   String docLabel(DocArtifact doc) => switch (doc.id) {
     DocArtifact.masterDocId => docsMasterDoc,
     DocArtifact.groupDocId => docsGroupDoc,
+    DocArtifact.specFileId => docsSpecFile,
+    'specs' => artifactSpecs,
     'proposal' => artifactSpec,
     'design' => artifactDesign,
     final id when id.startsWith('tasks-') => artifactTasksOfStack(stackLabel(id.substring(6))),

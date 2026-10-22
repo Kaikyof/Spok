@@ -248,6 +248,7 @@ class _NodeHeader extends StatelessWidget {
         DocNodeKind.archivedChange when node.children.isNotEmpty =>
           texts.docsArchiveTitle,
         DocNodeKind.group when node.title.isEmpty => texts.docsUngrouped,
+        DocNodeKind.specs when node.title.isEmpty => texts.docsSpecsTitle,
         _ => node.title.isEmpty ? node.id : node.title,
       };
 
@@ -267,6 +268,8 @@ class _NodeHeader extends StatelessWidget {
         id.isEmpty ? texts.docsArchivedNoDate : '$id · ${texts.docsArchivedNoDate}',
       DocNodeKind.change => id,
       DocNodeKind.group => node.branch,
+      // У каталога спецификаций — путь, если заголовок взят из H1.
+      DocNodeKind.specs => id,
     };
   }
 }
@@ -308,8 +311,18 @@ class _DocRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  texts.docLabel(doc),
+                Text.rich(
+                  TextSpan(
+                    text: texts.docLabel(doc),
+                    children: [
+                      // Операция дельты рядом с путём: «specs/auth/spec.md · ADDED».
+                      if (doc.operations.isNotEmpty)
+                        TextSpan(
+                          text: ' · ${doc.operations.join(', ')}',
+                          style: AppTextStyles.monospace(10.5, color: AppColors.textMuted),
+                        ),
+                    ],
+                  ),
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
@@ -320,7 +333,10 @@ class _DocRow extends StatelessWidget {
                 ),
                 if (!doc.exists) ...[
                   const SizedBox(height: 2),
-                  Text(texts.artifactMissing, style: AppTextStyles.hint),
+                  Text(
+                    doc.fileName.contains('*') ? texts.artifactMissingFiles : texts.artifactMissing,
+                    style: AppTextStyles.hint,
+                  ),
                 ],
               ],
             ),

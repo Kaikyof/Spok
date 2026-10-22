@@ -1,7 +1,8 @@
 import 'doc_artifact.dart';
 
-/// Что за узел дерева документов: группа работы, change или архивный change.
-enum DocNodeKind { group, change, archivedChange }
+/// Что за узел дерева документов: группа работы, change, архивный change
+/// или каталог спецификаций проекта (`openspec/specs/`).
+enum DocNodeKind { group, change, archivedChange, specs }
 
 /// Узел дерева документов спеки.
 ///
