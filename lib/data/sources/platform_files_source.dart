@@ -182,13 +182,6 @@ class PlatformFilesSource {
       File(p.join(root.path, 'openspec', 'redmine.yaml')),
       ['defaults', 'project_id']);
 
-  /// Улика трекера: спека им пользуется, если объявила семантику статусов
-  /// (`openspec/redmine.yaml`) или адрес системы в `.env.example`. Без
-  /// улики трекер не опрашивается, и его отсутствие — не нехватка.
-  bool get trackerDeclared =>
-      trackerFile.isNotEmpty ||
-      loadEnvExampleKeys().any((example) => example.key == 'REDMINE_URL');
-
   // ─── Группы ────────────────────────────────────────────────────────────────
 
   /// Группы change'ей: спринты (каталог со `sprint.yaml`), иначе мастер-спеки

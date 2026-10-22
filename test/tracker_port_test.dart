@@ -162,12 +162,12 @@ void main() {
         'полосы и строки статусов в разборе нет', () async {
       final root = buildUpstreamSpec()..also(roots.add);
       final source = PlatformFilesSource(root);
-      expect(source.trackerDeclared, isFalse);
+      const resolver = RedmineTrackerResolver();
+      expect(resolver.declaredIn(source), isFalse);
 
       // Настоящий резолвер: улики нет — адаптера нет, и ни один запрос
       // к трекеру не делается.
-      final repository = PlatformRepositoryImpl(source,
-          trackers: const RedmineTrackerResolver());
+      final repository = PlatformRepositoryImpl(source, trackers: resolver);
       final snapshot = await repository.load();
 
       expect(snapshot.trackerProblem, TrackerProblem.notDeclared);
@@ -200,7 +200,7 @@ void main() {
         () async {
       final root = _buildTrackedSpec()..also(roots.add);
       final source = PlatformFilesSource(root);
-      expect(source.trackerDeclared, isTrue);
+      expect(const RedmineTrackerResolver().declaredIn(source), isTrue);
 
       final snapshot = await PlatformRepositoryImpl(source).load();
 
@@ -224,10 +224,11 @@ void main() {
         ..also(roots.add);
       Directory(p.join(root.path, 'openspec')).createSync();
       final source = PlatformFilesSource(root);
-      expect(source.trackerDeclared, isFalse);
+      const resolver = RedmineTrackerResolver();
+      expect(resolver.resolve(source, const {}), isNull);
 
       File(p.join(root.path, '.env.example')).writeAsStringSync('REDMINE_URL=\n');
-      expect(source.trackerDeclared, isTrue);
+      expect(resolver.resolve(source, const {}), isNotNull);
     });
   });
 

@@ -360,7 +360,8 @@ class PlatformRepositoryImpl implements PlatformRepository {
       divergences: findDivergences(groups.firstOrNull, changes, semantics),
       env: env,
       docs: source.loadDocTree(groups, changes, archived: archived),
-      profile: _buildProfile(source, groups, changes, semantics, env),
+      profile: _buildProfile(source, groups, changes, semantics, env,
+          trackerDeclared: tracker != null),
       trackerProblem: trackerProblem,
       trackerProblemDetail: trackerDetail,
       trackerName: tracker?.name ?? '',
@@ -377,8 +378,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
     List<Group> groups,
     List<ChangeUnit> changes,
     StatusSemantics semantics,
-    EnvReport envReport,
-  ) {
+    EnvReport envReport, {
+    required bool trackerDeclared,
+  }) {
     final schema = source.loadSchema();
     final exampleKeys = {
       for (final example in source.loadEnvExampleKeys()) example.key
@@ -429,6 +431,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         grouping: grouping,
         stacks: ordered,
         semantics: semantics,
+        trackerDeclared: trackerDeclared,
       ),
     );
   }
@@ -452,6 +455,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     required GroupingKind grouping,
     required List<String> stacks,
     required StatusSemantics semantics,
+    required bool trackerDeclared,
   }) {
     final commands = source.loadSlashCommands();
     final services = source.allServices();
@@ -496,9 +500,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
         lookedIn: 'schema.yaml → tasks-<stack>',
         sourcePath: schemaFile,
       ),
-      // Статусы трекера разбираются только там, где трекер объявлен:
-      // у спеки без него строка «не распознано» была бы ложной нехваткой.
-      if (source.trackerDeclared)
+      // Статусы трекера разбираются только там, где резолвер нашёл
+      // трекер: у спеки без него строка «не распознано» была бы ложной
+      // нехваткой.
+      if (trackerDeclared)
         RecognizedItem(
           part: RecognizedPart.statuses,
           recognized: !semantics.isEmpty,
