@@ -58,8 +58,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: const [], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: const [], groupIds: const []);
 
   @override
   String? get rootPath => '/tmp/spec';
@@ -83,13 +82,10 @@ class _FakeRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -113,8 +109,7 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
@@ -123,56 +118,48 @@ class _FakeRepository implements PlatformRepository {
 ConsoleSnapshot _snapshot({
   List<ChangeUnit> changes = const [],
   List<Group> groups = const [],
-  RedmineProblem problem = RedmineProblem.none,
+  TrackerProblem problem = TrackerProblem.none,
   String problemDetail = '',
   SpecRecognition recognition = _fullRecognition,
-}) =>
-    ConsoleSnapshot(
-      groups: groups,
-      changes: changes,
-      divergences: const [],
-      env: const EnvReport(keys: [], repos: [], systems: []),
-      profile: ProjectProfile(
-        schema: _schema,
-        stacks: const ['backend'],
-        statuses: StatusSemantics.empty,
-        recognition: recognition,
-      ),
-      redmineProblem: problem,
-      redmineProblemDetail: problemDetail,
-      refreshedAt: DateTime.now(),
-    );
+}) => ConsoleSnapshot(
+  groups: groups,
+  changes: changes,
+  divergences: const [],
+  env: const EnvReport(keys: [], repos: [], systems: []),
+  profile: ProjectProfile(
+    schema: _schema,
+    stacks: const ['backend'],
+    statuses: StatusSemantics.empty,
+    recognition: recognition,
+  ),
+  trackerProblem: problem,
+  trackerProblemDetail: problemDetail,
+  refreshedAt: DateTime.now(),
+);
 
 /// Плёнка под курсором — единственный видимый признак наведения: `InkWell`
 /// рисовал чернила за непрозрачным фоном карточки, и их не было видно.
 Color? _overlayOf(WidgetTester tester, Finder tappable) {
-  final container = tester.widget<Container>(find
-      .descendant(of: tappable, matching: find.byType(Container))
-      .first);
+  final container = tester.widget<Container>(find.descendant(of: tappable, matching: find.byType(Container)).first);
   final decoration = container.foregroundDecoration as BoxDecoration?;
   return decoration?.color;
 }
 
 MouseCursor _cursorOf(WidgetTester tester, Finder tappable) =>
-    tester
-        .widget<MouseRegion>(
-            find.descendant(of: tappable, matching: find.byType(MouseRegion)).first)
-        .cursor;
+    tester.widget<MouseRegion>(find.descendant(of: tappable, matching: find.byType(MouseRegion)).first).cursor;
 
 void main() {
   group('Фидбэк наведения', () {
-    testWidgets('нажимаемое место меняет курсор и подсвечивается',
-        (tester) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Tappable(
-              onTap: () {},
-              child: const SizedBox(width: 120, height: 40),
+    testWidgets('нажимаемое место меняет курсор и подсвечивается', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: Tappable(onTap: () {}, child: const SizedBox(width: 120, height: 40)),
             ),
           ),
         ),
-      ));
+      );
       final tappable = find.byType(Tappable);
 
       expect(_cursorOf(tester, tappable), SystemMouseCursors.click);
@@ -193,13 +180,13 @@ void main() {
     });
 
     testWidgets('выключенное место не обещает нажатия', (tester) async {
-      await tester.pumpWidget(const MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Tappable(child: SizedBox(width: 120, height: 40)),
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(child: Tappable(child: SizedBox(width: 120, height: 40))),
           ),
         ),
-      ));
+      );
       final tappable = find.byType(Tappable);
 
       expect(_cursorOf(tester, tappable), MouseCursor.defer);
@@ -213,22 +200,20 @@ void main() {
       expect(_overlayOf(tester, tappable), isNull);
     });
 
-    testWidgets('когда жест берёт родитель, нажатие до него доходит',
-        (tester) async {
+    testWidgets('когда жест берёт родитель, нажатие до него доходит', (tester) async {
       var taps = 0;
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: GestureDetector(
-              onTap: () => taps++,
-              child: const Tappable(
-                tapHandledAbove: true,
-                child: SizedBox(width: 120, height: 40),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: GestureDetector(
+                onTap: () => taps++,
+                child: const Tappable(tapHandledAbove: true, child: SizedBox(width: 120, height: 40)),
               ),
             ),
           ),
         ),
-      ));
+      );
       final tappable = find.byType(Tappable);
 
       expect(_cursorOf(tester, tappable), SystemMouseCursors.click);
@@ -236,26 +221,28 @@ void main() {
       expect(taps, 1);
     });
 
-    testWidgets('карточка change\'а на живом экране отвечает на наведение',
-        (tester) async {
+    testWidgets('карточка change\'а на живом экране отвечает на наведение', (tester) async {
       final repository = _FakeRepository(
-          snapshot: _snapshot(
-        groups: [
-          const Group(
-              id: 'sp-1',
-              title: 'Спринт 1',
-              kind: GroupingKind.sprintDir,
-              changeIds: ['mtm-03'])
-        ],
-        changes: [
-          ChangeUnit(id: 'mtm-03', title: 'Рассылка', dir: '/tmp', stackStates: {
-            'backend': StackState(
-                stack: 'backend',
-                cachedStatus: 'В работе',
-                tasks: const [TaskItem('1.1', 'Шаг', false)]),
-          }),
-        ],
-      ));
+        snapshot: _snapshot(
+          groups: [
+            const Group(id: 'sp-1', title: 'Спринт 1', kind: GroupingKind.sprintDir, changeIds: ['mtm-03']),
+          ],
+          changes: [
+            ChangeUnit(
+              id: 'mtm-03',
+              title: 'Рассылка',
+              dir: '/tmp',
+              stackStates: {
+                'backend': StackState(
+                  stack: 'backend',
+                  cachedStatus: 'В работе',
+                  tasks: const [TaskItem('1.1', 'Шаг', false)],
+                ),
+              },
+            ),
+          ],
+        ),
+      );
       final console = ConsoleBloc(repository);
       final sessions = SessionsBloc(repository);
       addTearDown(console.close);
@@ -263,28 +250,28 @@ void main() {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: console),
-            BlocProvider.value(value: sessions),
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
           ],
-          child: const GroupScreen(),
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: console),
+              BlocProvider.value(value: sessions),
+            ],
+            child: const GroupScreen(),
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
-      final row = find
-          .ancestor(of: find.text('Рассылка'), matching: find.byType(Tappable))
-          .first;
+      final row = find.ancestor(of: find.text('Рассылка'), matching: find.byType(Tappable)).first;
       expect(_cursorOf(tester, row), SystemMouseCursors.click);
 
       final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);

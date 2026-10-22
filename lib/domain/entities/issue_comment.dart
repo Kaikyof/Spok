@@ -1,4 +1,4 @@
-/// Комментарий в задаче Redmine — лента, по которой общаются
+/// Комментарий в задаче трекера — лента, по которой общаются
 /// разработчик и тестировщик.
 class IssueComment {
   final int issueId;
@@ -6,10 +6,5 @@ class IssueComment {
   final DateTime createdAt;
   final String text;
 
-  const IssueComment({
-    required this.issueId,
-    required this.author,
-    required this.createdAt,
-    required this.text,
-  });
+  const IssueComment({required this.issueId, required this.author, required this.createdAt, required this.text});
 }

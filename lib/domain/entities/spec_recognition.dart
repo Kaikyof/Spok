@@ -38,12 +38,17 @@ class RecognizedItem {
   /// пяти мест) или файла в спеке нет вовсе.
   final String sourcePath;
 
+  /// Уточнение к значению — данные, не текст: у схемы это источник
+  /// (`project` · `user` · `builtin`), откуда она взята.
+  final String qualifier;
+
   const RecognizedItem({
     required this.part,
     required this.recognized,
     this.value = '',
     this.lookedIn = '',
     this.sourcePath = '',
+    this.qualifier = '',
   });
 }
 
@@ -59,8 +64,10 @@ class SpecRecognition {
 
   static const empty = SpecRecognition([]);
 
-  List<RecognizedItem> get unrecognized =>
-      [for (final item in items) if (!item.recognized) item];
+  List<RecognizedItem> get unrecognized => [
+    for (final item in items)
+      if (!item.recognized) item,
+  ];
 
   int get recognizedCount => items.where((item) => item.recognized).length;
 

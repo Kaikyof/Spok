@@ -39,7 +39,7 @@ void main() {
     expect(stack.doneCount, 2);
     expect(stack.tasks.length, 3);
     expect(stack.issueId, isNull);
-    expect(stack.redmineStatus, isNull);
+    expect(stack.trackerStatus, isNull);
   });
 
   test('список через звёздочку, вложенность, чужая отметка, ссылка', () {
@@ -68,14 +68,7 @@ void main() {
 ''');
     final tasks = singleStack().tasks;
     expect(tasks.length, 6);
-    expect(tasks.map((task) => task.done), [
-      true,
-      false,
-      true,
-      true,
-      false,
-      true,
-    ]);
+    expect(tasks.map((task) => task.done), [true, false, true, true, false, true]);
     expect(tasks[3].number, '2.1');
     expect(tasks[3].title, 'Нумерованный маркер');
   });
@@ -92,10 +85,7 @@ void main() {
   });
 
   test('CRLF: задачи посчитаны, текст без \\r', () {
-    write(
-      'openspec/changes/a/tasks.md',
-      '- [x] 1.1 Первая\r\n- [ ] 1.2 Вторая\r\n',
-    );
+    write('openspec/changes/a/tasks.md', '- [x] 1.1 Первая\r\n- [ ] 1.2 Вторая\r\n');
     final tasks = singleStack().tasks;
     expect(tasks.length, 2);
     expect(tasks.last.title, 'Вторая');

@@ -17,7 +17,7 @@ class Divergence {
   final String changeId;
   final String changeTitle;
   final String stack; // ios | android
-  final String? redmineStatus;
+  final String? trackerStatus;
   final List<String> openTaskNumbers;
   final int doneCount;
   final int totalCount;
@@ -27,7 +27,7 @@ class Divergence {
     required this.changeId,
     required this.changeTitle,
     required this.stack,
-    this.redmineStatus,
+    this.trackerStatus,
     this.openTaskNumbers = const [],
     this.doneCount = 0,
     this.totalCount = 0,

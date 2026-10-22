@@ -33,12 +33,8 @@ const _schema = SpecSchema(
   name: 'test-schema',
   artifacts: [
     SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-    SchemaArtifact(
-        id: 'design', generates: 'design.md', requires: ['proposal']),
-    SchemaArtifact(
-        id: 'tasks-backend',
-        generates: 'tasks_backend.md',
-        requires: ['design']),
+    SchemaArtifact(id: 'design', generates: 'design.md', requires: ['proposal']),
+    SchemaArtifact(id: 'tasks-backend', generates: 'tasks_backend.md', requires: ['design']),
   ],
 );
 
@@ -48,41 +44,28 @@ class _FakeRepository implements PlatformRepository {
   _FakeRepository(this.changeDir);
 
   ChangeUnit get change => ChangeUnit(
-        id: 'mtm-03',
-        title: 'Рассылка из мастер-тикета',
-        dir: changeDir.path,
-        stackStates: {
-          'backend': StackState(
-            stack: 'backend',
-            issueId: 63592,
-            cachedStatus: 'В работе',
-            tasks: const [
-              TaskItem('1.1', 'Собрать получателей', true),
-              TaskItem('1.2', 'Отправить письмо', false),
-            ],
-          ),
-        },
-      );
+    id: 'mtm-03',
+    title: 'Рассылка из мастер-тикета',
+    dir: changeDir.path,
+    stackStates: {
+      'backend': StackState(
+        stack: 'backend',
+        issueId: 63592,
+        cachedStatus: 'В работе',
+        tasks: const [TaskItem('1.1', 'Собрать получателей', true), TaskItem('1.2', 'Отправить письмо', false)],
+      ),
+    },
+  );
 
   @override
   List<SlashCommand> slashCommands() => const [
-        SlashCommand(
-            id: 'opsx-apply',
-            description: 'Реализация задач change\'а',
-            argumentHint: '[change] [stack]'),
-        SlashCommand(
-            id: 'opsx-submit',
-            description: 'Отдать на ревью',
-            argumentHint: '[change] [stack]'),
-        SlashCommand(
-            id: 'opsx-explore',
-            description: 'Разобраться в спеке',
-            argumentHint: ''),
-      ];
+    SlashCommand(id: 'opsx-apply', description: 'Реализация задач change\'а', argumentHint: '[change] [stack]'),
+    SlashCommand(id: 'opsx-submit', description: 'Отдать на ревью', argumentHint: '[change] [stack]'),
+    SlashCommand(id: 'opsx-explore', description: 'Разобраться в спеке', argumentHint: ''),
+  ];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: ['mtm-03'], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: ['mtm-03'], groupIds: const []);
 
   @override
   String? get rootPath => changeDir.parent.path;
@@ -95,43 +78,33 @@ class _FakeRepository implements PlatformRepository {
 
   /// Вторая группа со своим change'ем: между ними переключаются в шапке.
   ChangeUnit get otherChange => ChangeUnit(
-        id: 'mtm-04',
-        title: 'Письмо поставщику',
-        dir: changeDir.path,
-        groupId: 'supplier',
-        stackStates: {
-          'backend': StackState(
-              stack: 'backend', tasks: const [TaskItem('1.1', 'Шаблон', false)]),
-        },
-      );
+    id: 'mtm-04',
+    title: 'Письмо поставщику',
+    dir: changeDir.path,
+    groupId: 'supplier',
+    stackStates: {
+      'backend': StackState(stack: 'backend', tasks: const [TaskItem('1.1', 'Шаблон', false)]),
+    },
+  );
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
-        groups: const [
-          Group(
-              id: 'broadcast',
-              title: 'Рассылка',
-              kind: GroupingKind.masterDoc,
-              changeIds: ['mtm-03']),
-          Group(
-              id: 'supplier',
-              title: 'Поставщики',
-              kind: GroupingKind.masterDoc,
-              changeIds: ['mtm-04']),
-        ],
-        changes: [change, otherChange],
-        divergences: const [],
-        env: const EnvReport(keys: [], repos: [], systems: []),
-        profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
-        redmineProblem: RedmineProblem.none,
-        refreshedAt: DateTime.now(),
-      );
+    groups: const [
+      Group(id: 'broadcast', title: 'Рассылка', kind: GroupingKind.masterDoc, changeIds: ['mtm-03']),
+      Group(id: 'supplier', title: 'Поставщики', kind: GroupingKind.masterDoc, changeIds: ['mtm-04']),
+    ],
+    changes: [change, otherChange],
+    divergences: const [],
+    env: const EnvReport(keys: [], repos: [], systems: []),
+    profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
+    trackerProblem: TrackerProblem.none,
+    refreshedAt: DateTime.now(),
+  );
 
   @override
   // Синхронное чтение: в фейковом времени теста настоящий ввод-вывод
   // не успевает завершиться до проверок.
-  Future<String> readDoc(String absolutePath) async =>
-      File(absolutePath).readAsStringSync();
+  Future<String> readDoc(String absolutePath) async => File(absolutePath).readAsStringSync();
 
   @override
   Future<DocState> docState(String absolutePath) async => DocState.unknown;
@@ -143,13 +116,10 @@ class _FakeRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -173,32 +143,31 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
 }
 
 Widget _wrap(ConsoleBloc console, SessionsBloc sessions) => MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ru'),
+  home: Scaffold(
+    body: MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: console),
+        BlocProvider.value(value: sessions),
       ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      home: Scaffold(
-        body: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: console),
-            BlocProvider.value(value: sessions),
-          ],
-          child: const ChangeScreen(),
-        ),
-      ),
-    );
+      child: const ChangeScreen(),
+    ),
+  ),
+);
 
 void main() {
   group('Карточка change', () {
@@ -210,8 +179,7 @@ void main() {
 
     setUp(() {
       root = Directory.systemTemp.createTempSync('change-card-test');
-      changeDir = Directory('${root.path}/openspec/changes/mtm-03')
-        ..createSync(recursive: true);
+      changeDir = Directory('${root.path}/openspec/changes/mtm-03')..createSync(recursive: true);
       repository = _FakeRepository(changeDir);
     });
 
@@ -231,10 +199,8 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('главный текст карточки — спека изменения, не задачи',
-        (tester) async {
-      File('${changeDir.path}/proposal.md')
-          .writeAsStringSync('## Зачем\n\nПисьма должны уходить всем.');
+    testWidgets('главный текст карточки — спека изменения, не задачи', (tester) async {
+      File('${changeDir.path}/proposal.md').writeAsStringSync('## Зачем\n\nПисьма должны уходить всем.');
       await openCard(tester);
 
       expect(find.text('Спека изменения'), findsOneWidget);
@@ -243,22 +209,21 @@ void main() {
       expect(find.textContaining('Собрать получателей'), findsOneWidget);
     });
 
-    testWidgets('спеки нет — говорим об этом и показываем ожидаемый файл',
-        (tester) async {
+    testWidgets('спеки нет — говорим об этом и показываем ожидаемый файл', (tester) async {
       await openCard(tester);
 
       expect(find.text('Спека ещё не написана'), findsOneWidget);
       expect(find.textContaining('proposal.md'), findsWidgets);
     });
 
-    testWidgets('длинная спека складывается, а не заводит вторую прокрутку',
-        (tester) async {
+    testWidgets('длинная спека складывается, а не заводит вторую прокрутку', (tester) async {
       // Спека заведомо выше сложенного вида (420 точек).
-      File('${changeDir.path}/proposal.md').writeAsStringSync([
-        '## Зачем',
-        for (var line = 0; line < 80; line++)
-          'Строка $line: письма должны уходить всем получателям.',
-      ].join('\n\n'));
+      File('${changeDir.path}/proposal.md').writeAsStringSync(
+        [
+          '## Зачем',
+          for (var line = 0; line < 80; line++) 'Строка $line: письма должны уходить всем получателям.',
+        ].join('\n\n'),
+      );
       await openCard(tester);
 
       // Колесо над текстом спеки двигает страницу. Раньше спека жила
@@ -267,8 +232,7 @@ void main() {
       final page = tester.state<ScrollableState>(find.byType(Scrollable).first);
       expect(page.position.pixels, 0);
 
-      final pointer = TestPointer(1, PointerDeviceKind.mouse)
-        ..hover(tester.getCenter(find.byType(Markdown)));
+      final pointer = TestPointer(1, PointerDeviceKind.mouse)..hover(tester.getCenter(find.byType(Markdown)));
       await tester.sendEventToBinding(pointer.scroll(const Offset(0, 300)));
       await tester.pump();
 
@@ -276,13 +240,13 @@ void main() {
       expect(find.text('Развернуть здесь'), findsOneWidget);
     });
 
-    testWidgets('спека разворачивается и сворачивается на месте',
-        (tester) async {
-      File('${changeDir.path}/proposal.md').writeAsStringSync([
-        '## Зачем',
-        for (var line = 0; line < 80; line++)
-          'Строка $line: письма должны уходить всем получателям.',
-      ].join('\n\n'));
+    testWidgets('спека разворачивается и сворачивается на месте', (tester) async {
+      File('${changeDir.path}/proposal.md').writeAsStringSync(
+        [
+          '## Зачем',
+          for (var line = 0; line < 80; line++) 'Строка $line: письма должны уходить всем получателям.',
+        ].join('\n\n'),
+      );
       await openCard(tester);
 
       await tester.tap(find.text('Развернуть здесь'));
@@ -299,13 +263,19 @@ void main() {
       expect(find.text('Развернуть здесь'), findsOneWidget);
     });
 
-    testWidgets('короткой спеке разворачивать нечего — кнопки нет',
-        (tester) async {
-      File('${changeDir.path}/proposal.md')
-          .writeAsStringSync('## Зачем\n\nПисьма должны уходить всем.');
+    testWidgets('короткой спеке разворачивать нечего — кнопки нет', (tester) async {
+      File('${changeDir.path}/proposal.md').writeAsStringSync('## Зачем\n\nПисьма должны уходить всем.');
       await openCard(tester);
 
       expect(find.text('Развернуть здесь'), findsNothing);
+    });
+
+    testWidgets('в шапке — стадия из файлов, статус трекера рядом ярлыком', (tester) async {
+      await openCard(tester);
+
+      // Задачи 1/2 — в работе; статус из redmine.yaml — ярлык с пометкой.
+      expect(find.text('в работе · 1/2'), findsOneWidget);
+      expect(find.text('В работе · из файла'), findsOneWidget);
     });
 
     testWidgets('артефакт ждёт предшественника по requires', (tester) async {
@@ -318,8 +288,7 @@ void main() {
       expect(find.textContaining('ждёт: '), findsWidgets);
     });
 
-    testWidgets('смена группы закрывает карточку change\'а прежней группы',
-        (tester) async {
+    testWidgets('смена группы закрывает карточку change\'а прежней группы', (tester) async {
       File('${changeDir.path}/proposal.md').writeAsStringSync('текст спеки');
       await openCard(tester);
       expect(find.text('Спека изменения'), findsOneWidget);
@@ -334,8 +303,7 @@ void main() {
       expect(console.state.changeSpec, isNull);
     });
 
-    testWidgets('меню действий собрано из сигнатур команд спеки',
-        (tester) async {
+    testWidgets('меню действий собрано из сигнатур команд спеки', (tester) async {
       await openCard(tester);
 
       await tester.tap(find.text('Ещё действия'));
@@ -348,8 +316,7 @@ void main() {
       expect(find.text('/opsx-apply'), findsNothing);
     });
 
-    testWidgets('выбор действия подставляет команду с известными аргументами',
-        (tester) async {
+    testWidgets('выбор действия подставляет команду с известными аргументами', (tester) async {
       await openCard(tester);
 
       await tester.tap(find.text('Ещё действия'));

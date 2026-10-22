@@ -412,6 +412,24 @@ abstract class AppLocalizations {
   /// **'плоский список'**
   String get groupingNone;
 
+  /// No description provided for @schemaSourceProject.
+  ///
+  /// In ru, this message translates to:
+  /// **'схема проекта'**
+  String get schemaSourceProject;
+
+  /// No description provided for @schemaSourceUser.
+  ///
+  /// In ru, this message translates to:
+  /// **'схема пользователя'**
+  String get schemaSourceUser;
+
+  /// No description provided for @schemaSourceBuiltin.
+  ///
+  /// In ru, this message translates to:
+  /// **'встроенная схема upstream — в спеке её нет'**
+  String get schemaSourceBuiltin;
+
   /// No description provided for @partialTrackerTitle.
   ///
   /// In ru, this message translates to:
@@ -424,23 +442,17 @@ abstract class AppLocalizations {
   /// **'Повторить'**
   String get partialRetry;
 
-  /// No description provided for @redmineUnavailable.
+  /// No description provided for @trackerNoKey.
   ///
   /// In ru, this message translates to:
-  /// **'Статусы Redmine недоступны ({reason}) — показаны данные файлов'**
-  String redmineUnavailable(String reason);
+  /// **'нет ключа {key}'**
+  String trackerNoKey(String key);
 
-  /// No description provided for @redmineNoKey.
+  /// No description provided for @trackerDown.
   ///
   /// In ru, this message translates to:
-  /// **'нет ключа REDMINE_API_KEY'**
-  String get redmineNoKey;
-
-  /// No description provided for @redmineDown.
-  ///
-  /// In ru, this message translates to:
-  /// **'Redmine недоступен: {reason}'**
-  String redmineDown(String reason);
+  /// **'{tracker} недоступен: {reason}'**
+  String trackerDown(String tracker, String reason);
 
   /// No description provided for @platformRepoNotFound.
   ///
@@ -514,6 +526,42 @@ abstract class AppLocalizations {
   /// **'{done} из {total} задач'**
   String statusFromTasks(int done, int total);
 
+  /// No description provided for @stagePlanning.
+  ///
+  /// In ru, this message translates to:
+  /// **'планирование · ждёт {artifact}'**
+  String stagePlanning(String artifact);
+
+  /// No description provided for @stageReadyToApply.
+  ///
+  /// In ru, this message translates to:
+  /// **'готов к реализации'**
+  String get stageReadyToApply;
+
+  /// No description provided for @stageInProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'в работе · {done}/{total}'**
+  String stageInProgress(int done, int total);
+
+  /// No description provided for @stageDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'сделано'**
+  String get stageDone;
+
+  /// No description provided for @stageArchived.
+  ///
+  /// In ru, this message translates to:
+  /// **'в архиве'**
+  String get stageArchived;
+
+  /// No description provided for @stageTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Стадия работы — из файлов change’а: артефакты схемы и отметки задач'**
+  String get stageTooltip;
+
   /// No description provided for @marksOpenTask.
   ///
   /// In ru, this message translates to:
@@ -549,6 +597,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'открыть tasks_*.md в change\'ах'**
   String get nextStepCommand;
+
+  /// No description provided for @nextStepPlanning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следующий шаг: написать {artifact} для change’а «{change}»'**
+  String nextStepPlanning(String artifact, String change);
+
+  /// No description provided for @nextStepPlanningReason.
+  ///
+  /// In ru, this message translates to:
+  /// **'без этого артефакта change нельзя реализовать'**
+  String get nextStepPlanningReason;
+
+  /// No description provided for @nextStepApply.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следующий шаг: реализовать change «{change}»'**
+  String nextStepApply(String change);
+
+  /// No description provided for @nextStepApplyReason.
+  ///
+  /// In ru, this message translates to:
+  /// **'артефакты написаны, задачи ещё открыты'**
+  String get nextStepApplyReason;
+
+  /// No description provided for @nextStepArchive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Следующий шаг: сдать change’и в архив — все задачи закрыты'**
+  String get nextStepArchive;
+
+  /// No description provided for @nextStepArchiveReason.
+  ///
+  /// In ru, this message translates to:
+  /// **'сделанное уходит в openspec/changes/archive, и спека показывает только живую работу'**
+  String get nextStepArchiveReason;
 
   /// No description provided for @backToChanges.
   ///
@@ -700,6 +784,18 @@ abstract class AppLocalizations {
   /// **'Дизайн-решения'**
   String get artifactDesign;
 
+  /// No description provided for @artifactSpecs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спецификации'**
+  String get artifactSpecs;
+
+  /// No description provided for @artifactTasks.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задачи'**
+  String get artifactTasks;
+
   /// No description provided for @artifactTasksIos.
   ///
   /// In ru, this message translates to:
@@ -802,17 +898,11 @@ abstract class AppLocalizations {
   /// **'Внешние системы'**
   String get envSystemsSection;
 
-  /// No description provided for @envHintRedmineUrl.
+  /// No description provided for @envKeysNotDeclared.
   ///
   /// In ru, this message translates to:
-  /// **'адрес Redmine'**
-  String get envHintRedmineUrl;
-
-  /// No description provided for @envHintRedmineKey.
-  ///
-  /// In ru, this message translates to:
-  /// **'доступ к задачам'**
-  String get envHintRedmineKey;
+  /// **'Спека не объявляет ключей — нет .env.example, заполнять нечего'**
+  String get envKeysNotDeclared;
 
   /// No description provided for @envHintGitlabUrl.
   ///
@@ -855,6 +945,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'роль машины'**
   String get envHintRole;
+
+  /// No description provided for @envHintTrackerUrl.
+  ///
+  /// In ru, this message translates to:
+  /// **'адрес трекера задач'**
+  String get envHintTrackerUrl;
+
+  /// No description provided for @envHintTrackerKey.
+  ///
+  /// In ru, this message translates to:
+  /// **'доступ к задачам трекера'**
+  String get envHintTrackerKey;
 
   /// No description provided for @checkFilled.
   ///
@@ -1090,11 +1192,11 @@ abstract class AppLocalizations {
   /// **'Все стеки'**
   String get stackFilterAll;
 
-  /// No description provided for @openInRedmineTooltip.
+  /// No description provided for @openInTrackerTooltip.
   ///
   /// In ru, this message translates to:
-  /// **'Открыть задачу в Redmine'**
-  String get openInRedmineTooltip;
+  /// **'Открыть задачу в {tracker}'**
+  String openInTrackerTooltip(String tracker);
 
   /// No description provided for @dependenciesTitle.
   ///
@@ -1165,14 +1267,14 @@ abstract class AppLocalizations {
   /// No description provided for @handoffStatusNoKey.
   ///
   /// In ru, this message translates to:
-  /// **'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.'**
-  String get handoffStatusNoKey;
+  /// **'Ключ {tracker} не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.'**
+  String handoffStatusNoKey(String tracker);
 
   /// No description provided for @handoffStatusUnreachable.
   ///
   /// In ru, this message translates to:
-  /// **'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.'**
-  String get handoffStatusUnreachable;
+  /// **'{tracker} не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.'**
+  String handoffStatusUnreachable(String tracker);
 
   /// No description provided for @handoffStatusNotAsked.
   ///
@@ -1231,8 +1333,8 @@ abstract class AppLocalizations {
   /// No description provided for @handoffRecipientsNote.
   ///
   /// In ru, this message translates to:
-  /// **'Тестировщик и менеджер определяются из ролей Redmine и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).'**
-  String get handoffRecipientsNote;
+  /// **'Тестировщик и менеджер определяются из ролей {tracker} и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).'**
+  String handoffRecipientsNote(String tracker);
 
   /// No description provided for @handoffRecipientTester.
   ///
@@ -1608,8 +1710,8 @@ abstract class AppLocalizations {
   /// No description provided for @commentsTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Комментарии Redmine'**
-  String get commentsTitle;
+  /// **'Комментарии {tracker}'**
+  String commentsTitle(String tracker);
 
   /// No description provided for @commentsEmpty.
   ///
@@ -1620,8 +1722,8 @@ abstract class AppLocalizations {
   /// No description provided for @commentsUnavailable.
   ///
   /// In ru, this message translates to:
-  /// **'комментарии недоступны без ключа Redmine'**
-  String get commentsUnavailable;
+  /// **'комментарии недоступны без ключа {tracker}'**
+  String commentsUnavailable(String tracker);
 
   /// No description provided for @codeMrOpened.
   ///
@@ -1728,8 +1830,8 @@ abstract class AppLocalizations {
   /// No description provided for @handoffRecipientsResolving.
   ///
   /// In ru, this message translates to:
-  /// **'скрипт платформы опрашивает Redmine и Mattermost…'**
-  String get handoffRecipientsResolving;
+  /// **'скрипт платформы опрашивает {tracker} и Mattermost…'**
+  String handoffRecipientsResolving(String tracker);
 
   /// No description provided for @handoffRecipientsHint.
   ///
@@ -1740,8 +1842,8 @@ abstract class AppLocalizations {
   /// No description provided for @handoffRecipientsSource.
   ///
   /// In ru, this message translates to:
-  /// **'роли Redmine × участники канала · scripts/sprint-handover-recipients.mjs'**
-  String get handoffRecipientsSource;
+  /// **'роли {tracker} × участники канала · scripts/sprint-handover-recipients.mjs'**
+  String handoffRecipientsSource(String tracker);
 
   /// No description provided for @handoffRecipientsError.
   ///
@@ -2040,7 +2142,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusFromCacheHint.
   ///
   /// In ru, this message translates to:
-  /// **'Статус взят из redmine.yaml change’а — трекер не опрошен'**
+  /// **'Статус взят из файла change’а — трекер не опрошен'**
   String get statusFromCacheHint;
 
   /// No description provided for @changeFormatWarning.

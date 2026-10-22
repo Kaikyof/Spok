@@ -30,33 +30,24 @@ import 'package:spok/presentation/widgets/missing_key_block.dart';
 
 /// Спека объявила статус передачи, группировку и семантику статусов —
 /// ворота фичи открыты, экран передачи работает.
-const _semantics = StatusSemantics(statuses: [
-  TrackerStatus(id: 7, name: 'Ожидает тестирования'),
-]);
+const _semantics = StatusSemantics(statuses: [TrackerStatus(id: 7, name: 'Ожидает тестирования')]);
 
-const _group = Group(
-    id: 'sp-1',
-    title: 'Спринт 1',
-    kind: GroupingKind.sprintDir,
-    changeIds: ['mtm-03']);
+const _group = Group(id: 'sp-1', title: 'Спринт 1', kind: GroupingKind.sprintDir, changeIds: ['mtm-03']);
 
 /// Change без статуса: трекер не опрошен, а в `redmine.yaml` change'а
 /// статуса нет — это и есть случай, из-за которого экран раньше молча
 /// докладывал о готовности.
 ChangeUnit _change() => ChangeUnit(
-      id: 'mtm-03',
-      title: 'Рассылка',
-      dir: '/tmp',
-      stackStates: {
-        'backend': StackState(
-            stack: 'backend', tasks: const [TaskItem('1.1', 'Шаг', true)]),
-      },
-    );
+  id: 'mtm-03',
+  title: 'Рассылка',
+  dir: '/tmp',
+  stackStates: {
+    'backend': StackState(stack: 'backend', tasks: const [TaskItem('1.1', 'Шаг', true)]),
+  },
+);
 
-FeatureGate _gate(RequirementId id, {required bool satisfied}) => FeatureGate([
-      FeatureRequirement(
-          id: id, scope: RequirementScope.spec, satisfied: satisfied),
-    ]);
+FeatureGate _gate(RequirementId id, {required bool satisfied}) =>
+    FeatureGate([FeatureRequirement(id: id, scope: RequirementScope.spec, satisfied: satisfied)]);
 
 /// Команда передачи у спеки есть — иначе фича выключена целиком и экран
 /// вместо шагов показывает чеклист требований.
@@ -68,24 +59,15 @@ const _handover = SlashCommand(
 
 final _features = {
   SpecFeature.handoff: FeatureGate([
-    FeatureRequirement(
-        id: RequirementId.grouping,
-        scope: RequirementScope.spec,
-        satisfied: true),
-    FeatureRequirement(
-        id: RequirementId.statusSemantics,
-        scope: RequirementScope.spec,
-        satisfied: true),
-    FeatureRequirement(
-        id: RequirementId.handoverCommand,
-        scope: RequirementScope.spec,
-        satisfied: true),
+    FeatureRequirement(id: RequirementId.grouping, scope: RequirementScope.spec, satisfied: true),
+    FeatureRequirement(id: RequirementId.statusSemantics, scope: RequirementScope.spec, satisfied: true),
+    FeatureRequirement(id: RequirementId.handoverCommand, scope: RequirementScope.spec, satisfied: true),
   ]),
   SpecFeature.builds: _gate(RequirementId.buildsFile, satisfied: false),
 };
 
 class _FakeRepository implements PlatformRepository {
-  final RedmineProblem problem;
+  final TrackerProblem problem;
 
   /// Спека без команды передачи — случай avelacom: передавать нечем.
   final bool withoutHandover;
@@ -94,21 +76,25 @@ class _FakeRepository implements PlatformRepository {
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
-        groups: const [_group],
-        changes: [_change()],
-        divergences: const [],
-        env: const EnvReport(keys: [], repos: [], systems: []),
-        profile: ProjectProfile(
-          schema: const SpecSchema(name: 'avelacom', artifacts: []),
-          stacks: const ['backend'],
-          grouping: GroupingKind.sprintDir,
-          statuses: _semantics,
-          features: withoutHandover ? _featuresWithoutHandover : _features,
-          handoverCommand: withoutHandover ? null : _handover,
-        ),
-        redmineProblem: problem,
-        refreshedAt: DateTime.now(),
-      );
+    groups: const [_group],
+    changes: [_change()],
+    divergences: const [],
+    env: const EnvReport(keys: [], repos: [], systems: []),
+    profile: ProjectProfile(
+      schema: const SpecSchema(name: 'avelacom', artifacts: []),
+      stacks: const ['backend'],
+      grouping: GroupingKind.sprintDir,
+      statuses: _semantics,
+      features: withoutHandover ? _featuresWithoutHandover : _features,
+      handoverCommand: withoutHandover ? null : _handover,
+    ),
+    trackerProblem: problem,
+    // Спека с трекером: имя и ключ приходят от контракта, и именно
+    // по ним шаг знает, какое поле предложить.
+    trackerName: 'Redmine',
+    trackerKeys: const ['REDMINE_API_KEY'],
+    refreshedAt: DateTime.now(),
+  );
 
   @override
   Future<bool> setPlatformDir(String path) async => true;
@@ -123,8 +109,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: const [], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: const [], groupIds: const []);
 
   @override
   String get role => '';
@@ -139,17 +124,13 @@ class _FakeRepository implements PlatformRepository {
   Future<DocState> docState(String absolutePath) async => DocState.unknown;
 
   @override
-  Future<List<IssueComment>> issueComments(List<int> issueIds) async =>
-      const [];
+  Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -170,34 +151,32 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
 }
-
 
 /// Ворота той же фичи у спеки, которая передачу не описывает.
 final _featuresWithoutHandover = {
   ..._features,
   SpecFeature.handoff: FeatureGate([
     ..._features[SpecFeature.handoff]!.requirements.where(
-        (requirement) => requirement.id != RequirementId.handoverCommand),
+      (requirement) => requirement.id != RequirementId.handoverCommand,
+    ),
     const FeatureRequirement(
-        id: RequirementId.handoverCommand,
-        scope: RequirementScope.spec,
-        satisfied: false,
-        lookedIn: '.claude/commands, openspec/schemas/*/commands'),
+      id: RequirementId.handoverCommand,
+      scope: RequirementScope.spec,
+      satisfied: false,
+      lookedIn: '.claude/commands, openspec/schemas/*/commands',
+    ),
   ]),
 };
 
 void main() {
   group('Передача без статусов трекера', () {
-    Future<ConsoleBloc> open(WidgetTester tester, RedmineProblem problem,
-        {bool withoutHandover = false}) async {
-      final repository =
-          _FakeRepository(problem, withoutHandover: withoutHandover);
+    Future<ConsoleBloc> open(WidgetTester tester, TrackerProblem problem, {bool withoutHandover = false}) async {
+      final repository = _FakeRepository(problem, withoutHandover: withoutHandover);
       final console = ConsoleBloc(repository);
       final sessions = SessionsBloc(repository);
       addTearDown(console.close);
@@ -205,60 +184,58 @@ void main() {
       tester.view.physicalSize = const Size(1400, 1000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: Scaffold(
-          body: MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: console),
-              BlocProvider.value(value: sessions),
-            ],
-            child: const HandoffScreen(),
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: Scaffold(
+            body: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: console),
+                BlocProvider.value(value: sessions),
+              ],
+              child: const HandoffScreen(),
+            ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
       return console;
     }
 
-    testWidgets('экран остаётся, но готовность объявлена неизвестной',
-        (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+    testWidgets('экран остаётся, но готовность объявлена неизвестной', (tester) async {
+      await open(tester, TrackerProblem.noApiKey);
 
       // Экран не спрятан: получателей и сборку человек собирает без трекера.
       expect(find.text('Готовность'), findsOneWidget);
-      expect(find.text('Готовность неизвестна — статусы трекера не опрошены'),
-          findsOneWidget);
+      expect(find.text('Готовность неизвестна — статусы трекера не опрошены'), findsOneWidget);
       // Прежней строки «1 из 1 готовы» на экране больше нет.
       expect(find.textContaining("готовы к передаче"), findsNothing);
       expect(find.textContaining('статус не опрошен'), findsOneWidget);
     });
 
-    testWidgets('ключа нет у меня — поле для него прямо в шаге',
-        (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+    testWidgets('ключа нет у меня — поле для него прямо в шаге', (tester) async {
+      await open(tester, TrackerProblem.noApiKey);
 
       expect(find.byType(MissingKeyBlock), findsOneWidget);
       expect(find.text('Повторить'), findsNothing);
     });
 
     testWidgets('трекер молчит — не поле, а повтор запроса', (tester) async {
-      await open(tester, RedmineProblem.unreachable);
+      await open(tester, TrackerProblem.unreachable);
 
       expect(find.byType(MissingKeyBlock), findsNothing);
       expect(find.text('Повторить'), findsOneWidget);
     });
 
-    testWidgets('спека без команды передачи — фича выключена с чеклистом',
-        (tester) async {
-      await open(tester, RedmineProblem.none, withoutHandover: true);
+    testWidgets('спека без команды передачи — фича выключена с чеклистом', (tester) async {
+      await open(tester, TrackerProblem.none, withoutHandover: true);
 
       // Шагов нет вовсе: передавать нечем, и экран говорит это, а не
       // показывает предпросмотр команды, которой у спеки не существует.
@@ -268,19 +245,20 @@ void main() {
       expect(find.text('Отправить спринт тестировщику'), findsNothing);
     });
 
-    testWidgets('отправка недоступна и причина названа честно',
-        (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+    testWidgets('отправка недоступна и причина названа честно', (tester) async {
+      await open(tester, TrackerProblem.noApiKey);
 
       final button = tester.widget<FilledButton>(
-          find.ancestor(
-              of: find.text('Отправить спринт тестировщику'),
-              matching: find.byType(FilledButton)));
+        find.ancestor(of: find.text('Отправить спринт тестировщику'), matching: find.byType(FilledButton)),
+      );
       expect(button.onPressed, isNull);
       expect(
-          find.text('недоступно: статусы трекера не опрошены — '
-              'готовность неизвестна'),
-          findsOneWidget);
+        find.text(
+          'недоступно: статусы трекера не опрошены — '
+          'готовность неизвестна',
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

@@ -17,6 +17,8 @@ import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
+import '../../domain/entities/work_stage.dart';
+import '../../domain/usecases/assess_work_stage.dart';
 import 'builtin_schemas.dart';
 import 'executable_locator.dart';
 import 'env_file.dart';
@@ -38,13 +40,11 @@ class PlatformFilesSource {
 
   /// Проверка, что каталог — корень спеки.
   static bool isPlatformRoot(String dir) =>
-      File(p.join(dir, 'workspace.yaml')).existsSync() ||
-      Directory(p.join(dir, 'openspec')).existsSync();
+      File(p.join(dir, 'workspace.yaml')).existsSync() || Directory(p.join(dir, 'openspec')).existsSync();
 
   /// Ищет репозиторий спеки: переменные окружения, путь из конфига
   /// приложения, затем типовые пути.
-  static PlatformFilesSource? locate(
-      {String? configuredPath, CommandLog? commandLog}) {
+  static PlatformFilesSource? locate({String? configuredPath, CommandLog? commandLog}) {
     final home = Platform.environment['HOME'];
     final candidates = [
       ?Platform.environment['SPEC_PLATFORM_DIR'],
@@ -57,8 +57,7 @@ class PlatformFilesSource {
     ];
     for (final candidate in candidates) {
       if (isPlatformRoot(candidate)) {
-        return PlatformFilesSource(Directory(candidate),
-            commandLog: commandLog);
+        return PlatformFilesSource(Directory(candidate), commandLog: commandLog);
       }
     }
     return null;
@@ -75,8 +74,7 @@ class PlatformFilesSource {
   /// У встроенной схемы файла в спеке нет — открывать нечего.
   String get schemaFile => defaultSchemaResolution?.path ?? '';
 
-  String get trackerFile => _existing(p.join(root.path, 'openspec',
-      'redmine.yaml'));
+  String get trackerFile => _existing(p.join(root.path, 'openspec', 'redmine.yaml'));
 
   String get workspaceFile => _existing(p.join(root.path, 'workspace.yaml'));
 
@@ -85,8 +83,7 @@ class PlatformFilesSource {
     return dir.existsSync() ? dir.path : '';
   }
 
-  static String _existing(String path) =>
-      File(path).existsSync() ? path : '';
+  static String _existing(String path) => File(path).existsSync() ? path : '';
 
   // ─── Схема спеки ───────────────────────────────────────────────────────────
 
@@ -96,8 +93,7 @@ class PlatformFilesSource {
 
   /// Имя схемы из `openspec/config.yaml`; null — конфиг схему не называет
   /// (или его нет вовсе), и действует умолчание upstream.
-  String? get configuredSchemaName => _yamlValue(
-      File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
+  String? get configuredSchemaName => _yamlValue(File(p.join(root.path, 'openspec', 'config.yaml')), ['schema']);
 
   bool _defaultResolved = false;
   ResolvedSchema? _defaultSchema;
@@ -108,29 +104,24 @@ class PlatformFilesSource {
   ResolvedSchema? get defaultSchemaResolution {
     if (!_defaultResolved) {
       _defaultResolved = true;
-      _defaultSchema =
-          _schemas.resolve(configuredSchemaName ?? defaultSchemaName);
+      _defaultSchema = _schemas.resolve(configuredSchemaName ?? defaultSchemaName);
     }
     return _defaultSchema;
   }
 
   /// Схема спеки по умолчанию. Не найдена — пустая; тогда работает
   /// эвристика по именам файлов, а экран распознавания говорит об этом.
-  SpecSchema loadSchema() =>
-      defaultSchemaResolution?.schema ?? SpecSchema.empty;
+  SpecSchema loadSchema() => defaultSchemaResolution?.schema ?? SpecSchema.empty;
 
   /// Схема конкретного change'а по цепочке upstream: `.openspec.yaml`
   /// change'а → конфиг → `spec-driven`.
   SpecSchema _schemaFor(ChangeMetadata meta) {
     final own = meta.schemaName;
-    final resolved = own != null && own.isNotEmpty
-        ? _schemas.resolve(own)
-        : defaultSchemaResolution;
+    final resolved = own != null && own.isNotEmpty ? _schemas.resolve(own) : defaultSchemaResolution;
     // Названная схема не найдена — change всё равно надо прочитать: берём
     // встроенную `spec-driven`. Экран распознавания при этом честно
     // говорит, что схемы спеки нет (`defaultSchemaResolution == null`).
-    return (resolved ?? _schemas.resolve(defaultSchemaName))?.schema ??
-        SpecSchema.empty;
+    return (resolved ?? _schemas.resolve(defaultSchemaName))?.schema ?? SpecSchema.empty;
   }
 
   /// `.openspec.yaml` change'а — метаданные формата upstream. Файла нет
@@ -169,16 +160,14 @@ class PlatformFilesSource {
       ],
       sync: {
         if (sync is YamlMap)
-          for (final entry in sync.entries)
-            entry.key.toString(): ?int.tryParse('${entry.value}'),
+          for (final entry in sync.entries) entry.key.toString(): ?int.tryParse('${entry.value}'),
       },
     );
   }
 
   /// Базовые значения трекера, которых нет в .env: project_id спеки.
-  String? get trackerProjectId => _yamlValue(
-      File(p.join(root.path, 'openspec', 'redmine.yaml')),
-      ['defaults', 'project_id']);
+  String? get trackerProjectId =>
+      _yamlValue(File(p.join(root.path, 'openspec', 'redmine.yaml')), ['defaults', 'project_id']);
 
   // ─── Группы ────────────────────────────────────────────────────────────────
 
@@ -196,11 +185,7 @@ class PlatformFilesSource {
       if (sprintDirs.isNotEmpty) {
         groups.addAll(sprintDirs.map((dir) => _sprintGroup(dir, changes)));
       } else {
-        final docs = docDir
-            .listSync()
-            .whereType<File>()
-            .where((file) => file.path.endsWith('.md'))
-            .toList();
+        final docs = docDir.listSync().whereType<File>().where((file) => file.path.endsWith('.md')).toList();
         groups.addAll(docs.map((file) => _masterDocGroup(file, changes)));
       }
     }
@@ -211,18 +196,12 @@ class PlatformFilesSource {
     ];
     // Change'и вне групп не должны исчезать с экрана — им отдельная группа.
     if (ungrouped.isNotEmpty) {
-      groups.add(Group(
-        id: '',
-        title: '',
-        kind: GroupingKind.none,
-        changeIds: ungrouped,
-      ));
+      groups.add(Group(id: '', title: '', kind: GroupingKind.none, changeIds: ungrouped));
     }
     // Группа с работой идёт первой: она открывается по умолчанию, и пустая
     // мастер-спека не должна встречать человека пустым экраном.
     groups.sort((a, b) {
-      final byFilled =
-          (b.changeIds.isEmpty ? 0 : 1) - (a.changeIds.isEmpty ? 0 : 1);
+      final byFilled = (b.changeIds.isEmpty ? 0 : 1) - (a.changeIds.isEmpty ? 0 : 1);
       return byFilled != 0 ? byFilled : a.id.compareTo(b.id);
     });
     return groups;
@@ -240,8 +219,7 @@ class PlatformFilesSource {
       branches: {
         if (branches is YamlMap)
           for (final entry in branches.entries)
-            if (entry.value?['name'] != null)
-              entry.key.toString(): entry.value['name'].toString(),
+            if (entry.value?['name'] != null) entry.key.toString(): entry.value['name'].toString(),
       },
       builds: _loadBuilds(dir),
       docPath: docFile.existsSync() ? docFile.path : null,
@@ -273,23 +251,18 @@ class PlatformFilesSource {
   String? _docTitle(File docFile) {
     if (!docFile.existsSync()) return null;
     final lines = docFile.readAsLinesSync();
-    final heading = lines.firstWhere((line) => line.startsWith('# '),
-        orElse: () => lines.isEmpty ? '' : lines.first);
+    final heading = lines.firstWhere((line) => line.startsWith('# '), orElse: () => lines.isEmpty ? '' : lines.first);
     final title = heading.startsWith('# ') ? heading.substring(2) : heading;
     if (title.trim().isEmpty) return null;
     // «pin-biometric-auth — Локальный вход: master-spec» → человеческая часть.
-    final match = RegExp(r'^\s*\S+\s*[—–-]\s*(.+?)(:\s*master-spec)?\s*$')
-        .firstMatch(title);
+    final match = RegExp(r'^\s*\S+\s*[—–-]\s*(.+?)(:\s*master-spec)?\s*$').firstMatch(title);
     return (match?.group(1) ?? title).trim();
   }
 
   Map<String, BuildInfo> _loadBuilds(Directory dir) {
     final yaml = _yamlOf(File(p.join(dir.path, 'builds.yaml')));
     if (yaml is! YamlMap) return const {};
-    return {
-      for (final entry in yaml.entries)
-        entry.key.toString(): ?_buildOf(entry.key.toString(), entry.value),
-    };
+    return {for (final entry in yaml.entries) entry.key.toString(): ?_buildOf(entry.key.toString(), entry.value)};
   }
 
   BuildInfo? _buildOf(String stack, dynamic node) {
@@ -302,8 +275,7 @@ class PlatformFilesSource {
         : '${build['version_name']}($versionCode)';
     return BuildInfo(
       versionName: versionName ?? '?',
-      channel: build['channel']?.toString() ??
-          (build['nextcloud_url'] != null ? 'QA APK в Nextcloud' : null),
+      channel: build['channel']?.toString() ?? (build['nextcloud_url'] != null ? 'QA APK в Nextcloud' : null),
       publishedAt: DateTime.tryParse(build['published_at']?.toString() ?? ''),
     );
   }
@@ -315,8 +287,7 @@ class PlatformFilesSource {
     if (!changesDir.existsSync()) return [];
     final changes = [
       for (final entry in changesDir.listSync().whereType<Directory>())
-        if (p.basename(entry.path) != 'archive')
-          _loadChange(p.basename(entry.path), entry),
+        if (p.basename(entry.path) != 'archive') _loadChange(p.basename(entry.path), entry),
     ];
     _sortByDeliveryOrder(changes);
     return changes;
@@ -326,8 +297,7 @@ class PlatformFilesSource {
   /// Дата берётся из имени каталога, а id — очищенным от неё: иначе
   /// связь с задачей трекера и группой рвётся.
   List<ChangeUnit> loadArchivedChanges() {
-    final archiveDir =
-        Directory(p.join(root.path, 'openspec', 'changes', 'archive'));
+    final archiveDir = Directory(p.join(root.path, 'openspec', 'changes', 'archive'));
     if (!archiveDir.existsSync()) return [];
     final datePrefix = RegExp(r'^(\d{4}-\d{2}-\d{2})[-_](.+)$');
     final changes = [
@@ -338,6 +308,11 @@ class PlatformFilesSource {
           final changeId = match?.group(2) ?? name;
           final archivedAt = DateTime.tryParse(match?.group(1) ?? '');
           final change = _loadChange(changeId, entry);
+          // Архив решает стадию целиком: открытые отметки в сданном
+          // change'е — история, а не работа.
+          for (final stack in change.stacks) {
+            stack.stage = WorkStage.archived;
+          }
           return ChangeUnit(
             id: change.id,
             title: change.title,
@@ -347,12 +322,14 @@ class PlatformFilesSource {
             dependsOn: change.dependsOn,
             formatWarning: change.formatWarning,
             archivedAt: archivedAt,
+            schema: change.schema,
+            meta: change.meta,
+            stage: WorkStage.archived,
           );
         }(),
     ];
     // Свежий архив сверху: без даты — в конец, туда же и одноимённые.
-    changes.sort((a, b) =>
-        (b.archivedAt ?? DateTime(0)).compareTo(a.archivedAt ?? DateTime(0)));
+    changes.sort((a, b) => (b.archivedAt ?? DateTime(0)).compareTo(a.archivedAt ?? DateTime(0)));
     return changes;
   }
 
@@ -361,8 +338,7 @@ class PlatformFilesSource {
   /// Дерево документов: группа → её change'и → файлы артефактов схемы.
   /// Мастер-спека, лежащая одним файлом, — это документ самой группы,
   /// у неё нет каталога. Архив идёт отдельным узлом в конце.
-  List<DocNode> loadDocTree(List<Group> groups, List<ChangeUnit> changes,
-      {List<ChangeUnit> archived = const []}) {
+  List<DocNode> loadDocTree(List<Group> groups, List<ChangeUnit> changes, {List<ChangeUnit> archived = const []}) {
     final nodes = [
       for (final group in groups)
         DocNode(
@@ -377,26 +353,24 @@ class PlatformFilesSource {
                 p.basename(path),
                 path,
                 File(path).existsSync(),
-                id: group.kind == GroupingKind.masterDoc
-                    ? DocArtifact.masterDocId
-                    : DocArtifact.groupDocId,
+                id: group.kind == GroupingKind.masterDoc ? DocArtifact.masterDocId : DocArtifact.groupDocId,
               ),
           ],
           children: [
             for (final id in group.changeIds)
-              ...changes
-                  .where((change) => change.id == id)
-                  .map((change) => _changeDocNode(change)),
+              ...changes.where((change) => change.id == id).map((change) => _changeDocNode(change)),
           ],
         ),
     ];
     if (archived.isNotEmpty) {
-      nodes.add(DocNode(
-        id: archiveNodeId,
-        title: '',
-        kind: DocNodeKind.archivedChange,
-        children: [for (final change in archived) _changeDocNode(change)],
-      ));
+      nodes.add(
+        DocNode(
+          id: archiveNodeId,
+          title: '',
+          kind: DocNodeKind.archivedChange,
+          children: [for (final change in archived) _changeDocNode(change)],
+        ),
+      );
     }
     return nodes;
   }
@@ -405,31 +379,26 @@ class PlatformFilesSource {
   static const archiveNodeId = '::archive';
 
   DocNode _changeDocNode(ChangeUnit change) => DocNode(
-        id: change.id,
-        title: change.title,
-        kind: change.archived ? DocNodeKind.archivedChange : DocNodeKind.change,
-        branch: change.archived
-            ? ''
-            : _docSchemaOf(change).branchFor(change.id) ?? '',
-        archivedAt: change.archivedAt,
-        docs: _changeDocs(change),
-      );
+    id: change.id,
+    title: change.title,
+    kind: change.archived ? DocNodeKind.archivedChange : DocNodeKind.change,
+    branch: change.archived ? '' : _docSchemaOf(change).branchFor(change.id) ?? '',
+    archivedAt: change.archivedAt,
+    docs: _changeDocs(change),
+  );
 
   /// Файлы change'а: одиночные артефакты схемы в объявленном ею порядке,
   /// плюс markdown, которого схема не знает, — он всё равно документ.
   /// У архивного change'а ненаписанных артефактов не показываем: работа
   /// сдана, и «чего в ней не хватает» — уже не вопрос.
   /// Схема change'а для документов: своя, иначе схема спеки.
-  SpecSchema _docSchemaOf(ChangeUnit change) =>
-      change.schema.isEmpty ? loadSchema() : change.schema;
+  SpecSchema _docSchemaOf(ChangeUnit change) => change.schema.isEmpty ? loadSchema() : change.schema;
 
   List<DocArtifact> _changeDocs(ChangeUnit change) {
     final schema = _docSchemaOf(change);
     final declared = [
       for (final artifact in schema.artifacts)
-        if (artifact.isSingleFile &&
-            (!change.archived ||
-                File(p.join(change.dir, artifact.generates)).existsSync()))
+        if (artifact.isSingleFile && (!change.archived || File(p.join(change.dir, artifact.generates)).existsSync()))
           DocArtifact(
             artifact.description.isEmpty ? artifact.id : artifact.description,
             artifact.generates,
@@ -441,12 +410,9 @@ class PlatformFilesSource {
     final known = {for (final doc in declared) doc.fileName};
     final dir = Directory(change.dir);
     final extra = [
-      for (final entry in dir.existsSync()
-          ? dir.listSync().whereType<File>()
-          : <File>[])
+      for (final entry in dir.existsSync() ? dir.listSync().whereType<File>() : <File>[])
         if (entry.path.endsWith('.md') && !known.contains(p.basename(entry.path)))
-          DocArtifact(p.basenameWithoutExtension(p.basename(entry.path)),
-              p.basename(entry.path), entry.path, true),
+          DocArtifact(p.basenameWithoutExtension(p.basename(entry.path)), p.basename(entry.path), entry.path, true),
     ]..sort((a, b) => a.fileName.compareTo(b.fileName));
     return [...declared, ...extra];
   }
@@ -459,8 +425,7 @@ class PlatformFilesSource {
         deliveryOrder.putIfAbsent(memberId, () => index);
       }
     }
-    changes.sort((a, b) =>
-        (deliveryOrder[a.id] ?? 99).compareTo(deliveryOrder[b.id] ?? 99));
+    changes.sort((a, b) => (deliveryOrder[a.id] ?? 99).compareTo(deliveryOrder[b.id] ?? 99));
   }
 
   ChangeUnit _loadChange(String changeId, Directory changeDir) {
@@ -473,16 +438,14 @@ class PlatformFilesSource {
       final (tasks, redmineTitle) = _loadTasksFile(file);
       // Стек без задач не показываем; единственный файл работы — иное:
       // пустой `tasks.md` всё равно объявляет единицу работы.
-      if (tasks.isEmpty &&
-          !(stack == StackState.singleWorkStack && file.existsSync())) {
+      if (tasks.isEmpty && !(stack == StackState.singleWorkStack && file.existsSync())) {
         continue;
       }
       titleFromTasks ??= redmineTitle;
       final cached = links.stacks[_normalizedStack(stack, links.stacks.keys)];
       stackStates[stack] = StackState(
         stack: stack,
-        issueId: cached?.issueId ??
-            (stack == StackState.singleWorkStack ? links.groupIssueId : null),
+        issueId: cached?.issueId ?? (stack == StackState.singleWorkStack ? links.groupIssueId : null),
         tasks: tasks,
         cachedStatus: cached?.statusName,
       );
@@ -497,17 +460,34 @@ class PlatformFilesSource {
       );
     }
 
-    return ChangeUnit(
+    final change = ChangeUnit(
       id: changeId,
       title: titleFromTasks ?? _proposalTitle(changeDir) ?? changeId,
       dir: changeDir.path,
       groupId: links.groupId,
       stackStates: stackStates,
-      dependsOn:
-          links.members.takeWhile((member) => member != changeId).toList(),
+      dependsOn: links.members.takeWhile((member) => member != changeId).toList(),
       formatWarning: links.formatWarning,
       schema: schema,
       meta: meta,
+    );
+    // Стадия — из тех же файлов, что и всё остальное: артефакты схемы и
+    // отметки. У стека своя: артефакты change'а плюс его отметки.
+    const assess = AssessWorkStage();
+    for (final stack in change.stacks) {
+      stack.stage = assess(change, schema, stack: stack.stack, tasks: stack.tasks);
+    }
+    return ChangeUnit(
+      id: change.id,
+      title: change.title,
+      dir: change.dir,
+      groupId: change.groupId,
+      stackStates: change.stackStates,
+      dependsOn: change.dependsOn,
+      formatWarning: change.formatWarning,
+      schema: schema,
+      meta: meta,
+      stage: assess(change, schema),
     );
   }
 
@@ -519,21 +499,17 @@ class PlatformFilesSource {
     if (schema.stacks.isNotEmpty) {
       return [
         for (final stack in schema.stacks)
-          if (schema.tasksFileFor(stack) case final fileName?)
-            (stack, File(p.join(changeDir.path, fileName))),
+          if (schema.tasksFileFor(stack) case final fileName?) (stack, File(p.join(changeDir.path, fileName))),
       ];
     }
-    final single = schema.singleTasksFile == null
-        ? null
-        : File(p.join(changeDir.path, schema.singleTasksFile!));
+    final single = schema.singleTasksFile == null ? null : File(p.join(changeDir.path, schema.singleTasksFile!));
     if (single != null && single.existsSync()) {
       return [(StackState.singleWorkStack, single)];
     }
     final pattern = RegExp(r'^tasks[_-](.+)\.md$');
     final byMask = [
       for (final entry in changeDir.listSync().whereType<File>())
-        if (pattern.firstMatch(p.basename(entry.path)) case final match?)
-          (match.group(1)!, entry),
+        if (pattern.firstMatch(p.basename(entry.path)) case final match?) (match.group(1)!, entry),
     ];
     if (byMask.isNotEmpty || single == null) return byMask;
     // Файла нет ни по схеме, ни по маске — единица работы объявлена, но
@@ -543,11 +519,8 @@ class PlatformFilesSource {
 
   /// `tasks_ios` · `tasks-ios` · `tasksIos` · `ios` — один и тот же стек.
   String _normalizedStack(String stack, Iterable<String> candidates) {
-    String flatten(String value) =>
-        value.toLowerCase().replaceAll(RegExp(r'[_\-\s]'), '');
-    return candidates.firstWhere(
-        (candidate) => flatten(candidate) == flatten(stack),
-        orElse: () => stack);
+    String flatten(String value) => value.toLowerCase().replaceAll(RegExp(r'[_\-\s]'), '');
+    return candidates.firstWhere((candidate) => flatten(candidate) == flatten(stack), orElse: () => stack);
   }
 
   ({
@@ -556,7 +529,8 @@ class PlatformFilesSource {
     String groupId,
     int? groupIssueId,
     String formatWarning,
-  }) _loadRedmineLinks(Directory changeDir) {
+  })
+  _loadRedmineLinks(Directory changeDir) {
     final file = File(p.join(changeDir.path, 'redmine.yaml'));
     const empty = (
       stacks: <String, ({int? issueId, String? statusName})>{},
@@ -583,14 +557,10 @@ class PlatformFilesSource {
               statusName: entry.value?['status_name']?.toString(),
             ),
       },
-      members: members is YamlList
-          ? members.map((member) => member.toString()).toList()
-          : const <String>[],
+      members: members is YamlList ? members.map((member) => member.toString()).toList() : const <String>[],
       groupId: (group?['feature_sprint'] ?? group?['doc'])?.toString() ?? '',
       groupIssueId: int.tryParse('${group?['issue_id']}'),
-      formatWarning: version == null || supported.contains(version)
-          ? ''
-          : '${p.basename(file.path)}: version $version',
+      formatWarning: version == null || supported.contains(version) ? '' : '${p.basename(file.path)}: version $version',
     );
   }
 
@@ -600,14 +570,12 @@ class PlatformFilesSource {
   /// нет: неизвестная отметка должна считаться открытой работой, а не
   /// исчезать из счёта. За скобкой не может идти `(` или `[` — это ссылка
   /// `- [x](…)`, а не задача. Конец строки не привязан ради CRLF.
-  static final _taskLinePattern = RegExp(
-      r'^\s*(?:[-*+]|\d{1,9}[.)])\s*\[(?:\s*([^\]\s]?)\s*\](?![(\[])|\s+\])\s*(.*)');
+  static final _taskLinePattern = RegExp(r'^\s*(?:[-*+]|\d{1,9}[.)])\s*\[(?:\s*([^\]\s]?)\s*\](?![(\[])|\s+\])\s*(.*)');
 
   /// Номер задачи в начале текста: `1.2 Текст` → («1.2», «Текст»).
   /// Буква после номера — ревизия (`2.3a`), у команды так помечают
   /// задачи, добавленные после согласования; это тоже номер.
-  static final _taskNumberPattern =
-      RegExp(r'^(\d+(?:\.\d+)*[a-zа-я]?)\.?\s+(.*)$');
+  static final _taskNumberPattern = RegExp(r'^(\d+(?:\.\d+)*[a-zа-я]?)\.?\s+(.*)$');
 
   /// Возвращает (задачи, redmine_title из финального front-matter блока).
   /// Номер задачи берётся из текста; его нет — порядковый по файлу.
@@ -622,12 +590,13 @@ class PlatformFilesSource {
         final done = (checkbox.group(1) ?? '').toLowerCase() == 'x';
         final text = (checkbox.group(2) ?? '').trim();
         final numbered = _taskNumberPattern.firstMatch(text);
-        tasks.add(numbered == null
-            ? TaskItem('${tasks.length + 1}', text, done)
-            : TaskItem(numbered.group(1)!, numbered.group(2)!.trim(), done));
+        tasks.add(
+          numbered == null
+              ? TaskItem('${tasks.length + 1}', text, done)
+              : TaskItem(numbered.group(1)!, numbered.group(2)!.trim(), done),
+        );
       }
-      redmineTitle =
-          titlePattern.firstMatch(line)?.group(1)?.trim() ?? redmineTitle;
+      redmineTitle = titlePattern.firstMatch(line)?.group(1)?.trim() ?? redmineTitle;
     }
     return (tasks, redmineTitle);
   }
@@ -638,14 +607,9 @@ class PlatformFilesSource {
   String? _proposalTitle(Directory changeDir) {
     final file = File(p.join(changeDir.path, 'proposal.md'));
     if (!file.existsSync()) return null;
-    final heading = file
-        .readAsLinesSync()
-        .firstWhere((line) => line.startsWith('# '), orElse: () => '');
+    final heading = file.readAsLinesSync().firstWhere((line) => line.startsWith('# '), orElse: () => '');
     if (heading.isEmpty) return null;
-    final title = heading
-        .substring(2)
-        .replaceFirst(RegExp(r'^proposal\s*:\s*', caseSensitive: false), '')
-        .trim();
+    final title = heading.substring(2).replaceFirst(RegExp(r'^proposal\s*:\s*', caseSensitive: false), '').trim();
     return title.isEmpty ? null : title;
   }
 
@@ -656,6 +620,10 @@ class PlatformFilesSource {
     if (!file.existsSync()) return {};
     return EnvFile.parse(file.readAsStringSync());
   }
+
+  /// Спека объявляет ключи окружения — у неё есть `.env.example`. Без
+  /// файла требований «ключ не заполнен у меня» не бывает.
+  bool get hasEnvExample => File(p.join(root.path, '.env.example')).existsSync();
 
   /// Ключи из `.env.example` целиком, с подсказкой из комментария над строкой:
   /// белого списка нет — иначе ключи чужой спеки просто исчезнут с экрана.
@@ -671,12 +639,9 @@ class PlatformFilesSource {
       final match = keyPattern.firstMatch(line);
       if (match != null) {
         keys.putIfAbsent(
-            match.group(1)!,
-            () => (
-                  key: match.group(1)!,
-                  hint: _hintOf(comment),
-                  optional: line.startsWith('#'),
-                ));
+          match.group(1)!,
+          () => (key: match.group(1)!, hint: _hintOf(comment), optional: line.startsWith('#')),
+        );
         comment.clear();
         continue;
       }
@@ -699,9 +664,7 @@ class PlatformFilesSource {
     final text = meaningful.join(' ');
     final sentenceEnd = text.indexOf(RegExp(r'[.:]\s'));
     final firstSentence = sentenceEnd < 0 ? text : text.substring(0, sentenceEnd);
-    return firstSentence.length <= 120
-        ? firstSentence
-        : '${firstSentence.substring(0, 117)}…';
+    return firstSentence.length <= 120 ? firstSentence : '${firstSentence.substring(0, 117)}…';
   }
 
   /// Скрипт подбора получателей передачи: спеки называют его по-разному,
@@ -709,8 +672,7 @@ class PlatformFilesSource {
   String? get recipientsScript {
     final dir = Directory(p.join(root.path, 'scripts'));
     if (!dir.existsSync()) return null;
-    final pattern = RegExp(r'handover.*recipient|recipient.*handover',
-        caseSensitive: false);
+    final pattern = RegExp(r'handover.*recipient|recipient.*handover', caseSensitive: false);
     for (final entry in dir.listSync().whereType<File>()) {
       if (pattern.hasMatch(p.basename(entry.path))) {
         return p.relative(entry.path, from: root.path);
@@ -757,8 +719,13 @@ class PlatformFilesSource {
   /// в репозиторий вместе с чужим коммитом.
   Future<bool> envIgnoredByGit() async {
     try {
-      final result = await Process.run(
-          ExecutableLocator.resolve('git'), ['-C', root.path, 'check-ignore', '-q', '.env']);
+      final result = await Process.run(ExecutableLocator.resolve('git'), [
+        '-C',
+        root.path,
+        'check-ignore',
+        '-q',
+        '.env',
+      ]);
       return result.exitCode == 0;
     } catch (_) {
       return false;
@@ -766,17 +733,15 @@ class PlatformFilesSource {
   }
 
   /// Имя переменной роли: спека называет её по-своему (AVTOTO_ROLE и т.п.).
-  String get roleKey =>
-      loadEnv().keys.where((key) => key.endsWith('_ROLE')).firstOrNull ?? '';
+  String get roleKey => loadEnv().keys.where((key) => key.endsWith('_ROLE')).firstOrNull ?? '';
 
   /// Роль машины из ключа `*_ROLE`.
   String get role => loadEnv()[roleKey] ?? '';
 
   /// Сервисы workspace.yaml, отфильтрованные по роли машины.
   List<({String name, String ref})> workspaceServices() => [
-        for (final service in allServices())
-          (name: service.name, ref: service.ref),
-      ];
+    for (final service in allServices()) (name: service.name, ref: service.ref),
+  ];
 
   /// Сервисы без фильтра по роли: для GitLab нужен репозиторий стека,
   /// даже если на этой машине он не склонирован.
@@ -802,9 +767,7 @@ class PlatformFilesSource {
   /// Стек сервиса из его ролей: «dev, ios» → ios. Ролей нет — стек пустой,
   /// и сервис считается общим для всей спеки.
   String _stackOfService(dynamic service, List<String> stacks) {
-    final roles = (service['roles']?.toString() ?? '')
-        .split(',')
-        .map((role) => role.trim());
+    final roles = (service['roles']?.toString() ?? '').split(',').map((role) => role.trim());
     for (final stack in stacks) {
       if (roles.contains(stack)) return stack;
     }
@@ -815,11 +778,7 @@ class PlatformFilesSource {
     if (machineRole.isEmpty) return true;
     final roles = service['roles'];
     if (roles == null) return true;
-    return roles
-        .toString()
-        .split(',')
-        .map((role) => role.trim())
-        .contains(machineRole);
+    return roles.toString().split(',').map((role) => role.trim()).contains(machineRole);
   }
 
   // ─── Команды платформы ─────────────────────────────────────────────────────
@@ -847,26 +806,20 @@ class PlatformFilesSource {
   /// `SKILL.md` схлопнулись бы в одну команду.
   String _commandKey(File file) {
     final name = p.basenameWithoutExtension(file.path);
-    return name.toUpperCase() == 'SKILL'
-        ? p.basename(file.parent.path)
-        : name;
+    return name.toUpperCase() == 'SKILL' ? p.basename(file.parent.path) : name;
   }
 
   List<(Directory, CommandSource)> _commandDirs() {
     final schemaName = loadSchema().name;
     final candidates = <(String, CommandSource)>[
       if (schemaName.isNotEmpty)
-        (
-          p.join(root.path, 'openspec', 'schemas', schemaName, 'commands'),
-          CommandSource.schema
-        ),
+        (p.join(root.path, 'openspec', 'schemas', schemaName, 'commands'), CommandSource.schema),
       (p.join(root.path, '.claude', 'commands'), CommandSource.claude),
       (p.join(root.path, '.claude', 'skills'), CommandSource.claude),
-      for (final mirror in const ['.codex', '.cursor', '.kilocode', '.windsurf'])
-        ...[
-          (p.join(root.path, mirror, 'commands'), CommandSource.mirror),
-          (p.join(root.path, mirror, 'prompts'), CommandSource.mirror),
-        ],
+      for (final mirror in const ['.codex', '.cursor', '.kilocode', '.windsurf']) ...[
+        (p.join(root.path, mirror, 'commands'), CommandSource.mirror),
+        (p.join(root.path, mirror, 'prompts'), CommandSource.mirror),
+      ],
     ];
     return [
       for (final (dir, source) in candidates)
@@ -883,17 +836,20 @@ class PlatformFilesSource {
       final decoded = jsonDecode(file.readAsStringSync());
       final block = decoded is Map ? decoded['scripts'] : null;
       if (block is! Map) return const [];
-      final runner = (File(p.join(root.path, 'pnpm-lock.yaml')).existsSync() ||
+      final runner =
+          (File(p.join(root.path, 'pnpm-lock.yaml')).existsSync() ||
               File(p.join(root.path, 'pnpm-workspace.yaml')).existsSync())
           ? 'pnpm'
           : 'npm run';
       for (final entry in block.entries) {
-        scripts.add(SlashCommand(
-          id: entry.key.toString(),
-          description: entry.value.toString(),
-          source: CommandSource.packageScript,
-          runLine: '$runner ${entry.key}',
-        ));
+        scripts.add(
+          SlashCommand(
+            id: entry.key.toString(),
+            description: entry.value.toString(),
+            source: CommandSource.packageScript,
+            runLine: '$runner ${entry.key}',
+          ),
+        );
       }
     } on FormatException {
       // Битый package.json — не повод терять остальные команды спеки.
@@ -922,21 +878,16 @@ class PlatformFilesSource {
       }
       final name = match.group(1)!;
       if (name == '.PHONY') continue;
-      targets.add(SlashCommand(
-        id: name,
-        description: comment ?? '',
-        source: CommandSource.makeTarget,
-        runLine: 'make $name',
-      ));
+      targets.add(
+        SlashCommand(id: name, description: comment ?? '', source: CommandSource.makeTarget, runLine: 'make $name'),
+      );
       comment = null;
     }
     return targets;
   }
 
-  Iterable<File> _markdownFiles(Directory dir) => dir
-      .listSync(recursive: true)
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.md'));
+  Iterable<File> _markdownFiles(Directory dir) =>
+      dir.listSync(recursive: true).whereType<File>().where((file) => file.path.endsWith('.md'));
 
   SlashCommand? _loadSlashCommand(File file, CommandSource source) {
     final lines = file.readAsLinesSync();
@@ -961,17 +912,17 @@ class PlatformFilesSource {
     }
     // Имя команды пишет сама спека: файл opsx-apply.md, а зовётся она
     // /opsx:apply — нормализовать разделитель за спеку нельзя.
-    final id = (frontmatter['name'] ?? frontmatter['id'] ??
-            p.basenameWithoutExtension(file.path))
-        .replaceFirst(RegExp(r'^/'), '');
+    final id = (frontmatter['name'] ?? frontmatter['id'] ?? p.basenameWithoutExtension(file.path)).replaceFirst(
+      RegExp(r'^/'),
+      '',
+    );
     final description = frontmatter['description'] ?? '';
     if (description.isEmpty) return null;
     return SlashCommand(
       id: id,
       description: description,
       source: source,
-      argumentHint: frontmatter['argument-hint'] ??
-          _argumentHintFromBody(lines.skip(frontmatterEnd)),
+      argumentHint: frontmatter['argument-hint'] ?? _argumentHintFromBody(lines.skip(frontmatterEnd)),
     );
   }
 
@@ -981,13 +932,10 @@ class PlatformFilesSource {
   String _argumentHintFromBody(Iterable<String> body) {
     const slots = ['change', 'sprint', 'group', 'doc'];
     final lines = body.toList();
-    final start =
-        lines.indexWhere((line) => line.trimLeft().startsWith('**Input**'));
+    final start = lines.indexWhere((line) => line.trimLeft().startsWith('**Input**'));
     if (start < 0) return '';
     final section = lines.skip(start).take(12).toList();
-    final usage = section
-        .where((line) => line.trimLeft().startsWith('/'))
-        .firstOrNull;
+    final usage = section.where((line) => line.trimLeft().startsWith('/')).firstOrNull;
     if (usage != null) {
       return [
         for (final slot in slots)
@@ -1011,13 +959,14 @@ class PlatformFilesSource {
   Future<void> pullPlatform() async {
     final run = commandLog?.begin('git -C ${root.path} pull --ff-only');
     try {
-      final result =
-          await Process.run(ExecutableLocator.resolve('git'), ['-C', root.path, 'pull', '--ff-only'])
-              .timeout(const Duration(seconds: 15));
+      final result = await Process.run(ExecutableLocator.resolve('git'), [
+        '-C',
+        root.path,
+        'pull',
+        '--ff-only',
+      ]).timeout(const Duration(seconds: 15));
       if (run != null) {
-        commandLog?.complete(run,
-            output: '${result.stdout}${result.stderr}'.trim(),
-            exitCode: result.exitCode);
+        commandLog?.complete(run, output: '${result.stdout}${result.stderr}'.trim(), exitCode: result.exitCode);
       }
     } catch (error) {
       // офлайн или конфликт — читаем локальное состояние
@@ -1050,15 +999,13 @@ class PlatformFilesSource {
   Future<({String branch, int behind})?> workspaceGitInfo(String repoDirName) =>
       _gitInfo(p.join(root.path, 'workspace', repoDirName));
 
-  Future<({String branch, int behind})?> platformGitInfo() =>
-      _gitInfo(root.path);
+  Future<({String branch, int behind})?> platformGitInfo() => _gitInfo(root.path);
 
   Future<({String branch, int behind})?> _gitInfo(String repoDir) async {
     if (!Directory(repoDir).existsSync()) return null;
     final branch = await _git(repoDir, ['rev-parse', '--abbrev-ref', 'HEAD']);
     if (branch == null) return null;
-    final behind =
-        await _git(repoDir, ['rev-list', '--count', 'HEAD..@{upstream}']);
+    final behind = await _git(repoDir, ['rev-list', '--count', 'HEAD..@{upstream}']);
     return (branch: branch, behind: int.tryParse(behind ?? '') ?? 0);
   }
 
@@ -1074,8 +1021,7 @@ class PlatformFilesSource {
 
   // ─── Вспомогательное ───────────────────────────────────────────────────────
 
-  dynamic _yamlOf(File file) =>
-      file.existsSync() ? loadYaml(file.readAsStringSync()) : null;
+  dynamic _yamlOf(File file) => file.existsSync() ? loadYaml(file.readAsStringSync()) : null;
 
   String? _yamlValue(File file, List<String> keyPath) {
     dynamic node = _yamlOf(file);

@@ -8,6 +8,8 @@ import 'core/resources/app_dimens.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/command_log_impl.dart';
 import 'data/repositories/platform_repository_impl.dart';
+import 'data/sources/redmine_tracker_resolver.dart';
+import 'data/sources/tracker_resolver.dart';
 import 'domain/repositories/command_log.dart';
 import 'domain/repositories/platform_repository.dart';
 import 'l10n/gen/app_localizations.dart';
@@ -20,7 +22,10 @@ final getIt = GetIt.instance;
 Future<void> setupDi() async {
   final commandLog = CommandLogImpl();
   getIt.registerSingleton<CommandLog>(commandLog);
-  final repository = await PlatformRepositoryImpl.create(commandLog: commandLog);
+  // Адаптер трекера выбирается резолвером, а не репозиторием: второй
+  // адаптер встанет сюда, не трогая чтение слепка.
+  getIt.registerSingleton<TrackerResolver>(const RedmineTrackerResolver());
+  final repository = await PlatformRepositoryImpl.create(commandLog: commandLog, trackers: getIt<TrackerResolver>());
   getIt.registerSingleton<PlatformRepository>(repository);
 }
 
@@ -54,21 +59,18 @@ class ConsoleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Spok',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider(
-                create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
-            BlocProvider(
-                create: (_) => SessionsBloc(getIt<PlatformRepository>(),
-                    commandLog: getIt<CommandLog>())),
-          ],
-          child: const Shell(),
-        ),
-      );
+    title: 'Spok',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.dark(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('ru'),
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
+        BlocProvider(create: (_) => SessionsBloc(getIt<PlatformRepository>(), commandLog: getIt<CommandLog>())),
+      ],
+      child: const Shell(),
+    ),
+  );
 }

@@ -216,6 +216,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get groupingNone => 'плоский список';
 
   @override
+  String get schemaSourceProject => 'схема проекта';
+
+  @override
+  String get schemaSourceUser => 'схема пользователя';
+
+  @override
+  String get schemaSourceBuiltin =>
+      'встроенная схема upstream — в спеке её нет';
+
+  @override
   String get partialTrackerTitle =>
       'Статусы трекера недоступны — показаны данные файлов спеки';
 
@@ -223,16 +233,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get partialRetry => 'Повторить';
 
   @override
-  String redmineUnavailable(String reason) {
-    return 'Статусы Redmine недоступны ($reason) — показаны данные файлов';
+  String trackerNoKey(String key) {
+    return 'нет ключа $key';
   }
 
   @override
-  String get redmineNoKey => 'нет ключа REDMINE_API_KEY';
-
-  @override
-  String redmineDown(String reason) {
-    return 'Redmine недоступен: $reason';
+  String trackerDown(String tracker, String reason) {
+    return '$tracker недоступен: $reason';
   }
 
   @override
@@ -282,6 +289,29 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String stagePlanning(String artifact) {
+    return 'планирование · ждёт $artifact';
+  }
+
+  @override
+  String get stageReadyToApply => 'готов к реализации';
+
+  @override
+  String stageInProgress(int done, int total) {
+    return 'в работе · $done/$total';
+  }
+
+  @override
+  String get stageDone => 'сделано';
+
+  @override
+  String get stageArchived => 'в архиве';
+
+  @override
+  String get stageTooltip =>
+      'Стадия работы — из файлов change’а: артефакты схемы и отметки задач';
+
+  @override
   String marksOpenTask(String num) {
     return 'открыта $num';
   }
@@ -305,6 +335,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get nextStepCommand => 'открыть tasks_*.md в change\'ах';
+
+  @override
+  String nextStepPlanning(String artifact, String change) {
+    return 'Следующий шаг: написать $artifact для change’а «$change»';
+  }
+
+  @override
+  String get nextStepPlanningReason =>
+      'без этого артефакта change нельзя реализовать';
+
+  @override
+  String nextStepApply(String change) {
+    return 'Следующий шаг: реализовать change «$change»';
+  }
+
+  @override
+  String get nextStepApplyReason => 'артефакты написаны, задачи ещё открыты';
+
+  @override
+  String get nextStepArchive =>
+      'Следующий шаг: сдать change’и в архив — все задачи закрыты';
+
+  @override
+  String get nextStepArchiveReason =>
+      'сделанное уходит в openspec/changes/archive, и спека показывает только живую работу';
 
   @override
   String get backToChanges => '← Ко всем change\'ам';
@@ -388,6 +443,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get artifactDesign => 'Дизайн-решения';
 
   @override
+  String get artifactSpecs => 'Спецификации';
+
+  @override
+  String get artifactTasks => 'Задачи';
+
+  @override
   String get artifactTasksIos => 'Задачи iOS';
 
   @override
@@ -468,10 +529,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envSystemsSection => 'Внешние системы';
 
   @override
-  String get envHintRedmineUrl => 'адрес Redmine';
-
-  @override
-  String get envHintRedmineKey => 'доступ к задачам';
+  String get envKeysNotDeclared =>
+      'Спека не объявляет ключей — нет .env.example, заполнять нечего';
 
   @override
   String get envHintGitlabUrl => 'адрес GitLab';
@@ -494,6 +553,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get envHintRole => 'роль машины';
+
+  @override
+  String get envHintTrackerUrl => 'адрес трекера задач';
+
+  @override
+  String get envHintTrackerKey => 'доступ к задачам трекера';
 
   @override
   String get checkFilled => 'заполнен';
@@ -641,7 +706,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get stackFilterAll => 'Все стеки';
 
   @override
-  String get openInRedmineTooltip => 'Открыть задачу в Redmine';
+  String openInTrackerTooltip(String tracker) {
+    return 'Открыть задачу в $tracker';
+  }
 
   @override
   String get dependenciesTitle => 'Зависимости';
@@ -680,12 +747,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Готовность неизвестна — статусы трекера не опрошены';
 
   @override
-  String get handoffStatusNoKey =>
-      'Ключ Redmine не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.';
+  String handoffStatusNoKey(String tracker) {
+    return 'Ключ $tracker не заполнен на этой машине, а в файлах спеки статусов этих change\'ей нет. Спросить трекер нечем — готовность не считается.';
+  }
 
   @override
-  String get handoffStatusUnreachable =>
-      'Redmine не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.';
+  String handoffStatusUnreachable(String tracker) {
+    return '$tracker не отвечает, а в файлах спеки статусов этих change\'ей нет. Готовность не считается — данных о ней нет.';
+  }
 
   @override
   String get handoffStatusNotAsked =>
@@ -726,8 +795,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get handoffBuildMissingShort => 'не записана';
 
   @override
-  String get handoffRecipientsNote =>
-      'Тестировщик и менеджер определяются из ролей Redmine и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).';
+  String handoffRecipientsNote(String tracker) {
+    return 'Тестировщик и менеджер определяются из ролей $tracker и членства в канале Mattermost при отправке (scripts/sprint-handover-recipients.mjs).';
+  }
 
   @override
   String get handoffRecipientTester => 'Тестировщик';
@@ -965,13 +1035,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get codeNoBranch => 'ветка спринта не задана в sprint.yaml';
 
   @override
-  String get commentsTitle => 'Комментарии Redmine';
+  String commentsTitle(String tracker) {
+    return 'Комментарии $tracker';
+  }
 
   @override
   String get commentsEmpty => 'комментариев нет';
 
   @override
-  String get commentsUnavailable => 'комментарии недоступны без ключа Redmine';
+  String commentsUnavailable(String tracker) {
+    return 'комментарии недоступны без ключа $tracker';
+  }
 
   @override
   String codeMrOpened(int iid) {
@@ -1041,16 +1115,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get handoffRecipientsResolve => 'Подобрать получателей';
 
   @override
-  String get handoffRecipientsResolving =>
-      'скрипт платформы опрашивает Redmine и Mattermost…';
+  String handoffRecipientsResolving(String tracker) {
+    return 'скрипт платформы опрашивает $tracker и Mattermost…';
+  }
 
   @override
   String get handoffRecipientsHint =>
       'получатели ещё не подобраны — нажмите, чтобы увидеть, кому уйдёт передача';
 
   @override
-  String get handoffRecipientsSource =>
-      'роли Redmine × участники канала · scripts/sprint-handover-recipients.mjs';
+  String handoffRecipientsSource(String tracker) {
+    return 'роли $tracker × участники канала · scripts/sprint-handover-recipients.mjs';
+  }
 
   @override
   String handoffRecipientsError(String reason) {
@@ -1224,7 +1300,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get statusFromCacheHint =>
-      'Статус взят из redmine.yaml change’а — трекер не опрошен';
+      'Статус взят из файла change’а — трекер не опрошен';
 
   @override
   String changeFormatWarning(String detail) {
