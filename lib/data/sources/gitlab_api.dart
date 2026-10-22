@@ -28,14 +28,17 @@ class GitLabApi {
     required String sourceBranch,
     required String targetBranch,
   }) async {
-    final resp = await _dio.get('/projects/$projectPath/merge_requests',
+    final resp = await _dio.get<Object?>('/projects/$projectPath/merge_requests',
         queryParameters: {
           'source_branch': sourceBranch,
           'order_by': 'updated_at',
           'per_page': 5,
         });
-    final list = resp.data;
-    if (list is! List || list.isEmpty) {
+    final mr = switch (resp.data) {
+      [final Map<Object?, Object?> first, ...] => first,
+      _ => null,
+    };
+    if (mr == null) {
       return MergeRequestInfo(
         stack: stack,
         sourceBranch: sourceBranch,
@@ -43,7 +46,6 @@ class GitLabApi {
         state: MergeRequestState.none,
       );
     }
-    final mr = list.first;
     final state = switch (mr['state']?.toString()) {
       'opened' => MergeRequestState.opened,
       'merged' => MergeRequestState.merged,
@@ -74,12 +76,12 @@ class GitLabApi {
     required String branch,
   }) async {
     try {
-      final resp = await _dio.get(
+      final resp = await _dio.get<Object?>(
           '/projects/$projectPath/repository/commits/$sha/refs',
           queryParameters: {'type': 'branch', 'per_page': 100});
       final refs = resp.data;
-      if (refs is! List) return null;
-      return refs.any((ref) => ref['name']?.toString() == branch);
+      if (refs is! List<Object?>) return null;
+      return refs.any((ref) => ref is Map && ref['name']?.toString() == branch);
     } on DioException {
       return null; // нет прав или коммит недоступен — не выдумываем факт
     }

@@ -42,7 +42,6 @@ Future<void> main() async {
       title: 'Spok',
       titleBarStyle: TitleBarStyle.normal,
     ),
-    null,
   );
   // Русские названия месяцев в датах комментариев.
   await initializeDateFormatting('ru');

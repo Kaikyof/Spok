@@ -4,16 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
+import '../../data/sources/redmine_status_colors.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/divergence.dart';
 import '../../domain/entities/doc_artifact.dart';
-import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../domain/entities/work_stage.dart';
-import '../../data/sources/redmine_status_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
@@ -24,10 +24,10 @@ import '../ui_kit/next_step_banner.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/skeleton.dart';
 import '../ui_kit/status_badge.dart';
+import '../ui_kit/tappable.dart';
 import '../widgets/create_change_dialog.dart';
 import '../widgets/create_sprint_dialog.dart';
 import '../widgets/stack_filter_bar.dart';
-import '../ui_kit/tappable.dart';
 
 /// Главный экран: за пять секунд показать, где работа и что мешает.
 /// Группа — спринт, мастер-спека или просто все change'и спеки.

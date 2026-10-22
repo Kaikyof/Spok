@@ -36,35 +36,46 @@ class RedmineApi implements Tracker {
   @override
   Future<Map<int, String>> statuses(List<int> issueIds) async {
     if (issueIds.isEmpty) return {};
-    final resp = await _dio.get(
+    final resp = await _dio.get<Object?>(
       '/issues.json',
       queryParameters: {'issue_id': issueIds.join(','), 'status_id': '*', 'limit': 100},
     );
-    return {for (final issue in (resp.data['issues'] as List)) issue['id'] as int: issue['status']['name'] as String};
+    // Ответ без списка задач — сбой Redmine, а не «статусов нет».
+    if (resp.data case {'issues': final List<Object?> issues}) {
+      return {
+        for (final issue in issues)
+          if (issue case {'id': final int id, 'status': {'name': final String name}}) id: name,
+      };
+    }
+    throw const FormatException('в ответе Redmine нет списка issues');
   }
 
   /// Лента комментариев задачи (журналы с текстом), новые сверху.
   @override
   Future<List<TrackerComment>> comments(int issueId) async {
-    final resp = await _dio.get('/issues/$issueId.json', queryParameters: {'include': 'journals'});
-    final journals = resp.data['issue']?['journals'];
-    if (journals is! List) return const [];
-    return [
-      for (final journal in journals.reversed)
-        if ((journal['notes']?.toString() ?? '').trim().isNotEmpty)
-          (
-            author: journal['user']?['name']?.toString() ?? '—',
-            createdAt: DateTime.tryParse(journal['created_on']?.toString() ?? '') ?? DateTime.now(),
-            text: journal['notes'].toString().trim(),
-          ),
-    ];
+    final resp = await _dio.get<Object?>('/issues/$issueId.json', queryParameters: {'include': 'journals'});
+    if (resp.data case {'issue': {'journals': final List<Object?> journals}}) {
+      return [
+        for (final journal in journals.reversed)
+          if (journal case {'notes': final Object notes} when notes.toString().trim().isNotEmpty)
+            (
+              author: switch (journal) {
+                {'user': {'name': final Object name}} => name.toString(),
+                _ => '—',
+              },
+              createdAt: DateTime.tryParse('${journal['created_on'] ?? ''}') ?? DateTime.now(),
+              text: notes.toString().trim(),
+            ),
+      ];
+    }
+    return const [];
   }
 
   /// Проверка доступности; возвращает время ответа в мс.
   @override
   Future<int> ping() async {
     final sw = Stopwatch()..start();
-    await _dio.get('/my/account.json');
+    await _dio.get<Object?>('/my/account.json');
     return sw.elapsedMilliseconds;
   }
 }

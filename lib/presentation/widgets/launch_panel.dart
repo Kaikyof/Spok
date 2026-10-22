@@ -57,7 +57,7 @@ class _PanelBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentRun = run;
-    return Container(
+    return DecoratedBox(
       decoration: const BoxDecoration(
         color: AppColors.panel,
         border: Border(top: BorderSide(color: AppColors.borderSoft)),

@@ -663,7 +663,6 @@ class _TranscriptEntry extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: AppTextStyles.monospace(
                 11,
-                color: AppColors.monospaceText,
               ),
             ),
           ),
@@ -1354,7 +1353,6 @@ class _PaletteRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.monospace(
                       12,
-                      color: AppColors.monospaceText,
                     ),
                   ),
                   if (command.description.isNotEmpty)

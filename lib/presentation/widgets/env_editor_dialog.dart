@@ -11,8 +11,8 @@ import '../../domain/entities/operation_progress.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
-import '../localization/text_formatters.dart';
 import '../bloc/sessions_bloc.dart';
+import '../localization/text_formatters.dart';
 import '../ui_kit/progress_panel.dart';
 import '../ui_kit/tappable.dart';
 

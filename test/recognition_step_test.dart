@@ -16,7 +16,6 @@ import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/slash_command.dart';
 import 'package:spok/domain/entities/spec_recognition.dart';
 import 'package:spok/domain/entities/spec_schema.dart';
-import 'package:spok/domain/entities/status_semantics.dart';
 import 'package:spok/domain/repositories/platform_repository.dart';
 import 'package:spok/l10n/gen/app_localizations.dart';
 import 'package:spok/presentation/bloc/console_bloc.dart';
@@ -99,7 +98,6 @@ class _FakeRepository implements PlatformRepository {
     profile: ProjectProfile(
       schema: const SpecSchema(name: 'avelacom', artifacts: []),
       stacks: const ['backend'],
-      statuses: StatusSemantics.empty,
       features: _features,
       recognition: _recognition,
     ),

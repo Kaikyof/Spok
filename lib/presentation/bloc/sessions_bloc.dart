@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/sources/agent_cli_source.dart';
@@ -209,7 +211,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
     ));
 
     // Не await: процесс живёт минуты, события приходят через add().
-    source.start(
+    unawaited(source.start(
       binary: binary,
       prompt: prompt,
       model: state.model,
@@ -223,7 +225,7 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
           add(_SessionEventReceived(session.id, agentEvent)),
       onDone: (status, duration) =>
           add(_SessionFinished(session.id, status, duration)),
-    );
+    ));
   }
 
   void _onCreated(SessionCreated event, Emitter<SessionsState> emit) {

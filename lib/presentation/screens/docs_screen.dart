@@ -428,7 +428,6 @@ class _DocHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(
           AppDimens.gapXl, AppDimens.gapM, AppDimens.gapXl, AppDimens.gapM),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(

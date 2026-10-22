@@ -109,7 +109,7 @@ class SchemaResolver {
                 description: artifact['description']?.toString() ?? '',
                 requires: [
                   if (artifact['requires'] is YamlList)
-                    for (final required in artifact['requires'])
+                    for (final required in artifact['requires'] as YamlList)
                       required.toString(),
                 ],
               ),

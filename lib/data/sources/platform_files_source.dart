@@ -11,17 +11,17 @@ import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_node.dart';
 import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/group.dart';
-import '../../domain/entities/spec_schema.dart';
-import '../../domain/entities/status_semantics.dart';
-import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
+import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/stack_state.dart';
+import '../../domain/entities/status_semantics.dart';
 import '../../domain/entities/task_item.dart';
 import '../../domain/entities/work_stage.dart';
+import '../../domain/repositories/command_log.dart';
 import '../../domain/usecases/assess_work_stage.dart';
 import 'builtin_schemas.dart';
-import 'executable_locator.dart';
 import 'env_file.dart';
+import 'executable_locator.dart';
 import 'schema_resolver.dart';
 
 /// Ключ .env с подсказкой из комментария над строкой в `.env.example`.
@@ -144,18 +144,18 @@ class PlatformFilesSource {
   StatusSemantics loadStatusSemantics() {
     final file = File(p.join(root.path, 'openspec', 'redmine.yaml'));
     if (!file.existsSync()) return StatusSemantics.empty;
-    final yaml = loadYaml(file.readAsStringSync());
-    final statuses = yaml['statuses'];
-    final sync = yaml['sync'];
+    final Object? yaml = loadYaml(file.readAsStringSync());
+    final statuses = _at(yaml, 'statuses');
+    final sync = _at(yaml, 'sync');
     return StatusSemantics(
       statuses: [
         if (statuses is YamlList)
           for (final status in statuses)
             TrackerStatus(
-              id: int.tryParse('${status['id']}') ?? -1,
-              name: status['name']?.toString() ?? '',
-              closing: status['closing'] == true,
-              completesTask: status['completes_task'] == true,
+              id: int.tryParse('${_at(status, 'id')}') ?? -1,
+              name: _at(status, 'name')?.toString() ?? '',
+              closing: _at(status, 'closing') == true,
+              completesTask: _at(status, 'completes_task') == true,
             ),
       ],
       sync: {
@@ -210,7 +210,7 @@ class PlatformFilesSource {
   Group _sprintGroup(Directory dir, List<ChangeUnit> changes) {
     final sprintId = p.basename(dir.path);
     final yaml = _yamlOf(File(p.join(dir.path, 'sprint.yaml')));
-    final branches = yaml?['branches'];
+    final branches = _at(yaml, 'branches');
     final docFile = File(p.join(dir.path, 'doc.md'));
     return Group(
       id: sprintId,
@@ -219,11 +219,11 @@ class PlatformFilesSource {
       branches: {
         if (branches is YamlMap)
           for (final entry in branches.entries)
-            if (entry.value?['name'] != null) entry.key.toString(): entry.value['name'].toString(),
+            if (_at(entry.value, 'name') case final Object name) entry.key.toString(): name.toString(),
       },
       builds: _loadBuilds(dir),
       docPath: docFile.existsSync() ? docFile.path : null,
-      delivery: yaml?['delivery']?.toString() ?? 'batch',
+      delivery: _at(yaml, 'delivery')?.toString() ?? 'batch',
       changeIds: [
         for (final change in changes)
           if (change.groupId == sprintId) change.id,
@@ -265,18 +265,18 @@ class PlatformFilesSource {
     return {for (final entry in yaml.entries) entry.key.toString(): ?_buildOf(entry.key.toString(), entry.value)};
   }
 
-  BuildInfo? _buildOf(String stack, dynamic node) {
-    final builds = node is YamlMap ? node['builds'] : null;
+  BuildInfo? _buildOf(String stack, Object? node) {
+    final builds = _at(node, 'builds');
     if (builds is! YamlList || builds.isEmpty) return null;
-    final build = builds.first;
-    final versionCode = build['version_code'];
+    final Object? build = builds.first;
+    final versionCode = _at(build, 'version_code');
     final versionName = versionCode == null
-        ? build['version_name']?.toString()
-        : '${build['version_name']}($versionCode)';
+        ? _at(build, 'version_name')?.toString()
+        : '${_at(build, 'version_name')}($versionCode)';
     return BuildInfo(
       versionName: versionName ?? '?',
-      channel: build['channel']?.toString() ?? (build['nextcloud_url'] != null ? 'QA APK в Nextcloud' : null),
-      publishedAt: DateTime.tryParse(build['published_at']?.toString() ?? ''),
+      channel: _at(build, 'channel')?.toString() ?? (_at(build, 'nextcloud_url') != null ? 'QA APK в Nextcloud' : null),
+      publishedAt: DateTime.tryParse(_at(build, 'published_at')?.toString() ?? ''),
     );
   }
 
@@ -357,8 +357,7 @@ class PlatformFilesSource {
               ),
           ],
           children: [
-            for (final id in group.changeIds)
-              ...changes.where((change) => change.id == id).map((change) => _changeDocNode(change)),
+            for (final id in group.changeIds) ...changes.where((change) => change.id == id).map(_changeDocNode),
           ],
         ),
     ];
@@ -540,26 +539,26 @@ class PlatformFilesSource {
       formatWarning: '',
     );
     if (!file.existsSync()) return empty;
-    final yaml = loadYaml(file.readAsStringSync());
+    final Object? yaml = loadYaml(file.readAsStringSync());
     // Разбор идёт по версии формата: неизвестная версия — явная пометка,
     // а не молча пустое значение.
-    final version = int.tryParse('${yaml['version']}');
-    final supported = const [3, 4];
-    final stacks = yaml['stacks'];
-    final group = yaml['group'];
-    final members = group?['members'];
+    final version = int.tryParse('${_at(yaml, 'version')}');
+    const supported = [3, 4];
+    final stacks = _at(yaml, 'stacks');
+    final group = _at(yaml, 'group');
+    final members = _at(group, 'members');
     return (
       stacks: {
         if (stacks is YamlMap)
           for (final entry in stacks.entries)
             entry.key.toString(): (
-              issueId: int.tryParse('${entry.value?['issue_id']}'),
-              statusName: entry.value?['status_name']?.toString(),
+              issueId: int.tryParse('${_at(entry.value, 'issue_id')}'),
+              statusName: _at(entry.value, 'status_name')?.toString(),
             ),
       },
       members: members is YamlList ? members.map((member) => member.toString()).toList() : const <String>[],
-      groupId: (group?['feature_sprint'] ?? group?['doc'])?.toString() ?? '',
-      groupIssueId: int.tryParse('${group?['issue_id']}'),
+      groupId: (_at(group, 'feature_sprint') ?? _at(group, 'doc'))?.toString() ?? '',
+      groupIssueId: int.tryParse('${_at(group, 'issue_id')}'),
       formatWarning: version == null || supported.contains(version) ? '' : '${p.basename(file.path)}: version $version',
     );
   }
@@ -748,7 +747,7 @@ class PlatformFilesSource {
   List<({String name, String ref, String repo, String stack})> allServices() {
     final file = File(p.join(root.path, 'workspace.yaml'));
     if (!file.existsSync()) return [];
-    final services = loadYaml(file.readAsStringSync())['services'];
+    final services = _at(loadYaml(file.readAsStringSync()), 'services');
     if (services is! YamlList) return [];
     final machineRole = role;
     final stacks = loadSchema().stacks;
@@ -756,9 +755,9 @@ class PlatformFilesSource {
       for (final service in services)
         if (_serviceMatchesRole(service, machineRole))
           (
-            name: service['name'].toString(),
-            ref: service['ref'].toString(),
-            repo: service['repo']?.toString() ?? '',
+            name: _at(service, 'name').toString(),
+            ref: _at(service, 'ref').toString(),
+            repo: _at(service, 'repo')?.toString() ?? '',
             stack: _stackOfService(service, stacks),
           ),
     ];
@@ -766,17 +765,17 @@ class PlatformFilesSource {
 
   /// Стек сервиса из его ролей: «dev, ios» → ios. Ролей нет — стек пустой,
   /// и сервис считается общим для всей спеки.
-  String _stackOfService(dynamic service, List<String> stacks) {
-    final roles = (service['roles']?.toString() ?? '').split(',').map((role) => role.trim());
+  String _stackOfService(Object? service, List<String> stacks) {
+    final roles = (_at(service, 'roles')?.toString() ?? '').split(',').map((role) => role.trim());
     for (final stack in stacks) {
       if (roles.contains(stack)) return stack;
     }
     return '';
   }
 
-  bool _serviceMatchesRole(dynamic service, String machineRole) {
+  bool _serviceMatchesRole(Object? service, String machineRole) {
     if (machineRole.isEmpty) return true;
-    final roles = service['roles'];
+    final roles = _at(service, 'roles');
     if (roles == null) return true;
     return roles.toString().split(',').map((role) => role.trim()).contains(machineRole);
   }
@@ -1021,13 +1020,17 @@ class PlatformFilesSource {
 
   // ─── Вспомогательное ───────────────────────────────────────────────────────
 
-  dynamic _yamlOf(File file) => file.existsSync() ? loadYaml(file.readAsStringSync()) : null;
+  Object? _yamlOf(File file) => file.existsSync() ? loadYaml(file.readAsStringSync()) as Object? : null;
 
   String? _yamlValue(File file, List<String> keyPath) {
-    dynamic node = _yamlOf(file);
+    var node = _yamlOf(file);
     for (final key in keyPath) {
-      node = node?[key];
+      node = _at(node, key);
     }
     return node?.toString();
   }
 }
+
+/// Поле узла YAML или JSON; не словарь — null. Спека бывает неожиданной
+/// формы, и это «не распознано», а не исключение.
+Object? _at(Object? node, String key) => node is Map ? node[key] : null;

@@ -47,7 +47,7 @@ class _FakeTracker implements Tracker {
   @override
   Future<List<TrackerComment>> comments(int issueId) async {
     askedComments.add(issueId);
-    return [(author: 'qa', createdAt: DateTime(2026, 9, 1), text: 'ок')];
+    return [(author: 'qa', createdAt: DateTime(2026, 9), text: 'ок')];
   }
 
   @override

@@ -8,9 +8,9 @@ import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/build_info.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/entities/handoff_blocker.dart';
 import '../../domain/entities/handoff_recipient.dart';
-import '../../domain/entities/group.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/usecases/assess_handoff_readiness.dart';
@@ -20,10 +20,10 @@ import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/section_card.dart';
+import '../ui_kit/tappable.dart';
 import '../widgets/feature_unavailable_view.dart';
 import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
-import '../ui_kit/tappable.dart';
 
 /// Передача группы: мастер из четырёх шагов, все видны сразу.
 /// Шаг, для которого у спеки нет данных, не исчезает — он объясняет,
@@ -342,7 +342,7 @@ class _BuildRow extends StatelessWidget {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(info.versionName, style: AppTextStyles.monospace(12, color: AppColors.monospaceText)),
+                    Text(info.versionName, style: AppTextStyles.monospace(12)),
                     const SizedBox(height: 2),
                     Text(
                       [
@@ -666,8 +666,11 @@ class _PreviewStep extends StatelessWidget {
       '',
       texts.handoverMsgOrder,
       for (final (index, change) in stackChanges.indexed)
-        '  ${index + 1}. ${issueOf[change.id]?.issueId ?? change.id}'
-            '${change.dependsOn.isEmpty ? '' : texts.handoverMsgOrderAfter(change.dependsOn.map((id) => '${issueOf[id]?.issueId ?? id}').join(', '))}',
+        [
+          '  ${index + 1}. ${issueOf[change.id]?.issueId ?? change.id}',
+          if (change.dependsOn.isNotEmpty)
+            texts.handoverMsgOrderAfter(change.dependsOn.map((id) => '${issueOf[id]?.issueId ?? id}').join(', ')),
+        ].join(),
     ];
     return lines.join('\n');
   }

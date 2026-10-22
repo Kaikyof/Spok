@@ -76,7 +76,7 @@ void main() {
     write('specs/auth/spec.md', '## ADDED Requirements\n');
     write('design.md', '## Context\n');
     write('tasks.md', '## 1\n');
-    final tasks = const [TaskItem('1.1', 'Шаг', true), TaskItem('1.2', 'Шаг', true)];
+    const tasks = [TaskItem('1.1', 'Шаг', true), TaskItem('1.2', 'Шаг', true)];
 
     expect(assess(change(tasks: tasks), _specDriven), WorkStage.done);
   });
@@ -101,7 +101,7 @@ void main() {
   });
 
   test('архив решает всё: даже с открытыми задачами стадия — в архиве', () {
-    final unit = change(tasks: const [TaskItem('1.1', 'Шаг', false)], archivedAt: DateTime(2026, 9, 1));
+    final unit = change(tasks: const [TaskItem('1.1', 'Шаг', false)], archivedAt: DateTime(2026, 9));
 
     expect(assess(unit, _specDriven), WorkStage.archived);
   });

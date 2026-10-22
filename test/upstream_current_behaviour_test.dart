@@ -64,7 +64,7 @@ void main() {
   test('архив с датой в имени читается, id очищен', () {
     final archived = source.loadArchivedChanges();
     expect(archived.single.id, 'add-login');
-    expect(archived.single.archivedAt, DateTime(2026, 9, 1));
+    expect(archived.single.archivedAt, DateTime(2026, 9));
     expect(archived.single.stacks.single.doneCount, 1);
   });
 

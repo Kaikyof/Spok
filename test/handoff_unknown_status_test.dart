@@ -58,7 +58,7 @@ const _handover = SlashCommand(
 );
 
 final _features = {
-  SpecFeature.handoff: FeatureGate([
+  SpecFeature.handoff: const FeatureGate([
     FeatureRequirement(id: RequirementId.grouping, scope: RequirementScope.spec, satisfied: true),
     FeatureRequirement(id: RequirementId.statusSemantics, scope: RequirementScope.spec, satisfied: true),
     FeatureRequirement(id: RequirementId.handoverCommand, scope: RequirementScope.spec, satisfied: true),
@@ -216,7 +216,7 @@ void main() {
       expect(find.text('Готовность'), findsOneWidget);
       expect(find.text('Готовность неизвестна — статусы трекера не опрошены'), findsOneWidget);
       // Прежней строки «1 из 1 готовы» на экране больше нет.
-      expect(find.textContaining("готовы к передаче"), findsNothing);
+      expect(find.textContaining('готовы к передаче'), findsNothing);
       expect(find.textContaining('статус не опрошен'), findsOneWidget);
     });
 

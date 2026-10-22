@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:spok/data/sources/builtin_schemas.dart';
-import 'package:spok/data/sources/schema_resolver.dart';
 import 'package:spok/data/sources/platform_files_source.dart';
+import 'package:spok/data/sources/schema_resolver.dart';
 
 const _rapidSchema = '''
 name: rapid

@@ -15,7 +15,7 @@ class IdeLauncher {
   const IdeLauncher({this.commandLog});
 
   /// Редакторы в порядке предпочтения: имя утилиты и её аргументы к пути.
-  static const _editors = [
+  static const _editors = <(String, List<String>)>[
     ('cursor', ['--goto']),
     ('code', ['--goto']),
     ('windsurf', ['--goto']),
