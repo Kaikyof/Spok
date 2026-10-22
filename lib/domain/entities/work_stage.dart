@@ -31,12 +31,12 @@ sealed class WorkStage {
   /// Порядок стадий по ходу работы: по нему выбирается самый «отстающий»
   /// change группы для плашки следующего шага.
   int get rank => switch (this) {
-        PlanningStage() => 0,
-        ReadyToApplyStage() => 1,
-        InProgressStage() => 2,
-        DoneStage() => 3,
-        ArchivedStage() => 4,
-      };
+    PlanningStage() => 0,
+    ReadyToApplyStage() => 1,
+    InProgressStage() => 2,
+    DoneStage() => 3,
+    ArchivedStage() => 4,
+  };
 }
 
 /// Планирование: артефакт [next] ещё не написан, а всё, чего он требует
@@ -47,8 +47,7 @@ class PlanningStage extends WorkStage {
   const PlanningStage(this.next);
 
   @override
-  bool operator ==(Object other) =>
-      other is PlanningStage && other.next == next;
+  bool operator ==(Object other) => other is PlanningStage && other.next == next;
 
   @override
   int get hashCode => Object.hash(PlanningStage, next);
@@ -73,8 +72,7 @@ class InProgressStage extends WorkStage {
   const InProgressStage(this.done, this.total);
 
   @override
-  bool operator ==(Object other) =>
-      other is InProgressStage && other.done == done && other.total == total;
+  bool operator ==(Object other) => other is InProgressStage && other.done == done && other.total == total;
 
   @override
   int get hashCode => Object.hash(InProgressStage, done, total);

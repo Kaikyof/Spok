@@ -9,3 +9,7 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+
+# Ширина строки для dart format; линты здесь не настраиваются.
+formatter:
+  page_width: 120

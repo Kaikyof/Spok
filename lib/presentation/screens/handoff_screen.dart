@@ -41,86 +41,76 @@ class _HandoffScreenState extends State<HandoffScreen> {
 
   @override
   Widget build(BuildContext context) => BlocBuilder<ConsoleBloc, ConsoleState>(
-        builder: (context, state) {
-          final snapshot = state.snapshot;
-          if (snapshot == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final group = state.group;
-          final handover = state.profile.handoverCommand;
-          if (!state.profile.enabled(SpecFeature.handoff) ||
-              group == null ||
-              handover == null) {
-            return FeatureUnavailableView(
-                feature: SpecFeature.handoff,
-                gate: state.profile.gate(SpecFeature.handoff));
-          }
-          final groupChanges = state.groupChanges;
-          final readiness = AssessHandoffReadiness()(
-            group: group,
-            changes: groupChanges,
-            semantics: state.profile.statuses,
-            stackVisible: state.allowsStack,
-          );
-          return ListView(
-            padding: AppDimens.screenPadding,
+    builder: (context, state) {
+      final snapshot = state.snapshot;
+      if (snapshot == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      final group = state.group;
+      final handover = state.profile.handoverCommand;
+      if (!state.profile.enabled(SpecFeature.handoff) || group == null || handover == null) {
+        return FeatureUnavailableView(feature: SpecFeature.handoff, gate: state.profile.gate(SpecFeature.handoff));
+      }
+      final groupChanges = state.groupChanges;
+      final readiness = AssessHandoffReadiness()(
+        group: group,
+        changes: groupChanges,
+        semantics: state.profile.statuses,
+        stackVisible: state.allowsStack,
+      );
+      return ListView(
+        padding: AppDimens.screenPadding,
+        children: [
+          const _FilterRow(),
+          const SizedBox(height: AppDimens.gapM),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _FilterRow(),
-              const SizedBox(height: AppDimens.gapM),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 50,
-                    child: Column(
-                      children: [
-                        _ReadinessStep(
-                            readiness: readiness, snapshot: snapshot),
-                        const SizedBox(height: AppDimens.gapL),
-                        _BuildStep(group: group, stacks: state.stacks),
-                        const SizedBox(height: AppDimens.gapL),
-                        _RecipientsStep(
-                          stack: state.handoffStack,
-                          selectedTester: _tester,
-                          selectedManager: _manager,
-                          onTesterSelected: (person) =>
-                              setState(() => _tester = person),
-                          onManagerSelected: (person) =>
-                              setState(() => _manager = person),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppDimens.gapXl),
-                  Expanded(
-                    flex: 50,
-                    child: _PreviewStep(
-                      group: group,
-                      handover: handover,
-                      changes: groupChanges,
-                      readiness: readiness,
+              Expanded(
+                flex: 50,
+                child: Column(
+                  children: [
+                    _ReadinessStep(readiness: readiness, snapshot: snapshot),
+                    const SizedBox(height: AppDimens.gapL),
+                    _BuildStep(group: group, stacks: state.stacks),
+                    const SizedBox(height: AppDimens.gapL),
+                    _RecipientsStep(
                       stack: state.handoffStack,
-                      recipients: state.recipientsStack == state.handoffStack
-                          ? state.recipients
-                          : null,
-                      chosenTester: _tester,
-                      chosenManager: _manager,
+                      selectedTester: _tester,
+                      selectedManager: _manager,
+                      onTesterSelected: (person) => setState(() => _tester = person),
+                      onManagerSelected: (person) => setState(() => _manager = person),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppDimens.gapXl),
+              Expanded(
+                flex: 50,
+                child: _PreviewStep(
+                  group: group,
+                  handover: handover,
+                  changes: groupChanges,
+                  readiness: readiness,
+                  stack: state.handoffStack,
+                  recipients: state.recipientsStack == state.handoffStack ? state.recipients : null,
+                  chosenTester: _tester,
+                  chosenManager: _manager,
+                ),
               ),
             ],
-          );
-        },
+          ),
+        ],
       );
+    },
+  );
 }
 
 class _FilterRow extends StatelessWidget {
   const _FilterRow();
 
   @override
-  Widget build(BuildContext context) =>
-      const Row(children: [Spacer(), StackFilterBar()]);
+  Widget build(BuildContext context) => const Row(children: [Spacer(), StackFilterBar()]);
 }
 
 class _StepHeader extends StatelessWidget {
@@ -129,41 +119,38 @@ class _StepHeader extends StatelessWidget {
   final Color color;
   final bool dimmed;
 
-  const _StepHeader({
-    required this.number,
-    required this.title,
-    required this.color,
-    this.dimmed = false,
-  });
+  const _StepHeader({required this.number, required this.title, required this.color, this.dimmed = false});
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: AppDimens.gapS),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text('$number',
-                  style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w600, color: color)),
-            ),
-            const SizedBox(width: 10),
-            Text(title,
-                style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: dimmed
-                        ? AppColors.textMuted
-                        : AppColors.textPrimary)),
-          ],
+    padding: const EdgeInsets.only(bottom: AppDimens.gapS),
+    child: Row(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 1.5),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$number',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          ),
         ),
-      );
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: dimmed ? AppColors.textMuted : AppColors.textPrimary,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ReadinessStep extends StatelessWidget {
@@ -190,9 +177,7 @@ class _ReadinessStep extends StatelessWidget {
         _StepHeader(
           number: 1,
           title: texts.handoffStepReadiness,
-          color: unknown
-              ? AppColors.textMuted
-              : (readiness.ready ? AppColors.success : AppColors.warning),
+          color: unknown ? AppColors.textMuted : (readiness.ready ? AppColors.success : AppColors.warning),
           dimmed: unknown,
         ),
         SectionCard(
@@ -200,35 +185,27 @@ class _ReadinessStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                  unknown
-                      ? texts.handoffReadinessUnknown
-                      : texts.handoffReadyCount(
-                          readiness.readyCount, readiness.totalCount),
-                  style: AppTextStyles.rowTitle),
+                unknown
+                    ? texts.handoffReadinessUnknown
+                    : texts.handoffReadyCount(readiness.readyCount, readiness.totalCount),
+                style: AppTextStyles.rowTitle,
+              ),
               const SizedBox(height: AppDimens.gapS),
               if (unknown) ...[
-                Text(
-                    switch (problem) {
-                      TrackerProblem.noApiKey =>
-                        texts.handoffStatusNoKey(tracker),
-                      TrackerProblem.unreachable =>
-                        texts.handoffStatusUnreachable(tracker),
-                      _ => texts.handoffStatusNotAsked,
-                    },
-                    style: AppTextStyles.hint.copyWith(height: 1.4)),
+                Text(switch (problem) {
+                  TrackerProblem.noApiKey => texts.handoffStatusNoKey(tracker),
+                  TrackerProblem.unreachable => texts.handoffStatusUnreachable(tracker),
+                  _ => texts.handoffStatusNotAsked,
+                }, style: AppTextStyles.hint.copyWith(height: 1.4)),
                 const SizedBox(height: AppDimens.gapM),
                 // Ключ личный — поле прямо здесь, без похода в форму ключей
                 // за одним значением. Молчащий трекер поля не требует:
                 // ему нужен повтор.
-                if (problem == TrackerProblem.noApiKey &&
-                    snapshot.trackerKeys.isNotEmpty)
-                  MissingKeyBlock(
-                      keys: snapshot.trackerKeys,
-                      lookedIn: '${snapshot.trackerKeys.join(', ')} · .env')
+                if (problem == TrackerProblem.noApiKey && snapshot.trackerKeys.isNotEmpty)
+                  MissingKeyBlock(keys: snapshot.trackerKeys, lookedIn: '${snapshot.trackerKeys.join(', ')} · .env')
                 else
                   OutlinedButton(
-                    onPressed: () =>
-                        context.read<ConsoleBloc>().add(ConsoleRefreshed()),
+                    onPressed: () => context.read<ConsoleBloc>().add(ConsoleRefreshed()),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 28),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -236,21 +213,16 @@ class _ReadinessStep extends StatelessWidget {
                       backgroundColor: AppColors.cardHighlight,
                       foregroundColor: AppColors.textPrimary,
                     ),
-                    child: Text(texts.partialRetry,
-                        style: const TextStyle(fontSize: 12)),
+                    child: Text(texts.partialRetry, style: const TextStyle(fontSize: 12)),
                   ),
                 const SizedBox(height: AppDimens.gapM),
               ],
               if (readiness.blockers.isEmpty)
-                Text(texts.handoffNoBlockers,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.success))
+                Text(texts.handoffNoBlockers, style: const TextStyle(fontSize: 12, color: AppColors.success))
               else ...[
-                Text(texts.handoffBlockersLabel,
-                    style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+                Text(texts.handoffBlockersLabel, style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
                 const SizedBox(height: 6),
-                for (final blocker in readiness.blockers)
-                  _BlockerRow(blocker: blocker),
+                for (final blocker in readiness.blockers) _BlockerRow(blocker: blocker),
               ],
             ],
           ),
@@ -271,15 +243,17 @@ class _BlockerRow extends StatelessWidget {
     final stackLabel = texts.stackLabel(blocker.stack);
     final message = switch (blocker.kind) {
       HandoffBlockerKind.statusNotReady => texts.handoffBlockerStatus(
-          blocker.changeTitle, blocker.stack == 'ios' ? 'iOS' : 'Android',
-          blocker.status),
+        blocker.changeTitle,
+        blocker.stack == 'ios' ? 'iOS' : 'Android',
+        blocker.status,
+      ),
       HandoffBlockerKind.tasksOpen => texts.handoffBlockerTasks(
-          blocker.changeTitle, stackLabel,
-          blocker.openTaskNumbers.join(', ')),
-      HandoffBlockerKind.statusUnknown =>
-        texts.handoffBlockerStatusUnknown(blocker.changeTitle, stackLabel),
-      HandoffBlockerKind.buildMissing =>
-        texts.handoffBlockerBuild(stackLabel),
+        blocker.changeTitle,
+        stackLabel,
+        blocker.openTaskNumbers.join(', '),
+      ),
+      HandoffBlockerKind.statusUnknown => texts.handoffBlockerStatusUnknown(blocker.changeTitle, stackLabel),
+      HandoffBlockerKind.buildMissing => texts.handoffBlockerBuild(stackLabel),
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -290,8 +264,7 @@ class _BlockerRow extends StatelessWidget {
             width: 8,
             height: 8,
             margin: const EdgeInsets.only(top: 4),
-            decoration: const BoxDecoration(
-                color: AppColors.warning, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.warning, shape: BoxShape.circle),
           ),
           const SizedBox(width: 10),
           Expanded(child: Text(message, style: AppTextStyles.caption)),
@@ -329,16 +302,13 @@ class _BuildStep extends StatelessWidget {
                   children: [
                     for (final (index, stack) in rows.indexed) ...[
                       if (index > 0) const SizedBox(height: 10),
-                      _BuildRow(
-                          label: texts.stackLabel(stack),
-                          buildInfo: group.buildFor(stack)),
+                      _BuildRow(label: texts.stackLabel(stack), buildInfo: group.buildFor(stack)),
                     ],
                   ],
                 )
               : Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(texts.buildsNotTracked,
-                      style: AppTextStyles.captionMuted),
+                  child: Text(texts.buildsNotTracked, style: AppTextStyles.captionMuted),
                 ),
         ),
       ],
@@ -361,30 +331,24 @@ class _BuildRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 64,
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          ),
         ),
         Expanded(
           child: info == null
-              ? Text(texts.handoffBuildMissingShort,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.warning))
+              ? Text(texts.handoffBuildMissingShort, style: const TextStyle(fontSize: 12, color: AppColors.warning))
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(info.versionName,
-                        style: AppTextStyles.monospace(12,
-                            color: AppColors.monospaceText)),
+                    Text(info.versionName, style: AppTextStyles.monospace(12, color: AppColors.monospaceText)),
                     const SizedBox(height: 2),
                     Text(
                       [
                         if (info.channel != null) info.channel!,
                         if (info.publishedAt != null)
-                          texts.handoffBuildRecordedAt(DateFormat('d.MM HH:mm')
-                              .format(info.publishedAt!.toLocal())),
+                          texts.handoffBuildRecordedAt(DateFormat('d.MM HH:mm').format(info.publishedAt!.toLocal())),
                       ].join(' · '),
                       style: AppTextStyles.hint,
                     ),
@@ -416,8 +380,7 @@ class _RecipientsStep extends StatelessWidget {
     final texts = AppLocalizations.of(context);
     return BlocBuilder<ConsoleBloc, ConsoleState>(
       builder: (context, state) {
-        final recipients =
-            state.recipientsStack == stack ? state.recipients : null;
+        final recipients = state.recipientsStack == stack ? state.recipients : null;
         final resolved = recipients?.resolved ?? false;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,44 +395,36 @@ class _RecipientsStep extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (state.recipientsLoading &&
-                      state.recipientsStack == stack) ...[
+                  if (state.recipientsLoading && state.recipientsStack == stack) ...[
                     Row(
                       children: [
-                        const SizedBox(
-                            width: 12,
-                            height: 12,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 1.5)),
+                        const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.5)),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                              texts.handoffRecipientsResolving(
-                                  state.snapshot?.trackerName ?? ''),
-                              style: AppTextStyles.captionMuted),
+                            texts.handoffRecipientsResolving(state.snapshot?.trackerName ?? ''),
+                            style: AppTextStyles.captionMuted,
+                          ),
                         ),
                       ],
                     ),
                   ] else if (recipients == null) ...[
-                    Text(texts.handoffRecipientsHint,
-                        style: AppTextStyles.captionMuted),
+                    Text(texts.handoffRecipientsHint, style: AppTextStyles.captionMuted),
                     const SizedBox(height: AppDimens.gapS),
                     OutlinedButton(
-                      onPressed: () => context
-                          .read<ConsoleBloc>()
-                          .add(RecipientsRequested(stack)),
+                      onPressed: () => context.read<ConsoleBloc>().add(RecipientsRequested(stack)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.border),
                         backgroundColor: AppColors.cardHighlight,
                         foregroundColor: AppColors.textPrimary,
                       ),
-                      child: Text(texts.handoffRecipientsResolve,
-                          style: const TextStyle(fontSize: 12)),
+                      child: Text(texts.handoffRecipientsResolve, style: const TextStyle(fontSize: 12)),
                     ),
                   ] else if (recipients.error.isNotEmpty) ...[
-                    Text(texts.handoffRecipientsError(recipients.error),
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.danger)),
+                    Text(
+                      texts.handoffRecipientsError(recipients.error),
+                      style: const TextStyle(fontSize: 12, color: AppColors.danger),
+                    ),
                   ] else ...[
                     _RecipientGroup(
                       role: texts.handoffRecipientTester,
@@ -481,16 +436,15 @@ class _RecipientsStep extends StatelessWidget {
                     _RecipientGroup(
                       role: texts.handoffRecipientManager,
                       people: recipients.managers,
-                      selected:
-                          selectedManager ?? recipients.managers.firstOrNull,
+                      selected: selectedManager ?? recipients.managers.firstOrNull,
                       onSelected: onManagerSelected,
                     ),
                   ],
                   const SizedBox(height: AppDimens.gapS),
                   Text(
-                      texts.handoffRecipientsSource(
-                          state.snapshot?.trackerName ?? ''),
-                      style: AppTextStyles.hint.copyWith(height: 1.4)),
+                    texts.handoffRecipientsSource(state.snapshot?.trackerName ?? ''),
+                    style: AppTextStyles.hint.copyWith(height: 1.4),
+                  ),
                 ],
               ),
             ),
@@ -509,12 +463,7 @@ class _RecipientGroup extends StatelessWidget {
   final HandoffRecipient? selected;
   final ValueChanged<HandoffRecipient> onSelected;
 
-  const _RecipientGroup({
-    required this.role,
-    required this.people,
-    required this.selected,
-    required this.onSelected,
-  });
+  const _RecipientGroup({required this.role, required this.people, required this.selected, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -524,8 +473,7 @@ class _RecipientGroup extends StatelessWidget {
         children: [
           _RoleChip(role: role),
           const SizedBox(width: 12),
-          Text(texts.handoffRecipientPending,
-              style: AppTextStyles.captionMuted),
+          Text(texts.handoffRecipientPending, style: AppTextStyles.captionMuted),
         ],
       );
     }
@@ -552,17 +500,13 @@ class _RoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.cardHighlight,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(role,
-            style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    decoration: BoxDecoration(color: AppColors.cardHighlight, borderRadius: BorderRadius.circular(12)),
+    child: Text(
+      role,
+      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+    ),
+  );
 }
 
 class _RecipientOption extends StatelessWidget {
@@ -570,11 +514,7 @@ class _RecipientOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _RecipientOption({
-    required this.person,
-    required this.selected,
-    required this.onTap,
-  });
+  const _RecipientOption({required this.person, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -587,32 +527,26 @@ class _RecipientOption extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
-                size: 15,
-                color: selected ? AppColors.accent : AppColors.textMuted),
+              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              size: 15,
+              color: selected ? AppColors.accent : AppColors.textMuted,
+            ),
             const SizedBox(width: 10),
-            SelectableText(person.mention,
-                style: AppTextStyles.monospace(12,
-                    color: selected
-                        ? AppColors.monospaceText
-                        : AppColors.textMuted)),
+            SelectableText(
+              person.mention,
+              style: AppTextStyles.monospace(12, color: selected ? AppColors.monospaceText : AppColors.textMuted),
+            ),
             const SizedBox(width: 8),
             Flexible(
-              child: Text(person.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: selected
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary)),
+              child: Text(
+                person.name,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: selected ? AppColors.textPrimary : AppColors.textSecondary),
+              ),
             ),
             if (selected) ...[
               const SizedBox(width: 8),
-              Text(texts.handoffRecipientChosen,
-                  style: const TextStyle(
-                      fontSize: 10.5, color: AppColors.accent)),
+              Text(texts.handoffRecipientChosen, style: const TextStyle(fontSize: 10.5, color: AppColors.accent)),
             ],
           ],
         ),
@@ -645,11 +579,9 @@ class _PreviewStep extends StatelessWidget {
     required this.chosenManager,
   });
 
-  HandoffRecipient? get _tester =>
-      chosenTester ?? recipients?.testers.firstOrNull;
+  HandoffRecipient? get _tester => chosenTester ?? recipients?.testers.firstOrNull;
 
-  HandoffRecipient? get _manager =>
-      chosenManager ?? recipients?.managers.firstOrNull;
+  HandoffRecipient? get _manager => chosenManager ?? recipients?.managers.firstOrNull;
 
   /// Стек сообщения: передача идёт по одному стеку за раз.
   String get _messageStack => stack;
@@ -657,11 +589,7 @@ class _PreviewStep extends StatelessWidget {
   /// Точная команда платформы — она же уйдёт в агентную сессию. Имя и
   /// аргументы берутся из сигнатуры команды самой спеки, а не зашиты:
   /// `/opsx-sprint … handover` — это команда avtoto, у другой спеки своя.
-  String get _handoffCommand => const BuildHandoverCommand()(
-        handover,
-        groupId: group.id,
-        stack: _messageStack,
-      );
+  String get _handoffCommand => const BuildHandoverCommand()(handover, groupId: group.id, stack: _messageStack);
 
   /// Команда с уточнением получателей: скрипт подбирает список, а кого
   /// именно назначить — решает человек здесь.
@@ -677,38 +605,31 @@ class _PreviewStep extends StatelessWidget {
 
   /// Ничего не уходит наружу без предпросмотра (бриф §3.4): подтверждаем,
   /// затем запускаем команду платформы в сессии, где виден каждый шаг.
-  Future<void> _confirmAndRun(
-      BuildContext context, AppLocalizations texts) async {
+  Future<void> _confirmAndRun(BuildContext context, AppLocalizations texts) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.card,
-        title: Text(texts.handoffSendButton,
-            style: AppTextStyles.sectionTitle),
+        title: Text(texts.handoffSendButton, style: AppTextStyles.sectionTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(texts.handoffSendConfirm, style: AppTextStyles.body),
             const SizedBox(height: AppDimens.gapM),
-            SelectableText(_handoffPrompt,
-                style: AppTextStyles.monospace(12)),
+            SelectableText(_handoffPrompt, style: AppTextStyles.monospace(12)),
             const SizedBox(height: AppDimens.gapS),
-            Text(texts.handoffRunsWithBypass,
-                style: AppTextStyles.hint.copyWith(height: 1.4)),
+            Text(texts.handoffRunsWithBypass, style: AppTextStyles.hint.copyWith(height: 1.4)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(texts.handoffSendCancel,
-                style: const TextStyle(color: AppColors.textSecondary)),
+            child: Text(texts.handoffSendCancel, style: const TextStyle(color: AppColors.textSecondary)),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: AppColors.background),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: AppColors.background),
             child: Text(texts.handoffSendRun),
           ),
         ],
@@ -722,24 +643,17 @@ class _PreviewStep extends StatelessWidget {
   String _buildMessage(AppLocalizations texts) {
     final stack = _messageStack;
     final build = group.buildFor(stack);
-    final stackChanges = changes
-        .where((change) =>
-            change.stacks.any((candidate) => candidate.stack == stack))
-        .toList();
+    final stackChanges = changes.where((change) => change.stacks.any((candidate) => candidate.stack == stack)).toList();
     final issueOf = {
-      for (final change in stackChanges)
-        change.id: change.stacks
-            .firstWhere((candidate) => candidate.stack == stack)
+      for (final change in stackChanges) change.id: change.stacks.firstWhere((candidate) => candidate.stack == stack),
     };
     final lines = [
       texts.handoverMsgTitle,
       texts.handoverMsgSprint(group.title),
       texts.handoverMsgStack(texts.stackLabel(stack)),
-      texts.handoverMsgRecipients(
-          _tester?.mention ?? '@—', _manager?.mention ?? '@—'),
+      texts.handoverMsgRecipients(_tester?.mention ?? '@—', _manager?.mention ?? '@—'),
       if (build != null)
-        texts.handoverMsgBuild(
-            '${build.versionName}${build.channel != null ? ' · ${build.channel}' : ''}'),
+        texts.handoverMsgBuild('${build.versionName}${build.channel != null ? ' · ${build.channel}' : ''}'),
       '',
       texts.handoverMsgComposition,
       for (final change in stackChanges)
@@ -762,33 +676,31 @@ class _PreviewStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
     final affectedCount = changes
-        .where((change) =>
-            change.stacks.any((candidate) => candidate.stack == _messageStack))
+        .where((change) => change.stacks.any((candidate) => candidate.stack == _messageStack))
         .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _StepHeader(
-            number: 4,
-            title: texts.handoffStepPreview,
-            color: readiness.ready ? AppColors.accent : AppColors.textMuted,
-            dimmed: !readiness.ready),
+          number: 4,
+          title: texts.handoffStepPreview,
+          color: readiness.ready ? AppColors.accent : AppColors.textMuted,
+          dimmed: !readiness.ready,
+        ),
         Opacity(
           opacity: readiness.ready ? 1 : 0.55,
           child: SectionCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(texts.handoffPreviewLabel,
-                    style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+                Text(texts.handoffPreviewLabel, style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
                 const SizedBox(height: AppDimens.gapS),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.logBackground,
-                    borderRadius:
-                        BorderRadius.circular(AppDimens.controlRadius),
+                    borderRadius: BorderRadius.circular(AppDimens.controlRadius),
                   ),
                   child: SelectableText(
                     _buildMessage(texts),
@@ -796,24 +708,19 @@ class _PreviewStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppDimens.gapM),
-                Text(texts.handoffEffectsLabel,
-                    style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
+                Text(texts.handoffEffectsLabel, style: AppTextStyles.sectionLabel.copyWith(fontSize: 9.5)),
                 const SizedBox(height: AppDimens.gapS),
                 _EffectRow(text: texts.handoffEffectAssignee(affectedCount)),
                 _EffectRow(text: texts.handoffEffectComment(affectedCount)),
                 _EffectRow(text: texts.handoffEffectMessage),
                 const SizedBox(height: AppDimens.gapM),
                 FilledButton(
-                  onPressed: readiness.ready
-                      ? () => _confirmAndRun(context, texts)
-                      : null,
+                  onPressed: readiness.ready ? () => _confirmAndRun(context, texts) : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.accent,
-                    disabledBackgroundColor:
-                        AppColors.accent.withValues(alpha: 0.35),
+                    disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.35),
                     foregroundColor: AppColors.background,
-                    disabledForegroundColor:
-                        AppColors.background.withValues(alpha: 0.7),
+                    disabledForegroundColor: AppColors.background.withValues(alpha: 0.7),
                   ),
                   child: Text(texts.handoffSendButton),
                 ),
@@ -822,25 +729,15 @@ class _PreviewStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimens.gapS),
-        Text(
-          switch (readiness) {
-            // «Готовность 0 из 3» тут соврало бы: дело не в блокерах,
-            // а в том, что статусы неизвестны.
-            final state when state.statusUnknown =>
-              texts.handoffSendUnknown,
-            final state when state.ready =>
-              texts.handoffStackNotice(texts.stackLabel(_messageStack)),
-            final state => texts.handoffSendBlocked(
-                state.readyCount, state.totalCount),
-          },
-          style: TextStyle(
-              fontSize: 11.5,
-              color:
-                  readiness.ready ? AppColors.textMuted : AppColors.warning),
-        ),
+        Text(switch (readiness) {
+          // «Готовность 0 из 3» тут соврало бы: дело не в блокерах,
+          // а в том, что статусы неизвестны.
+          final state when state.statusUnknown => texts.handoffSendUnknown,
+          final state when state.ready => texts.handoffStackNotice(texts.stackLabel(_messageStack)),
+          final state => texts.handoffSendBlocked(state.readyCount, state.totalCount),
+        }, style: TextStyle(fontSize: 11.5, color: readiness.ready ? AppColors.textMuted : AppColors.warning)),
         const SizedBox(height: 4),
-        SelectableText(_handoffCommand,
-            style: AppTextStyles.monospace(11.5, color: AppColors.textMuted)),
+        SelectableText(_handoffCommand, style: AppTextStyles.monospace(11.5, color: AppColors.textMuted)),
       ],
     );
   }
@@ -853,17 +750,17 @@ class _EffectRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
-          children: [
-            Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                    color: AppColors.accent, shape: BoxShape.circle)),
-            const SizedBox(width: 10),
-            Text(text, style: AppTextStyles.caption),
-          ],
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
         ),
-      );
+        const SizedBox(width: 10),
+        Text(text, style: AppTextStyles.caption),
+      ],
+    ),
+  );
 }

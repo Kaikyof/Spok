@@ -31,14 +31,12 @@ class IssueLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = Text(
       _clickable ? '#$issueId ↗' : '#${issueId ?? '—'}',
-      style: AppTextStyles.monospace(fontSize,
-          color: _clickable ? AppColors.accent : AppColors.textMuted),
+      style: AppTextStyles.monospace(fontSize, color: _clickable ? AppColors.accent : AppColors.textMuted),
     );
     if (!_clickable) return label;
     return Tooltip(
       message: tooltip,
-      child: Tappable(
-          onTap: _open, effect: HoverEffect.underline, child: label),
+      child: Tappable(onTap: _open, effect: HoverEffect.underline, child: label),
     );
   }
 }

@@ -31,8 +31,7 @@ abstract class PlatformRepository {
 
   /// Состояние MR change'а по стекам: ярлык GitLab и факт влития.
   /// [groupId] — группа, ветка которой служит целью MR (может быть пустым).
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-      {String groupId = ''});
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''});
 
   /// Читает markdown-файл документации (внутри репозитория платформы).
   Future<String> readDoc(String absolutePath);

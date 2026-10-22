@@ -72,10 +72,7 @@ void main() {
     final ids = source.loadSlashCommands().map((command) => command.id);
     // Это ошибка, которую чинит `support-upstream-commands`: Claude Code
     // регистрирует `/opsx:propose` по пути файла, а не по `name`.
-    expect(
-      ids,
-      containsAll(['OPSX: Propose', 'OPSX: Apply', 'openspec-propose']),
-    );
+    expect(ids, containsAll(['OPSX: Propose', 'OPSX: Apply', 'openspec-propose']));
   });
 
   test('окружение: ключей и сервисов нет', () {

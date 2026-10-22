@@ -58,24 +58,24 @@ class PlatformRepositoryImpl implements PlatformRepository {
   /// человек правит ключи.
   final _materialized = <String>{};
 
-  PlatformRepositoryImpl(this.files,
-      {AppConfigSource? config,
-      this.commandLog,
-      FindDivergences? findDivergences,
-      SecretStore? secrets,
-      GitCloneSource? cloneSource,
-      TrackerResolver? trackers})
-      : config = config ?? AppConfigSource(),
-        findDivergences = findDivergences ?? FindDivergences(),
-        secrets = secrets ?? SecretStore(),
-        cloneSource = cloneSource ?? GitCloneSource(),
-        trackers = trackers ?? const RedmineTrackerResolver();
+  PlatformRepositoryImpl(
+    this.files, {
+    AppConfigSource? config,
+    this.commandLog,
+    FindDivergences? findDivergences,
+    SecretStore? secrets,
+    GitCloneSource? cloneSource,
+    TrackerResolver? trackers,
+  }) : config = config ?? AppConfigSource(),
+       findDivergences = findDivergences ?? FindDivergences(),
+       secrets = secrets ?? SecretStore(),
+       cloneSource = cloneSource ?? GitCloneSource(),
+       trackers = trackers ?? const RedmineTrackerResolver();
 
   /// Подбирает трекер спеки по её ключам в момент вызова: `.env` человек
   /// правит между обновлениями, и кэшировать адаптер здесь нельзя.
   /// Это метод, а не свойство: он читает диск и создаёт клиент.
-  Tracker? _resolveTracker(PlatformFilesSource source) =>
-      trackers.resolve(source, source.loadEnv());
+  Tracker? _resolveTracker(PlatformFilesSource source) => trackers.resolve(source, source.loadEnv());
 
   /// Сборщик `.env` текущей спеки; null — спека не подключена.
   EnvMaterializer? get _materializer {
@@ -99,21 +99,14 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
-  static Future<PlatformRepositoryImpl> create(
-      {CommandLog? commandLog, TrackerResolver? trackers}) async {
+  static Future<PlatformRepositoryImpl> create({CommandLog? commandLog, TrackerResolver? trackers}) async {
     final config = AppConfigSource();
     final configuredPath = await config.readPlatformDir();
-    final source = PlatformFilesSource.locate(
-        configuredPath: configuredPath, commandLog: commandLog);
+    final source = PlatformFilesSource.locate(configuredPath: configuredPath, commandLog: commandLog);
     // Спека, с которой приложение стартовало, тоже подключена — иначе
     // после перехода на другую вернуться к ней было бы не через что.
     if (source != null) await config.rememberSpec(source.path);
-    return PlatformRepositoryImpl(
-      source,
-      config: config,
-      commandLog: commandLog,
-      trackers: trackers,
-    );
+    return PlatformRepositoryImpl(source, config: config, commandLog: commandLog, trackers: trackers);
   }
 
   @override
@@ -137,11 +130,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final changes = source.loadChanges();
     return (
       changeIds: changes.map((change) => change.id).toList(),
-      groupIds: source
-          .loadGroups(changes)
-          .where((group) => group.id.isNotEmpty)
-          .map((group) => group.id)
-          .toList(),
+      groupIds: source.loadGroups(changes).where((group) => group.id.isNotEmpty).map((group) => group.id).toList(),
     );
   }
 
@@ -160,8 +149,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      cloneSource.clone(url, ref: ref);
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => cloneSource.clone(url, ref: ref);
 
   @override
   void cancelClone() => cloneSource.cancel();
@@ -172,10 +160,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final current = rootPath;
     // Текущая спека могла попасть сюда из переменной окружения — она тоже
     // подключена, даже если в реестре её ещё нет.
-    return [
-      ...known,
-      if (current != null && !known.contains(current)) current,
-    ];
+    return [...known, if (current != null && !known.contains(current)) current];
   }
 
   @override
@@ -189,12 +174,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     return EnvForm(
       fields: [
         for (final example in source.loadEnvExampleKeys())
-          EnvField(
-            key: example.key,
-            value: env[example.key] ?? '',
-            hint: example.hint,
-            optional: example.optional,
-          ),
+          EnvField(key: example.key, value: env[example.key] ?? '', hint: example.hint, optional: example.optional),
       ],
       ignoredByGit: await source.envIgnoredByGit(),
       path: source.envPath,
@@ -226,18 +206,15 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final tracker = _resolveTracker(source);
     if (tracker == null || !tracker.configured) return const [];
     try {
-      final perIssue = await Future.wait(issueIds.map((issueId) async {
-        final comments = await tracker.comments(issueId);
-        return [
-          for (final comment in comments)
-            IssueComment(
-              issueId: issueId,
-              author: comment.author,
-              createdAt: comment.createdAt,
-              text: comment.text,
-            ),
-        ];
-      }));
+      final perIssue = await Future.wait(
+        issueIds.map((issueId) async {
+          final comments = await tracker.comments(issueId);
+          return [
+            for (final comment in comments)
+              IssueComment(issueId: issueId, author: comment.author, createdAt: comment.createdAt, text: comment.text),
+          ];
+        }),
+      );
       final all = perIssue.expand((comments) => comments).toList();
       all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return all;
@@ -252,14 +229,15 @@ class PlatformRepositoryImpl implements PlatformRepository {
     if (source == null) {
       return const HandoffRecipients(error: 'platform-not-found');
     }
-    return HandoverRecipientsSource(source.root,
-            scriptPath: source.recipientsScript, commandLog: commandLog)
-        .forStack(stack);
+    return HandoverRecipientsSource(
+      source.root,
+      scriptPath: source.recipientsScript,
+      commandLog: commandLog,
+    ).forStack(stack);
   }
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-      {String groupId = ''}) async {
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async {
     final source = files;
     if (source == null) return const [];
     final env = source.loadEnv();
@@ -274,38 +252,34 @@ class PlatformRepositoryImpl implements PlatformRepository {
     if (targets.isEmpty) return const [];
 
     final changes = source.loadChanges();
-    final group = source
-        .loadGroups(changes)
-        .where((candidate) => candidate.id == groupId)
-        .firstOrNull;
+    final group = source.loadGroups(changes).where((candidate) => candidate.id == groupId).firstOrNull;
     // Ветка — из схемы самого change'а; схема её не объявляет — искать
     // MR не по чему, и выдумывать ветку за спеку нельзя.
-    final change =
-        changes.where((candidate) => candidate.id == changeId).firstOrNull;
-    final schema = change == null || change.schema.isEmpty
-        ? source.loadSchema()
-        : change.schema;
+    final change = changes.where((candidate) => candidate.id == changeId).firstOrNull;
+    final schema = change == null || change.schema.isEmpty ? source.loadSchema() : change.schema;
     final sourceBranch = schema.branchFor(changeId);
     if (sourceBranch == null) return const [];
     final api = GitLabApi(baseUrl, token);
-    final results = await Future.wait(targets.map((service) async {
-      final projectPath = GitLabApi.projectPathFromRepo(service.repo);
-      if (projectPath == null) return null;
-      // Цель MR — ветка группы, если спека её ведёт; иначе рабочая
-      // ветка сервиса из workspace.yaml.
-      final targetBranch = group?.branchFor(service.stack) ?? service.ref;
-      if (targetBranch.isEmpty) return null;
-      try {
-        return await api.mergeRequestFor(
-          projectPath: projectPath,
-          stack: service.stack.isEmpty ? service.name : service.stack,
-          sourceBranch: sourceBranch,
-          targetBranch: targetBranch,
-        );
-      } on DioException {
-        return null;
-      }
-    }));
+    final results = await Future.wait(
+      targets.map((service) async {
+        final projectPath = GitLabApi.projectPathFromRepo(service.repo);
+        if (projectPath == null) return null;
+        // Цель MR — ветка группы, если спека её ведёт; иначе рабочая
+        // ветка сервиса из workspace.yaml.
+        final targetBranch = group?.branchFor(service.stack) ?? service.ref;
+        if (targetBranch.isEmpty) return null;
+        try {
+          return await api.mergeRequestFor(
+            projectPath: projectPath,
+            stack: service.stack.isEmpty ? service.name : service.stack,
+            sourceBranch: sourceBranch,
+            targetBranch: targetBranch,
+          );
+        } on DioException {
+          return null;
+        }
+      }),
+    );
     return results.nonNulls.toList();
   }
 
@@ -319,12 +293,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   @override
-  Future<DocState> docState(String absolutePath) async =>
-      await files?.docState(absolutePath) ?? DocState.unknown;
+  Future<DocState> docState(String absolutePath) async => await files?.docState(absolutePath) ?? DocState.unknown;
 
   @override
-  Future<bool> openInEditor(String absolutePath) =>
-      IdeLauncher(commandLog: commandLog).open(absolutePath);
+  Future<bool> openInEditor(String absolutePath) => IdeLauncher(commandLog: commandLog).open(absolutePath);
 
   @override
   Future<ConsoleSnapshot> load() async {
@@ -334,8 +306,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         groups: const [],
         changes: const [],
         divergences: const [],
-        env: const EnvReport(
-            keys: [], repos: [], systems: [], keysDeclared: false),
+        env: const EnvReport(keys: [], repos: [], systems: [], keysDeclared: false),
         trackerProblem: TrackerProblem.platformNotFound,
         refreshedAt: DateTime.now(),
       );
@@ -350,8 +321,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final archived = source.loadArchivedChanges();
     final semantics = source.loadStatusSemantics();
     final tracker = _resolveTracker(source);
-    final (trackerProblem, trackerDetail) =
-        await _fetchStatuses(tracker, changes);
+    final (trackerProblem, trackerDetail) = await _fetchStatuses(tracker, changes);
 
     final env = await _buildEnvReport(source, tracker);
     return ConsoleSnapshot(
@@ -360,8 +330,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       divergences: findDivergences(groups.firstOrNull, changes, semantics),
       env: env,
       docs: source.loadDocTree(groups, changes, archived: archived),
-      profile: _buildProfile(source, groups, changes, semantics, env,
-          trackerDeclared: tracker != null),
+      profile: _buildProfile(source, groups, changes, semantics, env, trackerDeclared: tracker != null),
       trackerProblem: trackerProblem,
       trackerProblemDetail: trackerDetail,
       trackerName: tracker?.name ?? '',
@@ -382,13 +351,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
     required bool trackerDeclared,
   }) {
     final schema = source.loadSchema();
-    final exampleKeys = {
-      for (final example in source.loadEnvExampleKeys()) example.key
-    };
-    final grouping = groups
-            .where((group) => group.kind != GroupingKind.none)
-            .map((group) => group.kind)
-            .firstOrNull ??
+    final exampleKeys = {for (final example in source.loadEnvExampleKeys()) example.key};
+    final grouping =
+        groups.where((group) => group.kind != GroupingKind.none).map((group) => group.kind).firstOrNull ??
         GroupingKind.none;
     // Стеки — те, по которым реально есть задачи; порядок задаёт схема.
     final present = {
@@ -409,11 +374,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       stacks: ordered,
       services: [
         for (final service in source.allServices())
-          (
-            name: service.name,
-            stack: service.stack,
-            webUrl: _webUrlOfRepo(service.repo),
-          ),
+          (name: service.name, stack: service.stack, webUrl: _webUrlOfRepo(service.repo)),
       ],
       features: _buildGates(
         source: source,
@@ -438,13 +399,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   /// Команда передачи — любая команда спеки, знающая слово handover:
   /// в avtoto это `/opsx-sprint … handover`, у другой спеки будет своё имя.
-  SlashCommand? _handoverCommand(PlatformFilesSource source) =>
-      source
-          .loadSlashCommands()
-          .where((command) =>
-              command.id.contains('handover') ||
-              command.argumentHint.contains('handover'))
-          .firstOrNull;
+  SlashCommand? _handoverCommand(PlatformFilesSource source) => source
+      .loadSlashCommands()
+      .where((command) => command.id.contains('handover') || command.argumentHint.contains('handover'))
+      .firstOrNull;
 
   /// Что приложение поняло в спеке. Список честный: «не распознано» —
   /// такой же результат разбора, как и распознанное, и человек должен
@@ -474,13 +432,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
         value: schemaName,
         qualifier: resolution?.source.name ?? '',
         lookedIn: switch (resolution?.source) {
-          SchemaSource.project =>
-            p.relative(resolution!.path, from: source.path),
+          SchemaSource.project => p.relative(resolution!.path, from: source.path),
           SchemaSource.user => resolution!.path,
-          SchemaSource.builtin =>
-            'assets/openspec/schemas/$schemaName/schema.yaml',
-          null =>
-            'openspec/schemas/$schemaName · ~/.local/share/openspec/schemas/$schemaName',
+          SchemaSource.builtin => 'assets/openspec/schemas/$schemaName/schema.yaml',
+          null => 'openspec/schemas/$schemaName · ~/.local/share/openspec/schemas/$schemaName',
         },
         sourcePath: schemaFile,
       ),
@@ -538,20 +493,13 @@ class PlatformRepositoryImpl implements PlatformRepository {
     required EnvReport envValues,
   }) {
     final env = source.loadEnv();
-    final hasGrouping =
-        groups.any((group) => group.kind != GroupingKind.none);
-    final buildsFile = groups
-        .where((group) => group.builds.isNotEmpty)
-        .map((group) => group.id)
-        .firstOrNull;
+    final hasGrouping = groups.any((group) => group.kind != GroupingKind.none);
+    final buildsFile = groups.where((group) => group.builds.isNotEmpty).map((group) => group.id).firstOrNull;
     final handover = [?_handoverCommand(source)];
     final recipients = source.recipientsScript;
     final services = source.allServices();
-    final gitlabCheck = envValues.systems
-        .where((check) => check.name == 'GitLab')
-        .firstOrNull;
-    final chatKeys =
-        exampleKeys.where((key) => key.startsWith('MATTERMOST')).toList();
+    final gitlabCheck = envValues.systems.where((check) => check.name == 'GitLab').firstOrNull;
+    final chatKeys = exampleKeys.where((key) => key.startsWith('MATTERMOST')).toList();
 
     return {
       SpecFeature.handoff: FeatureGate([
@@ -589,7 +537,8 @@ class PlatformRepositoryImpl implements PlatformRepository {
           id: RequirementId.handoverCommand,
           scope: RequirementScope.spec,
           satisfied: handover.isNotEmpty,
-          lookedIn: handover.map((command) => command.invocation).firstOrNull ??
+          lookedIn:
+              handover.map((command) => command.invocation).firstOrNull ??
               '.claude/commands, openspec/schemas/*/commands',
         ),
       ]),
@@ -626,12 +575,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
           scope: RequirementScope.runtime,
           // Предупреждение «не настроено» — это про предыдущие требования,
           // а не про доступность самого GitLab.
-          satisfied:
-              gitlabCheck == null || gitlabCheck.level != CheckLevel.error,
+          satisfied: gitlabCheck == null || gitlabCheck.level != CheckLevel.error,
           lookedIn: gitlabCheck?.subtitle ?? '',
-          detail: gitlabCheck == null || gitlabCheck.level == CheckLevel.ok
-              ? ''
-              : gitlabCheck.outcome.name,
+          detail: gitlabCheck == null || gitlabCheck.level == CheckLevel.ok ? '' : gitlabCheck.outcome.name,
         ),
       ]),
       SpecFeature.chat: FeatureGate([
@@ -644,8 +590,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         FeatureRequirement(
           id: RequirementId.chatKeysFilled,
           scope: RequirementScope.personal,
-          satisfied: chatKeys.isNotEmpty &&
-              chatKeys.every((key) => (env[key] ?? '').isNotEmpty),
+          satisfied: chatKeys.isNotEmpty && chatKeys.every((key) => (env[key] ?? '').isNotEmpty),
           lookedIn: 'MATTERMOST_* · .env',
           keys: [
             for (final key in chatKeys)
@@ -667,26 +612,17 @@ class PlatformRepositoryImpl implements PlatformRepository {
   /// «git@host:group/project.git» → «https://host/group/project»:
   /// ссылка на ветку собирается без обращения к API.
   String _webUrlOfRepo(String repoUrl) {
-    final match =
-        RegExp(r'^(?:git@|https?://)([^:/]+)[:/](.+?)(?:\.git)?$')
-            .firstMatch(repoUrl.trim());
-    return match == null
-        ? ''
-        : 'https://${match.group(1)}/${match.group(2)}';
+    final match = RegExp(r'^(?:git@|https?://)([^:/]+)[:/](.+?)(?:\.git)?$').firstMatch(repoUrl.trim());
+    return match == null ? '' : 'https://${match.group(1)}/${match.group(2)}';
   }
 
   /// Живые статусы трекера: при отказе показываются закэшированные
   /// в redmine.yaml change'а, поэтому отказ — не пустой экран.
   /// Трекер не объявлен — запроса нет вовсе, и это не отказ.
-  Future<(TrackerProblem, String)> _fetchStatuses(
-      Tracker? tracker, List<ChangeUnit> changes) async {
+  Future<(TrackerProblem, String)> _fetchStatuses(Tracker? tracker, List<ChangeUnit> changes) async {
     if (tracker == null) return (TrackerProblem.notDeclared, '');
     if (!tracker.configured) return (TrackerProblem.noApiKey, '');
-    final issueIds = changes
-        .expand((change) => change.stacks)
-        .map((stack) => stack.issueId)
-        .nonNulls
-        .toList();
+    final issueIds = changes.expand((change) => change.stacks).map((stack) => stack.issueId).nonNulls.toList();
     try {
       final statuses = await tracker.statuses(issueIds);
       for (final stack in changes.expand((change) => change.stacks)) {
@@ -700,8 +636,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     }
   }
 
-  Future<EnvReport> _buildEnvReport(
-      PlatformFilesSource source, Tracker? tracker) async {
+  Future<EnvReport> _buildEnvReport(PlatformFilesSource source, Tracker? tracker) async {
     final env = source.loadEnv();
     return EnvReport(
       keys: _checkEnvKeys(source, env),
@@ -714,37 +649,31 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   /// Ключи строятся из `.env.example` целиком: белый список скрыл бы ключи
   /// чужой спеки (у avelacom — REDMINE_PROJECT_ID и OPENSPEC_REPO_URL).
-  List<EnvCheck> _checkEnvKeys(
-      PlatformFilesSource source, Map<String, String> env) {
-    return [
-      for (final example in source.loadEnvExampleKeys())
-        _checkEnvKey(example, env[example.key] ?? ''),
-    ];
+  List<EnvCheck> _checkEnvKeys(PlatformFilesSource source, Map<String, String> env) {
+    return [for (final example in source.loadEnvExampleKeys()) _checkEnvKey(example, env[example.key] ?? '')];
   }
 
   EnvCheck _checkEnvKey(EnvKeyHint example, String value) {
     final key = example.key;
     if (value.isEmpty) {
       return EnvCheck(
-          // Закомментированный в примере ключ — необязательный.
-          level: example.optional ? CheckLevel.warn : CheckLevel.error,
-          name: key,
-          subtitle: example.hint,
-          outcome: CheckOutcome.keyMissing);
+        // Закомментированный в примере ключ — необязательный.
+        level: example.optional ? CheckLevel.warn : CheckLevel.error,
+        name: key,
+        subtitle: example.hint,
+        outcome: CheckOutcome.keyMissing,
+      );
     }
     if (key.endsWith('_ROLE')) {
       return EnvCheck(
-          level: CheckLevel.ok,
-          name: key,
-          subtitle: example.hint,
-          outcome: CheckOutcome.roleValue,
-          param: value);
-    }
-    return EnvCheck(
         level: CheckLevel.ok,
         name: key,
         subtitle: example.hint,
-        outcome: CheckOutcome.keyFilled);
+        outcome: CheckOutcome.roleValue,
+        param: value,
+      );
+    }
+    return EnvCheck(level: CheckLevel.ok, name: key, subtitle: example.hint, outcome: CheckOutcome.keyFilled);
   }
 
   Future<List<EnvCheck>> _checkRepos(PlatformFilesSource source) async {
@@ -755,96 +684,89 @@ class PlatformRepositoryImpl implements PlatformRepository {
               level: CheckLevel.error,
               name: service.name,
               subtitle: service.ref,
-              outcome: CheckOutcome.repoNotCloned)
+              outcome: CheckOutcome.repoNotCloned,
+            )
           : _gitCheck(service.name, info);
     });
     final platformInfo = await source.platformGitInfo();
-    return [
-      if (platformInfo != null) _gitCheck(source.specName, platformInfo),
-      ...await Future.wait(serviceChecks),
-    ];
+    return [if (platformInfo != null) _gitCheck(source.specName, platformInfo), ...await Future.wait(serviceChecks)];
   }
 
-  EnvCheck _gitCheck(String repoName, ({String branch, int behind}) info) =>
-      EnvCheck(
-        level: info.behind > 0 ? CheckLevel.warn : CheckLevel.ok,
-        name: repoName,
-        subtitle: info.branch,
-        outcome: info.behind > 0
-            ? CheckOutcome.repoBehind
-            : CheckOutcome.repoSynced,
-        count: info.behind,
-      );
+  EnvCheck _gitCheck(String repoName, ({String branch, int behind}) info) => EnvCheck(
+    level: info.behind > 0 ? CheckLevel.warn : CheckLevel.ok,
+    name: repoName,
+    subtitle: info.branch,
+    outcome: info.behind > 0 ? CheckOutcome.repoBehind : CheckOutcome.repoSynced,
+    count: info.behind,
+  );
 
   /// Внешние системы — по ключам `<SYSTEM>_URL` из `.env.example`, а не
   /// по зашитому списку: спека без GitLab не должна слышать «GitLab не
   /// настроен». Проверку каждой системы пока знает этот класс; с реестром
   /// расширений каждую строку заберёт своё расширение.
-  Future<List<EnvCheck>> _checkSystems(PlatformFilesSource source,
-      Map<String, String> env, Tracker? tracker) {
-    final declared = {
-      for (final example in source.loadEnvExampleKeys()) example.key
-    };
+  Future<List<EnvCheck>> _checkSystems(PlatformFilesSource source, Map<String, String> env, Tracker? tracker) {
+    final declared = {for (final example in source.loadEnvExampleKeys()) example.key};
     final checks = <Future<EnvCheck>>[
       if (declared.contains('REDMINE_URL') && tracker != null)
         _pingSystem(tracker.name, env['REDMINE_URL'], (_) => tracker.ping()),
       if (declared.contains('GITLAB_URL'))
-        _pingSystem('GitLab', env['GITLAB_URL'],
-            (url) => _timedGet('$url/api/v4/projects?per_page=1', headers: {
-                  'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? '',
-                })),
+        _pingSystem(
+          'GitLab',
+          env['GITLAB_URL'],
+          (url) => _timedGet('$url/api/v4/projects?per_page=1', headers: {'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? ''}),
+        ),
       if (declared.contains('MATTERMOST_URL'))
-        _pingSystem('Mattermost', env['MATTERMOST_URL'],
-            (url) => _timedGet('$url/api/v4/system/ping')),
+        _pingSystem('Mattermost', env['MATTERMOST_URL'], (url) => _timedGet('$url/api/v4/system/ping')),
     ];
     return Future.wait(checks);
   }
 
   Future<int> _timedGet(String url, {Map<String, String>? headers}) async {
     final stopwatch = Stopwatch()..start();
-    await Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 8),
-      receiveTimeout: const Duration(seconds: 8),
-      headers: headers,
-    )).get(url);
+    await Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 8),
+        headers: headers,
+      ),
+    ).get(url);
     return stopwatch.elapsedMilliseconds;
   }
 
-  Future<EnvCheck> _pingSystem(String systemName, String? url,
-      Future<int> Function(String url) request) async {
+  Future<EnvCheck> _pingSystem(String systemName, String? url, Future<int> Function(String url) request) async {
     if (url == null || url.isEmpty) {
-      return EnvCheck(
-          level: CheckLevel.warn,
-          name: systemName,
-          outcome: CheckOutcome.systemNotConfigured);
+      return EnvCheck(level: CheckLevel.warn, name: systemName, outcome: CheckOutcome.systemNotConfigured);
     }
     final host = Uri.tryParse(url)?.host ?? url;
     try {
       final milliseconds = await request(url);
       return EnvCheck(
-          level: CheckLevel.ok,
-          name: systemName,
-          subtitle: host,
-          outcome: CheckOutcome.systemResponds,
-          count: milliseconds);
+        level: CheckLevel.ok,
+        name: systemName,
+        subtitle: host,
+        outcome: CheckOutcome.systemResponds,
+        count: milliseconds,
+      );
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode;
       if (statusCode != null && statusCode < 500) {
         // Система жива; неверный ключ — уже другой уровень проблемы.
         return EnvCheck(
-            level: CheckLevel.ok,
-            name: systemName,
-            subtitle: host,
-            outcome: CheckOutcome.systemRespondsWithCode,
-            count: statusCode);
-      }
-      return EnvCheck(
-          level: CheckLevel.error,
+          level: CheckLevel.ok,
           name: systemName,
           subtitle: host,
-          outcome: error.type == DioExceptionType.connectionTimeout
-              ? CheckOutcome.systemTimeout
-              : CheckOutcome.systemNoConnection);
+          outcome: CheckOutcome.systemRespondsWithCode,
+          count: statusCode,
+        );
+      }
+      return EnvCheck(
+        level: CheckLevel.error,
+        name: systemName,
+        subtitle: host,
+        outcome: error.type == DioExceptionType.connectionTimeout
+            ? CheckOutcome.systemTimeout
+            : CheckOutcome.systemNoConnection,
+      );
     }
   }
 }

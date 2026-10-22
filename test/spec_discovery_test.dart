@@ -78,8 +78,7 @@ statuses:
     closing: true
     completes_task: true
 ''');
-  write('openspec/doc/master-block.md',
-      '# master-block — Большой блок: master-spec\n\nchanges: `alpha-change`\n');
+  write('openspec/doc/master-block.md', '# master-block — Большой блок: master-spec\n\nchanges: `alpha-change`\n');
   write('openspec/changes/alpha-change/proposal.md', '# Альфа\n');
   write('openspec/changes/alpha-change/tasks_backend.md', '''
 - [x] 1.1 Первая
@@ -121,8 +120,7 @@ void main() {
   });
 
   test('имя ветки change’а читается из apply.instruction схемы', () {
-    expect(source.loadSchema().branchFor('alpha-change'),
-        'features/alpha-change');
+    expect(source.loadSchema().branchFor('alpha-change'), 'features/alpha-change');
   });
 
   test('change получает стек из схемы и статус из кэша redmine.yaml', () {
@@ -137,8 +135,7 @@ void main() {
     expect(change.formatWarning, isEmpty);
   });
 
-  test('мастер-спека становится группой, change виден по упоминанию в тексте',
-      () {
+  test('мастер-спека становится группой, change виден по упоминанию в тексте', () {
     final groups = source.loadGroups(source.loadChanges());
     expect(groups.single.kind, GroupingKind.masterDoc);
     expect(groups.single.id, 'master-block');
@@ -156,9 +153,7 @@ void main() {
 
   test('ключи окружения берутся из .env.example целиком', () {
     final keys = source.loadEnvExampleKeys();
-    expect(keys.map((key) => key.key),
-        ['REDMINE_URL', 'REDMINE_API_KEY', 'REDMINE_PROJECT_ID',
-         'OPENSPEC_REPO_URL']);
+    expect(keys.map((key) => key.key), ['REDMINE_URL', 'REDMINE_API_KEY', 'REDMINE_PROJECT_ID', 'OPENSPEC_REPO_URL']);
     // Закомментированный ключ — необязательный, а не отсутствующий.
     expect(keys.last.optional, isTrue);
     expect(keys.first.hint, 'Redmine');
@@ -182,13 +177,11 @@ REDMINE_PROJECT_ID=319
     expect(lines, contains('REDMINE_URL=https://new.example.com'));
     expect(lines, contains('CUSTOM_KEY=оставить'));
     expect(lines, contains('REDMINE_API_KEY=секрет'));
-    expect(lines.where((line) => line.startsWith('REDMINE_PROJECT_ID')),
-        isEmpty);
+    expect(lines.where((line) => line.startsWith('REDMINE_PROJECT_ID')), isEmpty);
     expect(source.loadEnv()['REDMINE_URL'], 'https://new.example.com');
   });
 
-  test('требования фич собираются явно: что есть, чего нет и где искали',
-      () async {
+  test('требования фич собираются явно: что есть, чего нет и где искали', () async {
     final snapshot = await PlatformRepositoryImpl(source).load();
     final profile = snapshot.profile;
 
@@ -202,13 +195,9 @@ REDMINE_PROJECT_ID=319
     // Сборки и получатели — необязательные: без них шаги гаснут, но
     // передача остаётся возможной.
     expect(
-        handoff.optional
-            .where((requirement) => !requirement.satisfied)
-            .map((requirement) => requirement.id),
-        containsAll([
-          RequirementId.buildsFile,
-          RequirementId.recipientsScript,
-        ]));
+      handoff.optional.where((requirement) => !requirement.satisfied).map((requirement) => requirement.id),
+      containsAll([RequirementId.buildsFile, RequirementId.recipientsScript]),
+    );
     expect(profile.handoverCommand, isNull);
 
     // MR: спека не объявила GITLAB_TOKEN — это нехватка на стороне спеки,
@@ -220,8 +209,7 @@ REDMINE_PROJECT_ID=319
     expect(mr.blocker?.lookedIn, contains('.env.example'));
   });
 
-  test('команда передачи в спеке включает передачу и попадает в профиль',
-      () async {
+  test('команда передачи в спеке включает передачу и попадает в профиль', () async {
     final file = File(p.join(root.path, '.claude/commands/opsx-sprint.md'));
     file.parent.createSync(recursive: true);
     file.writeAsStringSync('''
@@ -237,10 +225,8 @@ argument-hint: [sprint] [status|build|handover|finish] [--stack backend]
     expect(profile.handoverCommand?.id, 'opsx-sprint');
   });
 
-  test('заполненный ключ переводит нехватку из «у спеки» в «у меня»',
-      () async {
-    File(p.join(root.path, '.env.example'))
-        .writeAsStringSync('GITLAB_TOKEN=\nREDMINE_URL=\n');
+  test('заполненный ключ переводит нехватку из «у спеки» в «у меня»', () async {
+    File(p.join(root.path, '.env.example')).writeAsStringSync('GITLAB_TOKEN=\nREDMINE_URL=\n');
     final profile = (await PlatformRepositoryImpl(source).load()).profile;
     final mr = profile.gate(SpecFeature.mergeRequests);
     expect(mr.blocker?.id, RequirementId.gitlabTokenFilled);
@@ -248,8 +234,7 @@ argument-hint: [sprint] [status|build|handover|finish] [--stack backend]
   });
 
   test('неизвестная версия redmine.yaml помечается, а не молчит', () {
-    File(p.join(root.path, 'openspec/changes/alpha-change/redmine.yaml'))
-        .writeAsStringSync('version: 9\nstacks: {}\n');
+    File(p.join(root.path, 'openspec/changes/alpha-change/redmine.yaml')).writeAsStringSync('version: 9\nstacks: {}\n');
     expect(source.loadChanges().single.formatWarning, contains('version 9'));
   });
 }

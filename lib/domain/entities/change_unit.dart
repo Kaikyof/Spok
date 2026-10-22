@@ -50,10 +50,7 @@ class ChangeUnit {
 
   /// Стадия работы change'а целиком: есть у любой спеки, с трекером и без.
   WorkStage get stage =>
-      assessedStage ??
-      (archived
-          ? WorkStage.archived
-          : WorkStage.fromTasks(stacks.expand((stack) => stack.tasks)));
+      assessedStage ?? (archived ? WorkStage.archived : WorkStage.fromTasks(stacks.expand((stack) => stack.tasks)));
 
   List<StackState> get stacks => stackStates.values.toList();
 

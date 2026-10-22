@@ -21,28 +21,23 @@ class AssessHandoffReadiness {
           if (stackVisible(stack.stack)) (change: change, stack: stack),
     ];
     final blockers = [
-      for (final entry in stackEntries)
-        ..._stackBlockers(entry, expectedStatus),
+      for (final entry in stackEntries) ..._stackBlockers(entry, expectedStatus),
       ..._buildBlockers(group, stackEntries, stackVisible),
     ];
     final blockedPairs = {
       for (final blocker in blockers)
-        if (blocker.kind != HandoffBlockerKind.buildMissing)
-          '${blocker.changeTitle}/${blocker.stack}',
+        if (blocker.kind != HandoffBlockerKind.buildMissing) '${blocker.changeTitle}/${blocker.stack}',
     };
     return HandoffReadiness(
       readyCount: stackEntries
-          .where((entry) => !blockedPairs
-              .contains('${entry.change.title}/${entry.stack.stack}'))
+          .where((entry) => !blockedPairs.contains('${entry.change.title}/${entry.stack.stack}'))
           .length,
       totalCount: stackEntries.length,
       blockers: blockers,
     );
   }
 
-  Iterable<HandoffBlocker> _stackBlockers(
-      ({ChangeUnit change, StackState stack}) entry,
-      String? expectedStatus) sync* {
+  Iterable<HandoffBlocker> _stackBlockers(({ChangeUnit change, StackState stack}) entry, String? expectedStatus) sync* {
     final status = entry.stack.trackerStatus;
     if (expectedStatus != null && status == null) {
       // Статуса нет вовсе: ни живого, ни из кэша. Молчать нельзя — иначе
@@ -66,8 +61,7 @@ class AssessHandoffReadiness {
         kind: HandoffBlockerKind.tasksOpen,
         changeTitle: entry.change.title,
         stack: entry.stack.stack,
-        openTaskNumbers:
-            entry.stack.openTasks.map((task) => task.number).toList(),
+        openTaskNumbers: entry.stack.openTasks.map((task) => task.number).toList(),
       );
     }
   }
@@ -85,10 +79,7 @@ class AssessHandoffReadiness {
     return [
       for (final stack in stacks)
         if (stackVisible(stack) && group.buildFor(stack) == null)
-          HandoffBlocker(
-              kind: HandoffBlockerKind.buildMissing,
-              changeTitle: group.title,
-              stack: stack),
+          HandoffBlocker(kind: HandoffBlockerKind.buildMissing, changeTitle: group.title, stack: stack),
     ];
   }
 }

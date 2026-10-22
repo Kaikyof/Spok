@@ -8,11 +8,7 @@ import '../entities/status_semantics.dart';
 /// Смысл статусов берётся из `openspec/redmine.yaml` спеки, а не из строк
 /// в коде: у каждой команды свой набор статусов.
 class FindDivergences {
-  List<Divergence> call(
-    Group? group,
-    List<ChangeUnit> changes,
-    StatusSemantics semantics,
-  ) {
+  List<Divergence> call(Group? group, List<ChangeUnit> changes, StatusSemantics semantics) {
     if (semantics.isEmpty) return const [];
     final working = semantics.workingStatuses;
     final closed = semantics.testingStatuses.union(semantics.closingStatuses);
@@ -21,9 +17,7 @@ class FindDivergences {
         for (final stack in change.stacks) (change: change, stack: stack),
     ];
     return [
-      ...stackEntries
-          .map((entry) => _checkStack(entry, working, closed))
-          .nonNulls,
+      ...stackEntries.map((entry) => _checkStack(entry, working, closed)).nonNulls,
       ..._checkBuilds(group, changes, semantics),
     ];
   }
@@ -63,8 +57,7 @@ class FindDivergences {
 
   /// Сборка нужна там, где спека её ведёт: есть builds.yaml группы.
   /// Нет файла сборок — нет и правила, а не вечное «сборка не записана».
-  List<Divergence> _checkBuilds(
-      Group? group, List<ChangeUnit> changes, StatusSemantics semantics) {
+  List<Divergence> _checkBuilds(Group? group, List<ChangeUnit> changes, StatusSemantics semantics) {
     if (group == null || group.builds.isEmpty) return const [];
     final handoffStatus = semantics.handoffStatus;
     final waitingStacks = {
@@ -75,12 +68,7 @@ class FindDivergences {
     return [
       for (final stack in waitingStacks)
         if (group.buildFor(stack) == null)
-          Divergence(
-            kind: DivergenceKind.buildMissing,
-            changeId: group.id,
-            changeTitle: group.title,
-            stack: stack,
-          ),
+          Divergence(kind: DivergenceKind.buildMissing, changeId: group.id, changeTitle: group.title, stack: stack),
     ];
   }
 }

@@ -64,8 +64,10 @@ class SpecRecognition {
 
   static const empty = SpecRecognition([]);
 
-  List<RecognizedItem> get unrecognized =>
-      [for (final item in items) if (!item.recognized) item];
+  List<RecognizedItem> get unrecognized => [
+    for (final item in items)
+      if (!item.recognized) item,
+  ];
 
   int get recognizedCount => items.where((item) => item.recognized).length;
 

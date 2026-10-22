@@ -31,31 +31,27 @@ class _FakePlatformRepository implements PlatformRepository {
 
   @override
   List<SlashCommand> slashCommands() => const [
-        SlashCommand(
-            id: 'opsx-apply',
-            description: 'Implement tasks from a change',
-            argumentHint: '[change]'),
-        SlashCommand(
-            id: 'opsx-sprint',
-            description: 'Sprint level actions',
-            argumentHint: '[sprint] [status|build|handover|finish]'),
-      ];
+    SlashCommand(id: 'opsx-apply', description: 'Implement tasks from a change', argumentHint: '[change]'),
+    SlashCommand(
+      id: 'opsx-sprint',
+      description: 'Sprint level actions',
+      argumentHint: '[sprint] [status|build|handover|finish]',
+    ),
+  ];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (
-        changeIds: ['biometric-opt-in', 'pin-setup-flow'],
-        groupIds: ['pin-biometric-auth'],
-      );
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
+      (changeIds: ['biometric-opt-in', 'pin-setup-flow'], groupIds: ['pin-biometric-auth']);
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
-        groups: const [],
-        changes: const [],
-        divergences: const [],
-        env: const EnvReport(keys: [], repos: [], systems: []),
-        trackerProblem: TrackerProblem.none,
-        refreshedAt: DateTime.now(),
-      );
+    groups: const [],
+    changes: const [],
+    divergences: const [],
+    env: const EnvReport(keys: [], repos: [], systems: []),
+    trackerProblem: TrackerProblem.none,
+    refreshedAt: DateTime.now(),
+  );
 
   @override
   Future<String> readDoc(String absolutePath) async => '';
@@ -70,13 +66,10 @@ class _FakePlatformRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -100,26 +93,25 @@ class _FakePlatformRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
 }
 
 Widget _wrap(SessionsBloc bloc) => MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      home: Scaffold(
-        body: BlocProvider.value(value: bloc, child: const SessionsScreen()),
-      ),
-    );
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ru'),
+  home: Scaffold(
+    body: BlocProvider.value(value: bloc, child: const SessionsScreen()),
+  ),
+);
 
 void main() {
   group('SuggestCommandArguments', () {
@@ -129,34 +121,29 @@ void main() {
     );
 
     test('первый аргумент [change] — список change\'ей', () {
-      const command = SlashCommand(
-          id: 'opsx-apply', description: '', argumentHint: '[change]');
+      const command = SlashCommand(id: 'opsx-apply', description: '', argumentHint: '[change]');
       final suggestions = suggester(command, const [], '');
-      expect(suggestions.map((s) => s.value),
-          containsAll(['biometric-opt-in', 'pin-setup-flow']));
+      expect(suggestions.map((s) => s.value), containsAll(['biometric-opt-in', 'pin-setup-flow']));
     });
 
     test('фильтрация по префиксу', () {
-      const command = SlashCommand(
-          id: 'opsx-apply', description: '', argumentHint: '[change]');
+      const command = SlashCommand(id: 'opsx-apply', description: '', argumentHint: '[change]');
       final suggestions = suggester(command, const [], 'pin');
       expect(suggestions.map((s) => s.value), ['pin-setup-flow']);
     });
 
     test('второй аргумент — литеральные варианты из hint', () {
       const command = SlashCommand(
-          id: 'opsx-sprint',
-          description: '',
-          argumentHint: '[sprint] [status|build|handover|finish]');
-      final suggestions =
-          suggester(command, const ['pin-biometric-auth'], '');
-      expect(suggestions.map((s) => s.value),
-          ['status', 'build', 'handover', 'finish']);
+        id: 'opsx-sprint',
+        description: '',
+        argumentHint: '[sprint] [status|build|handover|finish]',
+      );
+      final suggestions = suggester(command, const ['pin-biometric-auth'], '');
+      expect(suggestions.map((s) => s.value), ['status', 'build', 'handover', 'finish']);
     });
 
     test('аргументы закончились — подсказок нет', () {
-      const command = SlashCommand(
-          id: 'opsx-apply', description: '', argumentHint: '[change]');
+      const command = SlashCommand(id: 'opsx-apply', description: '', argumentHint: '[change]');
       final suggestions = suggester(command, const ['biometric-opt-in'], '');
       expect(suggestions, isEmpty);
     });
@@ -172,10 +159,8 @@ void main() {
     /// [cliAvailable] задаётся явно: иначе блок спрашивает машину, есть ли
     /// на ней Claude Code, и тест проверяет установку инструмента, а не
     /// экран. На чистой машине и в CI такой тест падает.
-    Future<void> pumpScreen(WidgetTester tester,
-        {bool cliAvailable = true}) async {
-      bloc = SessionsBloc(_FakePlatformRepository(),
-          cliAvailable: cliAvailable);
+    Future<void> pumpScreen(WidgetTester tester, {bool cliAvailable = true}) async {
+      bloc = SessionsBloc(_FakePlatformRepository(), cliAvailable: cliAvailable);
       addTearDown(bloc.close);
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1;
@@ -184,8 +169,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('команда без пробела не роняет экран и показывает аргументы',
-        (tester) async {
+    testWidgets('команда без пробела не роняет экран и показывает аргументы', (tester) async {
       await pumpScreen(tester);
 
       // Ровно тот ввод, что вызывал RangeError: имя команды без пробела.
@@ -196,8 +180,7 @@ void main() {
       expect(find.text('biometric-opt-in'), findsOneWidget);
     });
 
-    testWidgets('клик по подсказке аргумента дописывает значение',
-        (tester) async {
+    testWidgets('клик по подсказке аргумента дописывает значение', (tester) async {
       await pumpScreen(tester);
 
       await tester.enterText(find.byType(TextField), '/opsx-apply');
@@ -210,8 +193,7 @@ void main() {
       expect(field.controller?.text, '/opsx-apply biometric-opt-in ');
     });
 
-    testWidgets('палитра открывается кнопкой и показывает источник',
-        (tester) async {
+    testWidgets('палитра открывается кнопкой и показывает источник', (tester) async {
       await pumpScreen(tester);
 
       // Палитра — состояние строки ввода, а не постоянный список:
@@ -227,8 +209,7 @@ void main() {
       expect(find.text('.claude'), findsWidgets);
     });
 
-    testWidgets('набранное «/» отбирает команды и показывает счётчик',
-        (tester) async {
+    testWidgets('набранное «/» отбирает команды и показывает счётчик', (tester) async {
       await pumpScreen(tester);
 
       await tester.enterText(find.byType(TextField), '/opsx-sp');
@@ -239,8 +220,7 @@ void main() {
       expect(find.text('/opsx-sprint'), findsWidgets);
     });
 
-    testWidgets('выбор команды подставляет её в ту же строку ввода',
-        (tester) async {
+    testWidgets('выбор команды подставляет её в ту же строку ввода', (tester) async {
       await pumpScreen(tester);
 
       await tester.tap(find.text('Все команды спеки'));
@@ -253,8 +233,7 @@ void main() {
       expect(find.text('КОМАНДЫ СПЕКИ'), findsNothing);
     });
 
-    testWidgets('минимальное окно: развёрнутый терминал с палитрой влезает',
-        (tester) async {
+    testWidgets('минимальное окно: развёрнутый терминал с палитрой влезает', (tester) async {
       await pumpScreen(tester);
       tester.view.physicalSize = AppDimens.minWindowSize;
       await tester.pumpAndSettle();
@@ -286,8 +265,7 @@ void main() {
       expect(find.text('Новый change'), findsNothing);
     });
 
-    testWidgets('без CLI экран объясняет нехватку, а не показывает пустоту',
-        (tester) async {
+    testWidgets('без CLI экран объясняет нехватку, а не показывает пустоту', (tester) async {
       await pumpScreen(tester, cliAvailable: false);
 
       expect(find.textContaining('Claude Code CLI не найден'), findsOneWidget);

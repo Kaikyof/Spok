@@ -33,39 +33,32 @@ class _FakeRepository implements PlatformRepository {
   /// Спека без `.env.example`: ключей она не объявляет.
   final bool keysDeclared;
 
-  _FakeRepository(
-      {this.envCommands = const {},
-      this.fileValues = const {},
-      this.keysDeclared = true});
+  _FakeRepository({this.envCommands = const {}, this.fileValues = const {}, this.keysDeclared = true});
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
-        groups: const [],
-        changes: const [],
-        divergences: const [],
-        env: EnvReport(
-          keysDeclared: keysDeclared,
-          keys: keysDeclared
-              ? const [
-                  EnvCheck(
-                      level: CheckLevel.error,
-                      name: 'REDMINE_API_KEY',
-                      outcome: CheckOutcome.keyMissing),
-                ]
-              : const [],
-          repos: const [
-            EnvCheck(
-                level: CheckLevel.error,
-                name: 'avelacom-odoo',
-                subtitle: 'develop',
-                outcome: CheckOutcome.repoNotCloned),
-          ],
-          systems: const [],
+    groups: const [],
+    changes: const [],
+    divergences: const [],
+    env: EnvReport(
+      keysDeclared: keysDeclared,
+      keys: keysDeclared
+          ? const [EnvCheck(level: CheckLevel.error, name: 'REDMINE_API_KEY', outcome: CheckOutcome.keyMissing)]
+          : const [],
+      repos: const [
+        EnvCheck(
+          level: CheckLevel.error,
+          name: 'avelacom-odoo',
+          subtitle: 'develop',
+          outcome: CheckOutcome.repoNotCloned,
         ),
-        profile: ProjectProfile(envCommands: envCommands),
-        trackerProblem: TrackerProblem.none,
-        refreshedAt: DateTime.now(),
-      );
+      ],
+      systems: const [],
+    ),
+    profile: ProjectProfile(envCommands: envCommands),
+    trackerProblem: TrackerProblem.none,
+    refreshedAt: DateTime.now(),
+  );
 
   @override
   Future<bool> setPlatformDir(String path) async => true;
@@ -80,8 +73,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: const [], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: const [], groupIds: const []);
 
   @override
   String get role => '';
@@ -96,17 +88,13 @@ class _FakeRepository implements PlatformRepository {
   Future<DocState> docState(String absolutePath) async => DocState.unknown;
 
   @override
-  Future<List<IssueComment>> issueComments(List<int> issueIds) async =>
-      const [];
+  Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -116,21 +104,21 @@ class _FakeRepository implements PlatformRepository {
 
   @override
   Future<EnvForm> envForm() async => const EnvForm(
-        fields: [
-          EnvField(
-              key: 'REDMINE_API_KEY', value: 'старый-ключ', hint: 'Токен'),
-          EnvField(
-              key: 'REDMINE_URL', value: 'https://прежний', hint: 'Адрес'),
-          EnvField(
-              key: 'OPENSPEC_REPO_URL',
-              value: '',
-              hint: 'OpenSpec repo — blob URL for clickable links in Redmine '
-                  'issue description (GitLab/GitHub)',
-              optional: true),
-        ],
-        ignoredByGit: true,
-        path: '/tmp/spec/.env',
-      );
+    fields: [
+      EnvField(key: 'REDMINE_API_KEY', value: 'старый-ключ', hint: 'Токен'),
+      EnvField(key: 'REDMINE_URL', value: 'https://прежний', hint: 'Адрес'),
+      EnvField(
+        key: 'OPENSPEC_REPO_URL',
+        value: '',
+        hint:
+            'OpenSpec repo — blob URL for clickable links in Redmine '
+            'issue description (GitLab/GitHub)',
+        optional: true,
+      ),
+    ],
+    ignoredByGit: true,
+    path: '/tmp/spec/.env',
+  );
 
   @override
   Future<Map<String, String>> readEnvFile(String path) async => fileValues;
@@ -142,14 +130,11 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
 }
-
-
 
 void main() {
   group('Окружение', () {
@@ -158,9 +143,12 @@ void main() {
 
     /// [settle] выключают там, где на экране заведомо крутится индикатор
     /// ожидания: форма ключей до ответа репозитория.
-    Future<void> open(WidgetTester tester, Widget screen,
-        {Map<EnvTask, SlashCommand> envCommands = const {},
-        bool settle = true}) async {
+    Future<void> open(
+      WidgetTester tester,
+      Widget screen, {
+      Map<EnvTask, SlashCommand> envCommands = const {},
+      bool settle = true,
+    }) async {
       final repository = _FakeRepository(envCommands: envCommands);
       console = ConsoleBloc(repository);
       sessions = SessionsBloc(repository);
@@ -169,52 +157,62 @@ void main() {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: Scaffold(
-          body: MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: console),
-              BlocProvider.value(value: sessions),
-            ],
-            child: screen,
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: Scaffold(
+            body: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: console),
+                BlocProvider.value(value: sessions),
+              ],
+              child: screen,
+            ),
           ),
         ),
-      ));
+      );
       settle ? await tester.pumpAndSettle() : await tester.pump();
     }
 
-    testWidgets('у раздела стоит распознанная команда спеки, а не «make init»',
-        (tester) async {
-      await open(tester, const EnvScreen(), envCommands: const {
-        EnvTask.repos: SlashCommand(
+    testWidgets('у раздела стоит распознанная команда спеки, а не «make init»', (tester) async {
+      await open(
+        tester,
+        const EnvScreen(),
+        envCommands: const {
+          EnvTask.repos: SlashCommand(
             id: 'workspace:init',
             description: 'Склонировать репозитории workspace.yaml',
             source: CommandSource.packageScript,
-            runLine: 'pnpm workspace:init'),
-      });
+            runLine: 'pnpm workspace:init',
+          ),
+        },
+      );
 
       expect(find.text('pnpm workspace:init'), findsOneWidget);
       // Придуманной кнопки нет: имя команды берётся из спеки.
       expect(find.text('make init'), findsNothing);
     });
 
-    testWidgets('команда уходит в сессию, а не выполняется молча',
-        (tester) async {
-      await open(tester, const EnvScreen(), envCommands: const {
-        EnvTask.repos: SlashCommand(
+    testWidgets('команда уходит в сессию, а не выполняется молча', (tester) async {
+      await open(
+        tester,
+        const EnvScreen(),
+        envCommands: const {
+          EnvTask.repos: SlashCommand(
             id: 'workspace:init',
             description: '',
             source: CommandSource.packageScript,
-            runLine: 'pnpm workspace:init'),
-      });
+            runLine: 'pnpm workspace:init',
+          ),
+        },
+      );
 
       await tester.tap(find.text('pnpm workspace:init'));
       await tester.pumpAndSettle();
@@ -229,8 +227,7 @@ void main() {
       expect(find.byIcon(Icons.play_arrow), findsNothing);
     });
 
-    testWidgets('проект без ключей: ни раздела ключей, ни «Заполнить ключи»',
-        (tester) async {
+    testWidgets('проект без ключей: ни раздела ключей, ни «Заполнить ключи»', (tester) async {
       final repository = _FakeRepository(keysDeclared: false);
       console = ConsoleBloc(repository);
       sessions = SessionsBloc(repository);
@@ -239,25 +236,27 @@ void main() {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: Scaffold(
-          body: MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: console),
-              BlocProvider.value(value: sessions),
-            ],
-            child: const EnvScreen(),
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: Scaffold(
+            body: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: console),
+                BlocProvider.value(value: sessions),
+              ],
+              child: const EnvScreen(),
+            ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Заполнить ключи'), findsNothing);
@@ -268,28 +267,29 @@ void main() {
       expect(find.textContaining('Спека не объявляет ключей'), findsOneWidget);
     });
 
-    testWidgets('в форме ключей описание видно целиком, а не до многоточия',
-        (tester) async {
+    testWidgets('в форме ключей описание видно целиком, а не до многоточия', (tester) async {
       await open(tester, const EnvEditorDialog(), settle: false);
       console.add(EnvFormRequested());
       await tester.pumpAndSettle();
 
-      const hint = 'OpenSpec repo — blob URL for clickable links in Redmine '
+      const hint =
+          'OpenSpec repo — blob URL for clickable links in Redmine '
           'issue description (GitLab/GitHub)';
       final text = tester.widget<Text>(find.text(hint));
       expect(text.maxLines, isNull);
       expect(text.overflow, isNot(TextOverflow.ellipsis));
     });
 
-    testWidgets('импорт подставляет значения и называет чужие ключи',
-        (tester) async {
-      final repository = _FakeRepository(fileValues: const {
-        'OPENSPEC_REPO_URL': 'https://gitlab.example.com/spec/-/blob/master',
-        'REDMINE_API_KEY': 'новый-ключ',
-        // Пустое значение прежнее не затирает — но и молчать о нём нельзя.
-        'REDMINE_URL': '',
-        'SOME_OTHER_KEY': 'значение из чужой спеки',
-      });
+    testWidgets('импорт подставляет значения и называет чужие ключи', (tester) async {
+      final repository = _FakeRepository(
+        fileValues: const {
+          'OPENSPEC_REPO_URL': 'https://gitlab.example.com/spec/-/blob/master',
+          'REDMINE_API_KEY': 'новый-ключ',
+          // Пустое значение прежнее не затирает — но и молчать о нём нельзя.
+          'REDMINE_URL': '',
+          'SOME_OTHER_KEY': 'значение из чужой спеки',
+        },
+      );
       console = ConsoleBloc(repository);
       sessions = SessionsBloc(repository);
       addTearDown(console.close);
@@ -300,25 +300,27 @@ void main() {
       tester.view.physicalSize = const Size(1280, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: Scaffold(
-          body: MultiBlocProvider(
-            providers: [
-              BlocProvider.value(value: console),
-              BlocProvider.value(value: sessions),
-            ],
-            child: const EnvEditorDialog(),
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ru'),
+          home: Scaffold(
+            body: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: console),
+                BlocProvider.value(value: sessions),
+              ],
+              child: const EnvEditorDialog(),
+            ),
           ),
         ),
-      ));
+      );
       await tester.pump();
       console.add(EnvFormRequested());
       await tester.pumpAndSettle();
@@ -327,9 +329,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Значение подставлено в поле — и только: записи ещё не было.
-      expect(
-          find.text('https://gitlab.example.com/spec/-/blob/master'),
-          findsOneWidget);
+      expect(find.text('https://gitlab.example.com/spec/-/blob/master'), findsOneWidget);
       // Заполненный ключ перезаписывается импортом, а не остаётся старым.
       expect(find.text('старый-ключ'), findsNothing);
       expect(find.textContaining('Подставлено 2 значения'), findsOneWidget);
@@ -338,13 +338,11 @@ void main() {
       // Пустой в файле ключ оставлен прежним — и об этом сказано поимённо,
       // иначе «почему значение не изменилось» остаётся без ответа.
       expect(find.text('https://прежний'), findsOneWidget);
-      expect(find.textContaining('прежние значения оставлены: REDMINE_URL'),
-          findsOneWidget);
+      expect(find.textContaining('прежние значения оставлены: REDMINE_URL'), findsOneWidget);
       expect(console.state.envSaving, isFalse);
     });
 
-    testWidgets('в форме ключей есть импорт из файла и он объяснён',
-        (tester) async {
+    testWidgets('в форме ключей есть импорт из файла и он объяснён', (tester) async {
       await open(tester, const EnvEditorDialog(), settle: false);
       console.add(EnvFormRequested());
       await tester.pumpAndSettle();

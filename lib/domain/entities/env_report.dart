@@ -26,6 +26,5 @@ class EnvReport {
 
   List<EnvCheck> get all => [...keys, ...repos, ...systems];
 
-  int get problemCount =>
-      all.where((check) => check.level != CheckLevel.ok).length;
+  int get problemCount => all.where((check) => check.level != CheckLevel.ok).length;
 }

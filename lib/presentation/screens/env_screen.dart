@@ -34,30 +34,27 @@ class EnvScreen extends StatelessWidget {
         return ListView(
           padding: AppDimens.screenPadding,
           children: [
-            _EnvHeader(
-                problemCount: envReport.problemCount,
-                keysDeclared: envReport.keysDeclared),
+            _EnvHeader(problemCount: envReport.problemCount, keysDeclared: envReport.keysDeclared),
             const SizedBox(height: AppDimens.gapL),
             if (envReport.keysDeclared) ...[
               _CheckSection(
-                  title: texts.envKeysSection,
-                  checks: envReport.keys,
-                  detailFromHint: true,
-                  task: EnvTask.keys,
-                  footer: _SecretBackendNote(backend: envReport.backend)),
+                title: texts.envKeysSection,
+                checks: envReport.keys,
+                detailFromHint: true,
+                task: EnvTask.keys,
+                footer: _SecretBackendNote(backend: envReport.backend),
+              ),
               const SizedBox(height: AppDimens.gapM),
             ],
-            _CheckSection(
-                title: texts.envReposSection,
-                checks: envReport.repos,
-                task: EnvTask.repos),
+            _CheckSection(title: texts.envReposSection, checks: envReport.repos, task: EnvTask.repos),
             if (envReport.systems.isNotEmpty) ...[
               const SizedBox(height: AppDimens.gapM),
               _CheckSection(
-                  title: texts.envSystemsSection,
-                  checks: envReport.systems,
-                  task: EnvTask.systems,
-                  monospacedNames: false),
+                title: texts.envSystemsSection,
+                checks: envReport.systems,
+                task: EnvTask.systems,
+                monospacedNames: false,
+              ),
             ],
           ],
         );
@@ -72,49 +69,49 @@ class _EnvSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-        padding: AppDimens.screenPadding,
-        children: [
-          const SizedBox(
-            height: 40,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SkeletonLine(width: 120),
-                      SizedBox(height: AppDimens.gapS),
-                      SkeletonLine(width: 180, height: 9),
-                    ],
-                  ),
-                ),
-                SkeletonLine(width: 130, height: 30),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppDimens.gapL),
-          for (final rows in [4, 2, 3]) ...[
-            SectionCard(
+    padding: AppDimens.screenPadding,
+    children: [
+      const SizedBox(
+        height: 40,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SkeletonLine(width: 220),
-                  const SizedBox(height: AppDimens.gapS),
-                  for (var row = 0; row < rows; row++)
-                    SkeletonRow(
-                      columnFlex: const [50, 30],
-                      widthFactors: const [0.6, 0.8],
-                      showTopDivider: row > 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                    ),
+                  SkeletonLine(width: 120),
+                  SizedBox(height: AppDimens.gapS),
+                  SkeletonLine(width: 180, height: 9),
                 ],
               ),
             ),
-            const SizedBox(height: AppDimens.gapM),
+            SkeletonLine(width: 130, height: 30),
           ],
-        ],
-      );
+        ),
+      ),
+      const SizedBox(height: AppDimens.gapL),
+      for (final rows in [4, 2, 3]) ...[
+        SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SkeletonLine(width: 220),
+              const SizedBox(height: AppDimens.gapS),
+              for (var row = 0; row < rows; row++)
+                SkeletonRow(
+                  columnFlex: const [50, 30],
+                  widthFactors: const [0.6, 0.8],
+                  showTopDivider: row > 0,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimens.gapM),
+      ],
+    ],
+  );
 }
 
 class _EnvHeader extends StatelessWidget {
@@ -155,12 +152,8 @@ class _EnvHeader extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => EnvEditorDialog.show(context),
             icon: const Icon(Icons.key, size: 15),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: AppColors.background,
-            ),
-            label: Text(texts.envEditOpen,
-                style: const TextStyle(fontSize: 12)),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent, foregroundColor: AppColors.background),
+            label: Text(texts.envEditOpen, style: const TextStyle(fontSize: 12)),
           ),
           const SizedBox(width: AppDimens.gapS),
         ],
@@ -191,15 +184,17 @@ class _SecretBackendNote extends StatelessWidget {
     final keyring = backend.isKeyring;
     return Row(
       children: [
-        Icon(keyring ? Icons.lock_outline : Icons.folder_outlined,
-            size: 14,
-            color: keyring ? AppColors.textMuted : AppColors.warning),
+        Icon(
+          keyring ? Icons.lock_outline : Icons.folder_outlined,
+          size: 14,
+          color: keyring ? AppColors.textMuted : AppColors.warning,
+        ),
         const SizedBox(width: AppDimens.gapS),
         Expanded(
-          child: Text(texts.secretBackendNote(backend),
-              style: TextStyle(
-                  fontSize: 11.5,
-                  color: keyring ? AppColors.textMuted : AppColors.warning)),
+          child: Text(
+            texts.secretBackendNote(backend),
+            style: TextStyle(fontSize: 11.5, color: keyring ? AppColors.textMuted : AppColors.warning),
+          ),
         ),
       ],
     );
@@ -219,7 +214,14 @@ class _CheckSection extends StatelessWidget {
   /// Строка под списком: у ключей это пометка о хранилище секретов.
   final Widget? footer;
 
-  const _CheckSection({required this.title, required this.checks, required this.task, this.monospacedNames = true, this.detailFromHint = false, this.footer});
+  const _CheckSection({
+    required this.title,
+    required this.checks,
+    required this.task,
+    this.monospacedNames = true,
+    this.detailFromHint = false,
+    this.footer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -242,17 +244,12 @@ class _CheckSection extends StatelessWidget {
               name: check.name,
               // Подсказку пишет сама спека в .env.example; своя —
               // только для ключей, которые она не прокомментировала.
-              detail: detailFromHint && check.subtitle.isEmpty
-                  ? texts.envKeyHint(check.name)
-                  : check.subtitle,
+              detail: detailFromHint && check.subtitle.isEmpty ? texts.envKeyHint(check.name) : check.subtitle,
               result: texts.checkResultText(check),
               monospacedName: monospacedNames,
             ),
           ],
-          if (footer case final note?) ...[
-            const SizedBox(height: AppDimens.gapM),
-            note,
-          ],
+          if (footer case final note?) ...[const SizedBox(height: AppDimens.gapM), note],
         ],
       ),
     );
@@ -280,20 +277,15 @@ class _TaskCommandButton extends StatelessWidget {
           // Выполняем не мы: команда уходит в сессию, где виден её вывод
           // и код возврата.
           onTap: () {
-            context
-                .read<SessionsBloc>()
-                .add(SessionDraftSet(command.invocation));
-            context
-                .read<ConsoleBloc>()
-                .add(ScreenSelected(ConsoleScreen.sessions));
+            context.read<SessionsBloc>().add(SessionDraftSet(command.invocation));
+            context.read<ConsoleBloc>().add(ScreenSelected(ConsoleScreen.sessions));
           },
           borderRadius: BorderRadius.circular(AppDimens.controlRadius),
           tooltip: command.description.isEmpty
               ? texts.envTaskCommandTooltip
               : '${command.description}\n${texts.envTaskCommandTooltip}',
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: AppColors.cardHighlight,
               borderRadius: BorderRadius.circular(AppDimens.controlRadius),
@@ -302,12 +294,9 @@ class _TaskCommandButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.play_arrow,
-                    size: 14, color: AppColors.accent),
+                const Icon(Icons.play_arrow, size: 14, color: AppColors.accent),
                 const SizedBox(width: 6),
-                Text(command.invocation,
-                    style: AppTextStyles.monospace(11.5,
-                        color: AppColors.textPrimary)),
+                Text(command.invocation, style: AppTextStyles.monospace(11.5, color: AppColors.textPrimary)),
               ],
             ),
           ),

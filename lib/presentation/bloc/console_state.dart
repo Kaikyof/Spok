@@ -93,29 +93,22 @@ class ConsoleState {
   /// Стеки спеки; пусто — работа без разделения на стеки.
   List<String> get stacks => profile.stacks;
 
-  bool allowsStack(String stack) =>
-      stackFilter.isEmpty || stackFilter == stack;
+  bool allowsStack(String stack) => stackFilter.isEmpty || stackFilter == stack;
 
   /// Change'и выбранной группы: переключение группы меняет и список.
   List<ChangeUnit> get groupChanges {
     final all = snapshot?.changes ?? const <ChangeUnit>[];
     final current = group;
     if (current == null) return all;
-    return [
-      for (final id in current.changeIds)
-        ...all.where((change) => change.id == id),
-    ];
+    return [for (final id in current.changeIds) ...all.where((change) => change.id == id)];
   }
 
   /// Нужен экран настройки: спека не найдена либо человек меняет её сам.
   bool get needsSetup =>
-      snapshot?.trackerProblem == TrackerProblem.platformNotFound ||
-      switchingSpec ||
-      recognitionReview;
+      snapshot?.trackerProblem == TrackerProblem.platformNotFound || switchingSpec || recognitionReview;
 
   /// Спека не найдена вовсе — отменить настройку некуда.
-  bool get specMissing =>
-      snapshot?.trackerProblem == TrackerProblem.platformNotFound;
+  bool get specMissing => snapshot?.trackerProblem == TrackerProblem.platformNotFound;
 
   /// Первая загрузка ещё идёт — показываем полноэкранный лоадер.
   bool get isFirstLoad => snapshot == null;
@@ -124,16 +117,16 @@ class ConsoleState {
     final current = snapshot;
     if (current == null || current.groups.isEmpty) return null;
     return current.groups.firstWhere(
-        (candidate) => candidate.id == selectedGroupId,
-        orElse: () => current.groups.first);
+      (candidate) => candidate.id == selectedGroupId,
+      orElse: () => current.groups.first,
+    );
   }
 
   /// Дерево документов спеки; пусто — читать нечего.
   List<DocNode> get docTree => snapshot?.docs ?? const [];
 
   /// Стек, для которого собирается передача: выбранный либо первый.
-  String get handoffStack =>
-      stackFilter.isNotEmpty ? stackFilter : (stacks.firstOrNull ?? '');
+  String get handoffStack => stackFilter.isNotEmpty ? stackFilter : (stacks.firstOrNull ?? '');
 
   ConsoleState copyWith({
     LoadStatus? status,
@@ -161,37 +154,31 @@ class ConsoleState {
     HandoffRecipients? Function()? recipients,
     String? recipientsStack,
     bool? recipientsLoading,
-  }) =>
-      ConsoleState(
-        status: status ?? this.status,
-        screen: screen ?? this.screen,
-        snapshot: snapshot ?? this.snapshot,
-        selectedGroupId: selectedGroupId ?? this.selectedGroupId,
-        selectedChange:
-            selectedChange != null ? selectedChange() : this.selectedChange,
-        selectedDoc: selectedDoc != null ? selectedDoc() : this.selectedDoc,
-        docContent: docContent != null ? docContent() : this.docContent,
-        openedDoc: openedDoc != null ? openedDoc() : this.openedDoc,
-        openedDocContent: openedDocContent != null
-            ? openedDocContent()
-            : this.openedDocContent,
-        openedDocState:
-            openedDocState != null ? openedDocState() : this.openedDocState,
-        collapsedDocNodes: collapsedDocNodes ?? this.collapsedDocNodes,
-        changeSpec: changeSpec != null ? changeSpec() : this.changeSpec,
-        pathRejected: pathRejected ?? this.pathRejected,
-        switchingSpec: switchingSpec ?? this.switchingSpec,
-        recognitionReview: recognitionReview ?? this.recognitionReview,
-        knownSpecs: knownSpecs ?? this.knownSpecs,
-        clone: clone ?? this.clone,
-        envForm: envForm != null ? envForm() : this.envForm,
-        envSaving: envSaving ?? this.envSaving,
-        stackFilter: stackFilter ?? this.stackFilter,
-        comments: comments != null ? comments() : this.comments,
-        mergeRequests:
-            mergeRequests != null ? mergeRequests() : this.mergeRequests,
-        recipients: recipients != null ? recipients() : this.recipients,
-        recipientsStack: recipientsStack ?? this.recipientsStack,
-        recipientsLoading: recipientsLoading ?? this.recipientsLoading,
-      );
+  }) => ConsoleState(
+    status: status ?? this.status,
+    screen: screen ?? this.screen,
+    snapshot: snapshot ?? this.snapshot,
+    selectedGroupId: selectedGroupId ?? this.selectedGroupId,
+    selectedChange: selectedChange != null ? selectedChange() : this.selectedChange,
+    selectedDoc: selectedDoc != null ? selectedDoc() : this.selectedDoc,
+    docContent: docContent != null ? docContent() : this.docContent,
+    openedDoc: openedDoc != null ? openedDoc() : this.openedDoc,
+    openedDocContent: openedDocContent != null ? openedDocContent() : this.openedDocContent,
+    openedDocState: openedDocState != null ? openedDocState() : this.openedDocState,
+    collapsedDocNodes: collapsedDocNodes ?? this.collapsedDocNodes,
+    changeSpec: changeSpec != null ? changeSpec() : this.changeSpec,
+    pathRejected: pathRejected ?? this.pathRejected,
+    switchingSpec: switchingSpec ?? this.switchingSpec,
+    recognitionReview: recognitionReview ?? this.recognitionReview,
+    knownSpecs: knownSpecs ?? this.knownSpecs,
+    clone: clone ?? this.clone,
+    envForm: envForm != null ? envForm() : this.envForm,
+    envSaving: envSaving ?? this.envSaving,
+    stackFilter: stackFilter ?? this.stackFilter,
+    comments: comments != null ? comments() : this.comments,
+    mergeRequests: mergeRequests != null ? mergeRequests() : this.mergeRequests,
+    recipients: recipients != null ? recipients() : this.recipients,
+    recipientsStack: recipientsStack ?? this.recipientsStack,
+    recipientsLoading: recipientsLoading ?? this.recipientsLoading,
+  );
 }

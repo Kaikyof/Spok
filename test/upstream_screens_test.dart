@@ -43,10 +43,8 @@ class _SnapshotRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => commands;
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (
-        changeIds: snapshot.changes.map((change) => change.id).toList(),
-        groupIds: const [],
-      );
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
+      (changeIds: snapshot.changes.map((change) => change.id).toList(), groupIds: const []);
 
   @override
   String? get rootPath => '/tmp/upstream';
@@ -58,8 +56,7 @@ class _SnapshotRepository implements PlatformRepository {
   String get roleKey => '';
 
   @override
-  Future<String> readDoc(String absolutePath) async =>
-      File(absolutePath).readAsStringSync();
+  Future<String> readDoc(String absolutePath) async => File(absolutePath).readAsStringSync();
 
   @override
   Future<DocState> docState(String absolutePath) async => DocState.unknown;
@@ -68,17 +65,13 @@ class _SnapshotRepository implements PlatformRepository {
   Future<bool> openInEditor(String absolutePath) async => false;
 
   @override
-  Future<List<IssueComment>> issueComments(List<int> issueIds) async =>
-      const [];
+  Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -102,8 +95,7 @@ class _SnapshotRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
@@ -134,25 +126,27 @@ void main() {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      home: Scaffold(
-        body: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: console),
-            BlocProvider.value(value: sessions),
-          ],
-          child: screen,
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: console),
+              BlocProvider.value(value: sessions),
+            ],
+            child: screen,
+          ),
         ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -174,22 +168,21 @@ void main() {
       expect(find.text('Статусы трекера'), findsNothing);
     });
 
-    testWidgets('следующий шаг — по стадии самого отстающего change\'а',
-        (tester) async {
+    testWidgets('следующий шаг — по стадии самого отстающего change\'а', (tester) async {
       await open(tester, const GroupScreen());
 
       expect(
-          find.textContaining(
-              'Следующий шаг: написать Дизайн-решения для change’а '
-              '«refactor-config»'),
-          findsOneWidget);
+        find.textContaining(
+          'Следующий шаг: написать Дизайн-решения для change’а '
+          '«refactor-config»',
+        ),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('карточка: стадия в шапке, ленты комментариев трекера нет',
-        (tester) async {
+    testWidgets('карточка: стадия в шапке, ленты комментариев трекера нет', (tester) async {
       await open(tester, const ChangeScreen());
-      final change =
-          snapshot.changes.singleWhere((c) => c.id == 'add-dark-mode');
+      final change = snapshot.changes.singleWhere((c) => c.id == 'add-dark-mode');
       console.add(ChangeOpened(change));
       await tester.pumpAndSettle();
 
@@ -214,8 +207,7 @@ void main() {
         'статусов трекера нет', (tester) async {
       await open(tester, const RecognitionScreen());
 
-      expect(find.textContaining('spec-driven · встроенная схема upstream'),
-          findsOneWidget);
+      expect(find.textContaining('spec-driven · встроенная схема upstream'), findsOneWidget);
       expect(find.text('Статусы трекера'), findsNothing);
       expect(find.textContaining('Redmine'), findsNothing);
     });

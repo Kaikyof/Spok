@@ -32,12 +32,8 @@ const _schema = SpecSchema(
   name: 'test-schema',
   artifacts: [
     SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-    SchemaArtifact(
-        id: 'design', generates: 'design.md', requires: ['proposal']),
-    SchemaArtifact(
-        id: 'tasks-backend',
-        generates: 'tasks_backend.md',
-        requires: ['design']),
+    SchemaArtifact(id: 'design', generates: 'design.md', requires: ['proposal']),
+    SchemaArtifact(id: 'tasks-backend', generates: 'tasks_backend.md', requires: ['design']),
   ],
 );
 
@@ -67,13 +63,10 @@ artifacts:
     requires:
       - design
 ''');
-  write('openspec/doc/pin-auth.md',
-      '# pin-auth — Локальный вход: master-spec\n\nchanges: mtm-03\n');
-  write('openspec/changes/mtm-03/proposal.md',
-      '## Зачем\n\nПисьма должны уходить всем.\n');
+  write('openspec/doc/pin-auth.md', '# pin-auth — Локальный вход: master-spec\n\nchanges: mtm-03\n');
+  write('openspec/changes/mtm-03/proposal.md', '## Зачем\n\nПисьма должны уходить всем.\n');
   write('openspec/changes/mtm-03/redmine.yaml', 'version: 3\nstacks: {}\n');
-  write('openspec/changes/archive/2026-07-31-mtm-01/proposal.md',
-      '## Что сделали\n\nПервый заход.\n');
+  write('openspec/changes/archive/2026-07-31-mtm-01/proposal.md', '## Что сделали\n\nПервый заход.\n');
   return root;
 }
 
@@ -88,12 +81,10 @@ class _FakeRepository implements PlatformRepository {
   @override
   // Синхронное чтение: в фейковом времени теста настоящий ввод-вывод
   // не успевает завершиться до проверок.
-  Future<String> readDoc(String absolutePath) async =>
-      File(absolutePath).readAsStringSync();
+  Future<String> readDoc(String absolutePath) async => File(absolutePath).readAsStringSync();
 
   @override
-  Future<DocState> docState(String absolutePath) async =>
-      const DocState(branch: 'main', file: DocFileState.modified);
+  Future<DocState> docState(String absolutePath) async => const DocState(branch: 'main', file: DocFileState.modified);
 
   String? openedInEditor;
 
@@ -107,8 +98,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: const [], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: const [], groupIds: const []);
 
   @override
   String? get rootPath => '/tmp/spec';
@@ -123,13 +113,10 @@ class _FakeRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -153,26 +140,25 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
 }
 
 Widget _wrap(ConsoleBloc console) => MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      home: Scaffold(
-        body: BlocProvider.value(value: console, child: const DocsScreen()),
-      ),
-    );
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ru'),
+  home: Scaffold(
+    body: BlocProvider.value(value: console, child: const DocsScreen()),
+  ),
+);
 
 void main() {
   late Directory root;
@@ -215,18 +201,15 @@ void main() {
       final change = tree.first.children.single;
 
       expect(change.id, 'mtm-03');
-      expect([for (final doc in change.docs) doc.fileName],
-          ['proposal.md', 'design.md', 'tasks_backend.md']);
-      expect([for (final doc in change.docs) doc.exists],
-          [true, false, false]);
+      expect([for (final doc in change.docs) doc.fileName], ['proposal.md', 'design.md', 'tasks_backend.md']);
+      expect([for (final doc in change.docs) doc.exists], [true, false, false]);
       expect(change.presentCount, 1);
       expect(change.declaredCount, 3);
     });
 
     test('архив — отдельный узел в конце дерева, без ненаписанных файлов', () {
       final changes = source.loadChanges();
-      final tree = source.loadDocTree(source.loadGroups(changes), changes,
-          archived: source.loadArchivedChanges());
+      final tree = source.loadDocTree(source.loadGroups(changes), changes, archived: source.loadArchivedChanges());
       final archived = tree.last.children.single;
 
       expect(tree.last.id, PlatformFilesSource.archiveNodeId);
@@ -243,17 +226,18 @@ void main() {
     Future<void> openScreen(WidgetTester tester) async {
       final changes = source.loadChanges();
       final groups = source.loadGroups(changes);
-      repository = _FakeRepository(ConsoleSnapshot(
-        groups: groups,
-        changes: changes,
-        divergences: const [],
-        env: const EnvReport(keys: [], repos: [], systems: []),
-        docs: source.loadDocTree(groups, changes,
-            archived: source.loadArchivedChanges()),
-        profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
-        trackerProblem: TrackerProblem.none,
-        refreshedAt: DateTime.now(),
-      ));
+      repository = _FakeRepository(
+        ConsoleSnapshot(
+          groups: groups,
+          changes: changes,
+          divergences: const [],
+          env: const EnvReport(keys: [], repos: [], systems: []),
+          docs: source.loadDocTree(groups, changes, archived: source.loadArchivedChanges()),
+          profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
+          trackerProblem: TrackerProblem.none,
+          refreshedAt: DateTime.now(),
+        ),
+      );
       console = ConsoleBloc(repository);
       addTearDown(console.close);
       tester.view.physicalSize = const Size(1280, 800);
@@ -263,8 +247,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('дерево показывает группу, change и архив с датой',
-        (tester) async {
+    testWidgets('дерево показывает группу, change и архив с датой', (tester) async {
       await openScreen(tester);
 
       expect(find.text('Локальный вход'), findsOneWidget);
@@ -273,8 +256,7 @@ void main() {
       expect(find.text('в архиве с 31 июля 2026'), findsOneWidget);
     });
 
-    testWidgets('ненаписанный артефакт виден и не открывается',
-        (tester) async {
+    testWidgets('ненаписанный артефакт виден и не открывается', (tester) async {
       await openScreen(tester);
 
       expect(find.text('объявлен схемой, файла нет'), findsWidgets);
@@ -285,8 +267,7 @@ void main() {
       expect(find.text('Выберите документ слева'), findsOneWidget);
     });
 
-    testWidgets('выбранный документ читается и показывает состояние ветки',
-        (tester) async {
+    testWidgets('выбранный документ читается и показывает состояние ветки', (tester) async {
       await openScreen(tester);
 
       // Первая «Спека» в дереве — у change'а в работе, вторая у архивного.
@@ -301,8 +282,7 @@ void main() {
       await openScreen(tester);
       final row = find.text('Спека').first;
       Color? background() => tester
-          .widgetList<Container>(find.ancestor(
-              of: row, matching: find.byType(Container)))
+          .widgetList<Container>(find.ancestor(of: row, matching: find.byType(Container)))
           .map((container) => container.decoration)
           .whereType<BoxDecoration>()
           .first
@@ -310,8 +290,7 @@ void main() {
 
       expect(background(), isNull);
 
-      final mouse =
-          await tester.createGesture(kind: PointerDeviceKind.mouse);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       addTearDown(mouse.removePointer);
       await mouse.addPointer(location: Offset.zero);
       await mouse.moveTo(tester.getCenter(row));
@@ -324,19 +303,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(background(), isNull);
       expect(
-          tester
-              .widgetList<Container>(find.ancestor(
-                  of: find.text('Дизайн-решения').first,
-                  matching: find.byType(Container)))
-              .map((container) => container.decoration)
-              .whereType<BoxDecoration>()
-              .first
-              .color,
-          isNull);
+        tester
+            .widgetList<Container>(
+              find.ancestor(of: find.text('Дизайн-решения').first, matching: find.byType(Container)),
+            )
+            .map((container) => container.decoration)
+            .whereType<BoxDecoration>()
+            .first
+            .color,
+        isNull,
+      );
     });
 
-    testWidgets('«Открыть в IDE» отдаёт редактору путь к файлу',
-        (tester) async {
+    testWidgets('«Открыть в IDE» отдаёт редактору путь к файлу', (tester) async {
       await openScreen(tester);
       // Первая «Спека» в дереве — у change'а в работе, вторая у архивного.
       await tester.tap(find.text('Спека').first);
@@ -345,8 +324,7 @@ void main() {
       await tester.tap(find.text('Открыть в IDE'));
       await tester.pumpAndSettle();
 
-      expect(repository.openedInEditor,
-          endsWith('openspec/changes/mtm-03/proposal.md'));
+      expect(repository.openedInEditor, endsWith('openspec/changes/mtm-03/proposal.md'));
     });
   });
 }

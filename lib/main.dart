@@ -25,8 +25,7 @@ Future<void> setupDi() async {
   // Адаптер трекера выбирается резолвером, а не репозиторием: второй
   // адаптер встанет сюда, не трогая чтение слепка.
   getIt.registerSingleton<TrackerResolver>(const RedmineTrackerResolver());
-  final repository = await PlatformRepositoryImpl.create(
-      commandLog: commandLog, trackers: getIt<TrackerResolver>());
+  final repository = await PlatformRepositoryImpl.create(commandLog: commandLog, trackers: getIt<TrackerResolver>());
   getIt.registerSingleton<PlatformRepository>(repository);
 }
 
@@ -60,21 +59,18 @@ class ConsoleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'Spok',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('ru'),
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider(
-                create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
-            BlocProvider(
-                create: (_) => SessionsBloc(getIt<PlatformRepository>(),
-                    commandLog: getIt<CommandLog>())),
-          ],
-          child: const Shell(),
-        ),
-      );
+    title: 'Spok',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.dark(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('ru'),
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => ConsoleBloc(getIt<PlatformRepository>())),
+        BlocProvider(create: (_) => SessionsBloc(getIt<PlatformRepository>(), commandLog: getIt<CommandLog>())),
+      ],
+      child: const Shell(),
+    ),
+  );
 }

@@ -117,13 +117,12 @@ void main() {
     test('статусы, адрес задачи и имя приходят от контракта', () async {
       final root = _buildTrackedSpec(fillKey: true)..also(roots.add);
       final tracker = _FakeTracker(byIssue: {100: 'На ревью'});
-      final repository = PlatformRepositoryImpl(PlatformFilesSource(root),
-          trackers: _FixedResolver(tracker));
+      final repository = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
 
       final snapshot = await repository.load();
 
       expect(tracker.askedStatuses, [
-        [100]
+        [100],
       ]);
       final stack = snapshot.changes.single.stacks.single;
       expect(stack.trackerStatus, 'На ревью');
@@ -142,16 +141,14 @@ void main() {
     test('комментарии — через контракт, без ключа не спрашиваются', () async {
       final root = _buildTrackedSpec(fillKey: true)..also(roots.add);
       final tracker = _FakeTracker();
-      final repository = PlatformRepositoryImpl(PlatformFilesSource(root),
-          trackers: _FixedResolver(tracker));
+      final repository = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
 
       final comments = await repository.issueComments([100]);
       expect(comments.single.text, 'ок');
       expect(tracker.askedComments, [100]);
 
       final silent = _FakeTracker(configuredValue: false);
-      final unconfigured = PlatformRepositoryImpl(PlatformFilesSource(root),
-          trackers: _FixedResolver(silent));
+      final unconfigured = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(silent));
       expect(await unconfigured.issueComments([100]), isEmpty);
       expect(silent.askedComments, isEmpty);
     });
@@ -178,26 +175,17 @@ void main() {
         expect(stack.trackerStatus, isNull);
         expect(stack.statusFromCache, isFalse);
       }
-      expect(
-        snapshot.profile.recognition.items
-            .map((item) => item.part)
-            .contains(RecognizedPart.statuses),
-        isFalse,
-      );
+      expect(snapshot.profile.recognition.items.map((item) => item.part).contains(RecognizedPart.statuses), isFalse);
       // Статусы не считаются непонятыми там, где их нет: нераспознанным
       // остаётся только то, чего у спеки нет из другого (репозитории
       // workspace.yaml — до реестра расширений).
-      expect(
-        snapshot.profile.recognition.unrecognized.map((item) => item.part),
-        [RecognizedPart.services],
-      );
+      expect(snapshot.profile.recognition.unrecognized.map((item) => item.part), [RecognizedPart.services]);
       // Внешних систем и ключей у спеки нет — разделов нет.
       expect(snapshot.env.systems, isEmpty);
       expect(snapshot.env.keysDeclared, isFalse);
     });
 
-    test('трекер объявлен, ключ не заполнен: «нет ключа», статус из файла',
-        () async {
+    test('трекер объявлен, ключ не заполнен: «нет ключа», статус из файла', () async {
       final root = _buildTrackedSpec()..also(roots.add);
       final source = PlatformFilesSource(root);
       expect(const RedmineTrackerResolver().declaredIn(source), isTrue);
@@ -210,18 +198,12 @@ void main() {
       final stack = snapshot.changes.single.stacks.single;
       expect(stack.trackerStatus, 'В работе');
       expect(stack.statusFromCache, isTrue);
-      expect(
-        snapshot.profile.recognition.items
-            .map((item) => item.part)
-            .contains(RecognizedPart.statuses),
-        isTrue,
-      );
+      expect(snapshot.profile.recognition.items.map((item) => item.part).contains(RecognizedPart.statuses), isTrue);
       expect(snapshot.env.keysDeclared, isTrue);
     });
 
     test('улика — и один лишь REDMINE_URL в примере, без redmine.yaml', () {
-      final root = Directory.systemTemp.createTempSync('tracker-evidence')
-        ..also(roots.add);
+      final root = Directory.systemTemp.createTempSync('tracker-evidence')..also(roots.add);
       Directory(p.join(root.path, 'openspec')).createSync();
       final source = PlatformFilesSource(root);
       const resolver = RedmineTrackerResolver();
@@ -235,30 +217,29 @@ void main() {
   group('внешние системы из ключей примера', () {
     test('только Redmine: одна строка, без «GitLab не настроен»', () async {
       final root = _buildTrackedSpec()..also(roots.add);
-      final snapshot = await PlatformRepositoryImpl(PlatformFilesSource(root),
-          trackers: _FixedResolver(_FakeTracker())).load();
+      final snapshot = await PlatformRepositoryImpl(
+        PlatformFilesSource(root),
+        trackers: _FixedResolver(_FakeTracker()),
+      ).load();
 
       expect(snapshot.env.systems.map((check) => check.name), ['FakeTracker']);
     });
 
-    test('ключ объявлен, адрес не заполнен — «адрес не задан», а не тишина',
-        () async {
+    test('ключ объявлен, адрес не заполнен — «адрес не задан», а не тишина', () async {
       final root = _buildTrackedSpec()..also(roots.add);
-      File(p.join(root.path, '.env.example'))
-          .writeAsStringSync('REDMINE_URL=\nGITLAB_URL=\n');
-      final snapshot = await PlatformRepositoryImpl(PlatformFilesSource(root),
-          trackers: _FixedResolver(_FakeTracker())).load();
+      File(p.join(root.path, '.env.example')).writeAsStringSync('REDMINE_URL=\nGITLAB_URL=\n');
+      final snapshot = await PlatformRepositoryImpl(
+        PlatformFilesSource(root),
+        trackers: _FixedResolver(_FakeTracker()),
+      ).load();
 
-      expect(snapshot.env.systems.map((check) => check.name),
-          ['FakeTracker', 'GitLab']);
-      expect(snapshot.env.systems.last.outcome,
-          CheckOutcome.systemNotConfigured);
+      expect(snapshot.env.systems.map((check) => check.name), ['FakeTracker', 'GitLab']);
+      expect(snapshot.env.systems.last.outcome, CheckOutcome.systemNotConfigured);
     });
 
     test('примера нет — систем и ключей нет', () async {
       final root = buildUpstreamSpec()..also(roots.add);
-      final snapshot =
-          await PlatformRepositoryImpl(PlatformFilesSource(root)).load();
+      final snapshot = await PlatformRepositoryImpl(PlatformFilesSource(root)).load();
 
       expect(snapshot.env.systems, isEmpty);
       expect(snapshot.env.keys, isEmpty);

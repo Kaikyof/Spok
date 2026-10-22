@@ -22,13 +22,8 @@ class StackState {
   /// стадия считается по одним отметкам.
   WorkStage stage;
 
-  StackState({
-    required this.stack,
-    this.issueId,
-    required this.tasks,
-    this.cachedStatus,
-    WorkStage? stage,
-  }) : stage = stage ?? WorkStage.fromTasks(tasks);
+  StackState({required this.stack, this.issueId, required this.tasks, this.cachedStatus, WorkStage? stage})
+    : stage = stage ?? WorkStage.fromTasks(tasks);
 
   /// Что показывать как ярлык трекера: живой статус, иначе закэшированный.
   String? get trackerStatus => liveStatus ?? cachedStatus;

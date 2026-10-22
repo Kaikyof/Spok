@@ -43,10 +43,10 @@ abstract class AppColors {
   /// Цвет точки стадии работы: та же шкала, что у статусов, — стадия
   /// описывает ход работы по файлам и есть у любой спеки.
   static Color forStage(WorkStage stage) => switch (stage) {
-        PlanningStage() => statusNew,
-        ReadyToApplyStage() => statusReviewDone,
-        InProgressStage() => statusInProgress,
-        DoneStage() => statusReadyToRelease,
-        ArchivedStage() => textMuted,
-      };
+    PlanningStage() => statusNew,
+    ReadyToApplyStage() => statusReviewDone,
+    InProgressStage() => statusInProgress,
+    DoneStage() => statusReadyToRelease,
+    ArchivedStage() => textMuted,
+  };
 }

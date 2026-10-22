@@ -14,32 +14,21 @@ abstract class AppTextStyles {
   static const fontSizeL = 13.0;
   static const fontSizeXl = 14.0;
 
-  static TextStyle monospace(
-    double size, {
-    Color color = AppColors.monospaceText,
-    FontWeight? weight,
-  }) =>
-      TextStyle(
-        fontFamily: monospaceFamily,
-        fontSize: size,
-        color: color,
-        fontWeight: weight,
-      );
+  static TextStyle monospace(double size, {Color color = AppColors.monospaceText, FontWeight? weight}) =>
+      TextStyle(fontFamily: monospaceFamily, fontSize: size, color: color, fontWeight: weight);
 
-  static const screenTitle = TextStyle(
-      fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static const screenTitle = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
 
-  static const sectionTitle = TextStyle(
-      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
+  static const sectionTitle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
 
   static const sectionLabel = TextStyle(
-      fontSize: 10.5,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 1,
-      color: AppColors.textMuted);
+    fontSize: 10.5,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 1,
+    color: AppColors.textMuted,
+  );
 
-  static const rowTitle = TextStyle(
-      fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static const rowTitle = TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
 
   static const body = TextStyle(fontSize: 13, color: AppColors.textSecondary);
 
@@ -50,8 +39,5 @@ abstract class AppTextStyles {
   static const hint = TextStyle(fontSize: 11.5, color: AppColors.textMuted);
 
   /// Стрелка плашки следующего шага.
-  static const bannerArrow = TextStyle(
-      fontSize: fontSizeXl,
-      fontWeight: FontWeight.w600,
-      color: AppColors.accent);
+  static const bannerArrow = TextStyle(fontSize: fontSizeXl, fontWeight: FontWeight.w600, color: AppColors.accent);
 }

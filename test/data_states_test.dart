@@ -56,8 +56,7 @@ class _FakeRepository implements PlatformRepository {
 
   @override
   Future<ConsoleSnapshot> load() async {
-    await Future<void>.delayed(
-        slowLoad ? const Duration(seconds: 2) : Duration.zero);
+    await Future<void>.delayed(slowLoad ? const Duration(seconds: 2) : Duration.zero);
     return snapshot ?? _snapshot();
   }
 
@@ -65,8 +64,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [];
 
   @override
-  ({List<String> changeIds, List<String> groupIds}) argumentValues() =>
-      (changeIds: const [], groupIds: const []);
+  ({List<String> changeIds, List<String> groupIds}) argumentValues() => (changeIds: const [], groupIds: const []);
 
   @override
   String? get rootPath => '/tmp/spec';
@@ -90,13 +88,10 @@ class _FakeRepository implements PlatformRepository {
   Future<List<IssueComment>> issueComments(List<int> issueIds) async => const [];
 
   @override
-  Future<List<MergeRequestInfo>> mergeRequests(String changeId,
-          {String groupId = ''}) async =>
-      const [];
+  Future<List<MergeRequestInfo>> mergeRequests(String changeId, {String groupId = ''}) async => const [];
 
   @override
-  Future<HandoffRecipients> handoffRecipients(String stack) async =>
-      const HandoffRecipients();
+  Future<HandoffRecipients> handoffRecipients(String stack) async => const HandoffRecipients();
 
   @override
   Future<String> configFilePath() async => '/tmp/fake-config/.env';
@@ -120,8 +115,7 @@ class _FakeRepository implements PlatformRepository {
   Future<SecretBackend> secretBackend() async => SecretBackend.file;
 
   @override
-  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) =>
-      const Stream.empty();
+  Stream<CloneProgress> cloneSpec(String url, {String ref = ''}) => const Stream.empty();
 
   @override
   void cancelClone() {}
@@ -133,42 +127,41 @@ ConsoleSnapshot _snapshot({
   TrackerProblem problem = TrackerProblem.none,
   String problemDetail = '',
   SpecRecognition recognition = _fullRecognition,
-}) =>
-    ConsoleSnapshot(
-      groups: groups,
-      changes: changes,
-      divergences: const [],
-      env: const EnvReport(keys: [], repos: [], systems: []),
-      profile: ProjectProfile(
-        schema: _schema,
-        stacks: const ['backend'],
-        statuses: StatusSemantics.empty,
-        recognition: recognition,
-      ),
-      trackerProblem: problem,
-      trackerProblemDetail: problemDetail,
-      refreshedAt: DateTime.now(),
-    );
+}) => ConsoleSnapshot(
+  groups: groups,
+  changes: changes,
+  divergences: const [],
+  env: const EnvReport(keys: [], repos: [], systems: []),
+  profile: ProjectProfile(
+    schema: _schema,
+    stacks: const ['backend'],
+    statuses: StatusSemantics.empty,
+    recognition: recognition,
+  ),
+  trackerProblem: problem,
+  trackerProblemDetail: problemDetail,
+  refreshedAt: DateTime.now(),
+);
 
 Widget _wrap(ConsoleBloc console, SessionsBloc sessions) => MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: AppLocalizations.supportedLocales,
+  locale: const Locale('ru'),
+  home: Scaffold(
+    body: MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: console),
+        BlocProvider.value(value: sessions),
       ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('ru'),
-      home: Scaffold(
-        body: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: console),
-            BlocProvider.value(value: sessions),
-          ],
-          child: const GroupScreen(),
-        ),
-      ),
-    );
+      child: const GroupScreen(),
+    ),
+  ),
+);
 
 void main() {
   group('Состояния данных', () {
@@ -186,23 +179,25 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('первая загрузка — скелет таблицы, а не лоадер в центре',
-        (tester) async {
+    testWidgets('первая загрузка — скелет таблицы, а не лоадер в центре', (tester) async {
       await open(
-          tester,
-          _FakeRepository(
-              slowLoad: true,
-              snapshot: _snapshot(changes: [
-                ChangeUnit(
-                    id: 'mtm-03',
-                    title: 'Рассылка',
-                    dir: '/tmp',
-                    stackStates: {
-                      'backend': StackState(
-                          stack: 'backend',
-                          tasks: const [TaskItem('1.1', 'Шаг', false)]),
-                    }),
-              ])));
+        tester,
+        _FakeRepository(
+          slowLoad: true,
+          snapshot: _snapshot(
+            changes: [
+              ChangeUnit(
+                id: 'mtm-03',
+                title: 'Рассылка',
+                dir: '/tmp',
+                stackStates: {
+                  'backend': StackState(stack: 'backend', tasks: const [TaskItem('1.1', 'Шаг', false)]),
+                },
+              ),
+            ],
+          ),
+        ),
+      );
 
       // Слепка ещё нет: на месте таблицы — её скелет, а не крутящийся
       // индикатор вместо всего экрана.
@@ -218,85 +213,105 @@ void main() {
     testWidgets('трекер молчит — говорим, что показаны данные файлов, '
         'и даём повтор', (tester) async {
       await open(
-          tester,
-          _FakeRepository(
-              snapshot: _snapshot(
+        tester,
+        _FakeRepository(
+          snapshot: _snapshot(
             changes: [
-              ChangeUnit(id: 'mtm-03', title: 'Рассылка', dir: '/tmp', stackStates: {
-                'backend': StackState(
+              ChangeUnit(
+                id: 'mtm-03',
+                title: 'Рассылка',
+                dir: '/tmp',
+                stackStates: {
+                  'backend': StackState(
                     stack: 'backend',
                     cachedStatus: 'В работе',
-                    tasks: const [TaskItem('1.1', 'Шаг', false)]),
-              }),
+                    tasks: const [TaskItem('1.1', 'Шаг', false)],
+                  ),
+                },
+              ),
             ],
             problem: TrackerProblem.noApiKey,
-          )));
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(
-          find.text('Статусы трекера недоступны — показаны данные файлов спеки'),
-          findsOneWidget);
+      expect(find.text('Статусы трекера недоступны — показаны данные файлов спеки'), findsOneWidget);
       expect(find.text('Повторить'), findsOneWidget);
     });
 
     testWidgets('статус из файла помечен и его точка полая', (tester) async {
       await open(
-          tester,
-          _FakeRepository(
-              snapshot: _snapshot(changes: [
-            ChangeUnit(id: 'mtm-03', title: 'Рассылка', dir: '/tmp', stackStates: {
-              'backend': StackState(
-                  stack: 'backend',
-                  cachedStatus: 'В работе',
-                  tasks: const [TaskItem('1.1', 'Шаг', false)]),
-            }),
-          ])));
+        tester,
+        _FakeRepository(
+          snapshot: _snapshot(
+            changes: [
+              ChangeUnit(
+                id: 'mtm-03',
+                title: 'Рассылка',
+                dir: '/tmp',
+                stackStates: {
+                  'backend': StackState(
+                    stack: 'backend',
+                    cachedStatus: 'В работе',
+                    tasks: const [TaskItem('1.1', 'Шаг', false)],
+                  ),
+                },
+              ),
+            ],
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Рядом со стадией — ярлык трекера: он и помечен «из файла».
-      final badges = tester
-          .widgetList<StatusBadge>(find.byType(StatusBadge))
-          .toList();
+      final badges = tester.widgetList<StatusBadge>(find.byType(StatusBadge)).toList();
       final tracker = badges.singleWhere((b) => b.text.contains('из файла'));
       expect(tracker.hollow, isTrue);
       // Стадия при этом видна и точка у неё обычная: это факт из файлов.
       expect(badges.any((b) => b.text.contains('готов к реализации')), isTrue);
     });
 
-    testWidgets('все change\'и сделаны — плашка предлагает архивирование',
-        (tester) async {
+    testWidgets('все change\'и сделаны — плашка предлагает архивирование', (tester) async {
       // Стеков у спеки нет: единственный «стек работы», все задачи закрыты.
       await open(
-          tester,
-          _FakeRepository(
-              snapshot: ConsoleSnapshot(
+        tester,
+        _FakeRepository(
+          snapshot: ConsoleSnapshot(
             groups: const [],
             changes: [
               for (final id in ['a', 'b'])
-                ChangeUnit(id: id, title: 'Change $id', dir: '/tmp', stackStates: {
-                  StackState.singleWorkStack: StackState(
+                ChangeUnit(
+                  id: id,
+                  title: 'Change $id',
+                  dir: '/tmp',
+                  stackStates: {
+                    StackState.singleWorkStack: StackState(
                       stack: StackState.singleWorkStack,
-                      tasks: const [TaskItem('1.1', 'Шаг', true)]),
-                }),
+                      tasks: const [TaskItem('1.1', 'Шаг', true)],
+                    ),
+                  },
+                ),
             ],
             divergences: const [],
             env: const EnvReport(keys: [], repos: [], systems: []),
             profile: const ProjectProfile(
-                schema: _schema,
-                stacks: [StackState.singleWorkStack],
-                recognition: _fullRecognition),
+              schema: _schema,
+              stacks: [StackState.singleWorkStack],
+              recognition: _fullRecognition,
+            ),
             trackerProblem: TrackerProblem.notDeclared,
             refreshedAt: DateTime.now(),
-          )));
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('сделано'), findsNWidgets(2));
-      expect(find.textContaining('Следующий шаг: сдать change’и в архив'),
-          findsOneWidget);
+      expect(find.textContaining('Следующий шаг: сдать change’и в архив'), findsOneWidget);
     });
 
-    testWidgets('пусто — объяснение, первый шаг и превью команды',
-        (tester) async {
+    testWidgets('пусто — объяснение, первый шаг и превью команды', (tester) async {
       await open(tester, _FakeRepository(snapshot: _snapshot()));
       await tester.pumpAndSettle();
 
@@ -306,28 +321,28 @@ void main() {
       expect(find.textContaining('/opsx-propose'), findsOneWidget);
     });
 
-    testWidgets('не распознанное показывается списком с «Указать вручную»',
-        (tester) async {
+    testWidgets('не распознанное показывается списком с «Указать вручную»', (tester) async {
       await open(
-          tester,
-          _FakeRepository(
-              snapshot: _snapshot(
+        tester,
+        _FakeRepository(
+          snapshot: _snapshot(
             changes: [
-              ChangeUnit(id: 'mtm-03', title: 'Рассылка', dir: '/tmp', stackStates: {
-                'backend': StackState(
-                    stack: 'backend',
-                    tasks: const [TaskItem('1.1', 'Шаг', false)]),
-              }),
+              ChangeUnit(
+                id: 'mtm-03',
+                title: 'Рассылка',
+                dir: '/tmp',
+                stackStates: {
+                  'backend': StackState(stack: 'backend', tasks: const [TaskItem('1.1', 'Шаг', false)]),
+                },
+              ),
             ],
             recognition: const SpecRecognition([
-              RecognizedItem(
-                  part: RecognizedPart.schema, recognized: true, value: 'sdr'),
-              RecognizedItem(
-                  part: RecognizedPart.statuses,
-                  recognized: false,
-                  lookedIn: 'openspec/redmine.yaml'),
+              RecognizedItem(part: RecognizedPart.schema, recognized: true, value: 'sdr'),
+              RecognizedItem(part: RecognizedPart.statuses, recognized: false, lookedIn: 'openspec/redmine.yaml'),
             ]),
-          )));
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Разобрано 1 из 2'), findsOneWidget);
@@ -336,18 +351,24 @@ void main() {
       expect(find.text('Указать вручную'), findsOneWidget);
     });
 
-    testWidgets('спека разобрана целиком — блока «не распознано» нет',
-        (tester) async {
+    testWidgets('спека разобрана целиком — блока «не распознано» нет', (tester) async {
       await open(
-          tester,
-          _FakeRepository(
-              snapshot: _snapshot(changes: [
-            ChangeUnit(id: 'mtm-03', title: 'Рассылка', dir: '/tmp', stackStates: {
-              'backend': StackState(
-                  stack: 'backend',
-                  tasks: const [TaskItem('1.1', 'Шаг', false)]),
-            }),
-          ])));
+        tester,
+        _FakeRepository(
+          snapshot: _snapshot(
+            changes: [
+              ChangeUnit(
+                id: 'mtm-03',
+                title: 'Рассылка',
+                dir: '/tmp',
+                stackStates: {
+                  'backend': StackState(stack: 'backend', tasks: const [TaskItem('1.1', 'Шаг', false)]),
+                },
+              ),
+            ],
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Указать вручную'), findsNothing);

@@ -16,20 +16,14 @@ class AssessWorkStage {
   /// Стадия change'а целиком. [tasks] — какие задачи считать; по умолчанию
   /// все задачи всех стеков. [stack] — считать стадию одного стека: тогда
   /// артефакты задач других стеков не ждут написания.
-  WorkStage call(
-    ChangeUnit change,
-    SpecSchema schema, {
-    Iterable<TaskItem>? tasks,
-    String? stack,
-  }) {
+  WorkStage call(ChangeUnit change, SpecSchema schema, {Iterable<TaskItem>? tasks, String? stack}) {
     if (change.archived) return WorkStage.archived;
     final states = const ListChangeArtifacts()(change, schema);
     // Change редко трогает все стеки спеки: у backend-change'а не будет
     // `tasks_mobile.md`, и это не «планирование», а отсутствие работы по
     // стеку. Поэтому ненаписанный артефакт чужого стека не считается,
     // когда у change'а есть хотя бы один файл задач.
-    final anyStackWritten = states.any(
-        (state) => state.artifact.stack.isNotEmpty && state.exists);
+    final anyStackWritten = states.any((state) => state.artifact.stack.isNotEmpty && state.exists);
     for (final state in states) {
       if (state.exists || state.skipped || state.waitingFor.isNotEmpty) {
         continue;
@@ -41,7 +35,6 @@ class AssessWorkStage {
       }
       return PlanningStage(state.artifact.id);
     }
-    return WorkStage.fromTasks(
-        tasks ?? change.stacks.expand((unit) => unit.tasks));
+    return WorkStage.fromTasks(tasks ?? change.stacks.expand((unit) => unit.tasks));
   }
 }

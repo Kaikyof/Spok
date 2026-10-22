@@ -6,10 +6,5 @@ class IssueComment {
   final DateTime createdAt;
   final String text;
 
-  const IssueComment({
-    required this.issueId,
-    required this.author,
-    required this.createdAt,
-    required this.text,
-  });
+  const IssueComment({required this.issueId, required this.author, required this.createdAt, required this.text});
 }

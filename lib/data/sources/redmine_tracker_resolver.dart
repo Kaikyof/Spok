@@ -17,12 +17,9 @@ class RedmineTrackerResolver implements TrackerResolver {
   /// Спека пользуется Redmine, если объявила семантику его статусов
   /// (`openspec/redmine.yaml`) или адрес системы в `.env.example`.
   bool declaredIn(PlatformFilesSource source) =>
-      source.trackerFile.isNotEmpty ||
-      source.loadEnvExampleKeys().any((example) => example.key == urlKey);
+      source.trackerFile.isNotEmpty || source.loadEnvExampleKeys().any((example) => example.key == urlKey);
 
   @override
   Tracker? resolve(PlatformFilesSource source, Map<String, String> env) =>
-      declaredIn(source)
-          ? RedmineApi(env[urlKey] ?? '', env[apiKey] ?? '')
-          : null;
+      declaredIn(source) ? RedmineApi(env[urlKey] ?? '', env[apiKey] ?? '') : null;
 }

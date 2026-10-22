@@ -60,8 +60,7 @@ class ConsoleSnapshot {
   /// Трекер объявлен спекой и спрошен или мог быть спрошен: его статусы
   /// и ссылки имеют смысл показывать рядом со стадией.
   bool get trackerActive =>
-      trackerProblem != TrackerProblem.notDeclared &&
-      trackerProblem != TrackerProblem.platformNotFound;
+      trackerProblem != TrackerProblem.notDeclared && trackerProblem != TrackerProblem.platformNotFound;
 
   /// Адресов задач нет — у спеки без трекера.
   static String? noIssueUrl(int issueId) => null;

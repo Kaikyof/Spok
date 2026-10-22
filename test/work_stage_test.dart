@@ -16,12 +16,9 @@ const _specDriven = SpecSchema(
   name: 'spec-driven',
   artifacts: [
     SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-    SchemaArtifact(
-        id: 'specs', generates: 'specs/**/*.md', requires: ['proposal']),
-    SchemaArtifact(
-        id: 'design', generates: 'design.md', requires: ['proposal']),
-    SchemaArtifact(
-        id: 'tasks', generates: 'tasks.md', requires: ['specs', 'design']),
+    SchemaArtifact(id: 'specs', generates: 'specs/**/*.md', requires: ['proposal']),
+    SchemaArtifact(id: 'design', generates: 'design.md', requires: ['proposal']),
+    SchemaArtifact(id: 'tasks', generates: 'tasks.md', requires: ['specs', 'design']),
   ],
   tracksFile: 'tasks.md',
 );
@@ -46,18 +43,14 @@ void main() {
     List<TaskItem> tasks = const [],
     ChangeMetadata meta = ChangeMetadata.none,
     DateTime? archivedAt,
-  }) =>
-      ChangeUnit(
-        id: 'a',
-        title: 'A',
-        dir: root.path,
-        stackStates: {
-          StackState.singleWorkStack:
-              StackState(stack: StackState.singleWorkStack, tasks: tasks),
-        },
-        meta: meta,
-        archivedAt: archivedAt,
-      );
+  }) => ChangeUnit(
+    id: 'a',
+    title: 'A',
+    dir: root.path,
+    stackStates: {StackState.singleWorkStack: StackState(stack: StackState.singleWorkStack, tasks: tasks)},
+    meta: meta,
+    archivedAt: archivedAt,
+  );
 
   const assess = AssessWorkStage();
 
@@ -73,13 +66,9 @@ void main() {
     write('specs/auth/spec.md', '## ADDED Requirements\n');
     write('design.md', '## Context\n');
     write('tasks.md', '## 1\n');
-    final tasks = [
-      for (var index = 1; index <= 7; index++)
-        TaskItem('1.$index', 'Шаг', index <= 3),
-    ];
+    final tasks = [for (var index = 1; index <= 7; index++) TaskItem('1.$index', 'Шаг', index <= 3)];
 
-    expect(assess(change(tasks: tasks), _specDriven),
-        const InProgressStage(3, 7));
+    expect(assess(change(tasks: tasks), _specDriven), const InProgressStage(3, 7));
   });
 
   test('сделано: все артефакты написаны и все задачи закрыты', () {
@@ -87,10 +76,7 @@ void main() {
     write('specs/auth/spec.md', '## ADDED Requirements\n');
     write('design.md', '## Context\n');
     write('tasks.md', '## 1\n');
-    final tasks = const [
-      TaskItem('1.1', 'Шаг', true),
-      TaskItem('1.2', 'Шаг', true),
-    ];
+    final tasks = const [TaskItem('1.1', 'Шаг', true), TaskItem('1.2', 'Шаг', true)];
 
     expect(assess(change(tasks: tasks), _specDriven), WorkStage.done);
   });
@@ -100,10 +86,7 @@ void main() {
     write('proposal.md', '## Why\n');
     write('design.md', '## Context\n');
     write('tasks.md', '## 1\n');
-    final unit = change(
-      tasks: const [TaskItem('1.1', 'Шаг', false)],
-      meta: const ChangeMetadata(skipSpecs: true),
-    );
+    final unit = change(tasks: const [TaskItem('1.1', 'Шаг', false)], meta: const ChangeMetadata(skipSpecs: true));
 
     expect(assess(unit, _specDriven), WorkStage.readyToApply);
   });
@@ -118,47 +101,41 @@ void main() {
   });
 
   test('архив решает всё: даже с открытыми задачами стадия — в архиве', () {
-    final unit = change(
-      tasks: const [TaskItem('1.1', 'Шаг', false)],
-      archivedAt: DateTime(2026, 9, 1),
-    );
+    final unit = change(tasks: const [TaskItem('1.1', 'Шаг', false)], archivedAt: DateTime(2026, 9, 1));
 
     expect(assess(unit, _specDriven), WorkStage.archived);
   });
 
   test('два артефакта готовы одновременно — берётся первый по схеме', () {
     // design объявлен раньше specs, и оба требуют только proposal.
-    const schema = SpecSchema(name: 's', artifacts: [
-      SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-      SchemaArtifact(
-          id: 'design', generates: 'design.md', requires: ['proposal']),
-      SchemaArtifact(
-          id: 'specs', generates: 'specs/**/*.md', requires: ['proposal']),
-    ]);
+    const schema = SpecSchema(
+      name: 's',
+      artifacts: [
+        SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
+        SchemaArtifact(id: 'design', generates: 'design.md', requires: ['proposal']),
+        SchemaArtifact(id: 'specs', generates: 'specs/**/*.md', requires: ['proposal']),
+      ],
+    );
     write('proposal.md', '## Why\n');
 
     expect(assess(change(), schema), const PlanningStage('design'));
   });
 
-  test('артефакт, который ждёт предшественника, планированием не считается',
-      () {
+  test('артефакт, который ждёт предшественника, планированием не считается', () {
     // Ничего не написано: tasks ждёт specs и design, они ждут proposal —
     // следующий шаг proposal, а не tasks.
     expect(assess(change(), _specDriven), const PlanningStage('proposal'));
   });
 
   group('стеки', () {
-    const stacked = SpecSchema(name: 'two', artifacts: [
-      SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
-      SchemaArtifact(
-          id: 'tasks-backend',
-          generates: 'tasks_backend.md',
-          requires: ['proposal']),
-      SchemaArtifact(
-          id: 'tasks-mobile',
-          generates: 'tasks_mobile.md',
-          requires: ['proposal']),
-    ]);
+    const stacked = SpecSchema(
+      name: 'two',
+      artifacts: [
+        SchemaArtifact(id: 'proposal', generates: 'proposal.md'),
+        SchemaArtifact(id: 'tasks-backend', generates: 'tasks_backend.md', requires: ['proposal']),
+        SchemaArtifact(id: 'tasks-mobile', generates: 'tasks_mobile.md', requires: ['proposal']),
+      ],
+    );
 
     test('change одного стека: файл задач другого стека не ждём', () {
       write('proposal.md', '# A\n');
@@ -168,17 +145,15 @@ void main() {
         title: 'A',
         dir: root.path,
         stackStates: {
-          'backend': StackState(stack: 'backend', tasks: const [
-            TaskItem('1.1', 'Шаг', true),
-            TaskItem('1.2', 'Шаг', false),
-          ]),
+          'backend': StackState(
+            stack: 'backend',
+            tasks: const [TaskItem('1.1', 'Шаг', true), TaskItem('1.2', 'Шаг', false)],
+          ),
         },
       );
 
       expect(assess(unit, stacked), const InProgressStage(1, 2));
-      expect(assess(unit, stacked, stack: 'backend',
-              tasks: unit.stack('backend')!.tasks),
-          const InProgressStage(1, 2));
+      expect(assess(unit, stacked, stack: 'backend', tasks: unit.stack('backend')!.tasks), const InProgressStage(1, 2));
     });
 
     test('файлов задач нет вовсе — планирование первого стека', () {

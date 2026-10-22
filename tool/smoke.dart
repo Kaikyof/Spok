@@ -20,9 +20,7 @@ Future<void> main() async {
   );
   // Поля следующих этапов печатаются уже сейчас, чтобы формат вывода —
   // и эталоны, снятые с него, — не менялись по мере их реализации.
-  print(
-    'источник схемы: ${source?.defaultSchemaResolution?.source.name ?? 'не найдена'}',
-  );
+  print('источник схемы: ${source?.defaultSchemaResolution?.source.name ?? 'не найдена'}');
   print('расширения: не реализовано');
   print('группировка: ${profile.grouping.name}');
   for (final feature in SpecFeature.values) {
@@ -108,9 +106,9 @@ Future<void> main() async {
 
 /// Стадия в одну строку для эталона: имя и то, что её уточняет.
 String _stageText(WorkStage stage) => switch (stage) {
-      PlanningStage(:final next) => 'planning:$next',
-      ReadyToApplyStage() => 'readyToApply',
-      InProgressStage(:final done, :final total) => 'inProgress:$done/$total',
-      DoneStage() => 'done',
-      ArchivedStage() => 'archived',
-    };
+  PlanningStage(:final next) => 'planning:$next',
+  ReadyToApplyStage() => 'readyToApply',
+  InProgressStage(:final done, :final total) => 'inProgress:$done/$total',
+  DoneStage() => 'done',
+  ArchivedStage() => 'archived',
+};
