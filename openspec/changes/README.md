@@ -7,7 +7,7 @@
 | 0 | `add-upstream-test-bench` ✓ в архиве | — | S |
 | 1 | `resolve-schema-like-upstream` ✓ в архиве | 0 | M |
 | 2 | `add-work-stage-and-tracker-port` | 1 | M |
-| 3 | `support-upstream-commands` | 1 (стадия — 2) | M |
+| 3 | `support-upstream-commands` ✓ в архиве | 1 (стадия — 2) | M |
 | 4 | `add-extension-registry` | 2, 3 | L |
 | 5 | `show-specs-in-docs` | 1 | S |
 | 6 | `split-core-and-extensions` | 4 | M (+M локаль) |
