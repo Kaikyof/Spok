@@ -71,11 +71,11 @@ class PlatformRepositoryImpl implements PlatformRepository {
         cloneSource = cloneSource ?? GitCloneSource(),
         trackers = trackers ?? const RedmineTrackerResolver();
 
-  /// Трекер текущей спеки по её ключам; null — не объявлен или спеки нет.
-  Tracker? get _tracker {
-    final source = files;
-    return source == null ? null : trackers.resolve(source, source.loadEnv());
-  }
+  /// Подбирает трекер спеки по её ключам в момент вызова: `.env` человек
+  /// правит между обновлениями, и кэшировать адаптер здесь нельзя.
+  /// Это метод, а не свойство: он читает диск и создаёт клиент.
+  Tracker? _resolveTracker(PlatformFilesSource source) =>
+      trackers.resolve(source, source.loadEnv());
 
   /// Сборщик `.env` текущей спеки; null — спека не подключена.
   EnvMaterializer? get _materializer {
@@ -221,8 +221,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async {
-    if (issueIds.isEmpty) return const [];
-    final tracker = _tracker;
+    final source = files;
+    if (source == null || issueIds.isEmpty) return const [];
+    final tracker = _resolveTracker(source);
     if (tracker == null || !tracker.configured) return const [];
     try {
       final perIssue = await Future.wait(issueIds.map((issueId) async {
@@ -348,7 +349,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final groups = source.loadGroups(changes);
     final archived = source.loadArchivedChanges();
     final semantics = source.loadStatusSemantics();
-    final tracker = trackers.resolve(source, source.loadEnv());
+    final tracker = _resolveTracker(source);
     final (trackerProblem, trackerDetail) =
         await _fetchStatuses(tracker, changes);
 
