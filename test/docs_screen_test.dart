@@ -251,7 +251,7 @@ void main() {
         docs: source.loadDocTree(groups, changes,
             archived: source.loadArchivedChanges()),
         profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
-        redmineProblem: RedmineProblem.none,
+        trackerProblem: TrackerProblem.none,
         refreshedAt: DateTime.now(),
       ));
       console = ConsoleBloc(repository);

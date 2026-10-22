@@ -9,6 +9,7 @@ import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
 import '../../domain/entities/change_unit.dart';
+import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/issue_comment.dart';
@@ -19,13 +20,14 @@ import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../domain/usecases/list_change_artifacts.dart';
+import '../../data/sources/redmine_status_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/doc_markdown.dart';
 import '../ui_kit/marks_indicator.dart';
-import '../ui_kit/redmine_issue_link.dart';
+import '../ui_kit/issue_link.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/status_badge.dart';
 import '../widgets/env_editor_dialog.dart';
@@ -52,16 +54,11 @@ class ChangeScreen extends StatelessWidget {
               change: state.selectedChange!,
               allChanges: state.groupChanges,
               state: state,
-              redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
               comments: state.comments,
               mergeRequests: state.mergeRequests,
             );
           }
-          return _ChangeList(
-            changes: state.groupChanges,
-            state: state,
-            redmineBaseUrl: state.snapshot?.redmineBaseUrl ?? '',
-          );
+          return _ChangeList(changes: state.groupChanges, state: state);
         },
       );
 }
@@ -69,12 +66,8 @@ class ChangeScreen extends StatelessWidget {
 class _ChangeList extends StatelessWidget {
   final List<ChangeUnit> changes;
   final ConsoleState state;
-  final String redmineBaseUrl;
 
-  const _ChangeList(
-      {required this.changes,
-      required this.state,
-      required this.redmineBaseUrl});
+  const _ChangeList({required this.changes, required this.state});
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -85,10 +78,7 @@ class _ChangeList extends StatelessWidget {
           for (final change in changes)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _ChangeListRow(
-                  change: change,
-                  state: state,
-                  redmineBaseUrl: redmineBaseUrl),
+              child: _ChangeListRow(change: change, state: state),
             ),
         ],
       );
@@ -97,16 +87,11 @@ class _ChangeList extends StatelessWidget {
 class _ChangeListRow extends StatelessWidget {
   final ChangeUnit change;
   final ConsoleState state;
-  final String redmineBaseUrl;
 
-  const _ChangeListRow(
-      {required this.change,
-      required this.state,
-      required this.redmineBaseUrl});
+  const _ChangeListRow({required this.change, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    final texts = AppLocalizations.of(context);
     final visibleStacks = change.stacks
         .where((stack) => state.allowsStack(stack.stack))
         .toList();
@@ -131,27 +116,11 @@ class _ChangeListRow extends StatelessWidget {
             ),
             for (final stackState in visibleStacks) ...[
               SizedBox(
-                width: 230,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: StatusBadge(
-                        text:
-                            '${texts.stackLabel(stackState.stack)} · ${stackState.redmineStatus ?? texts.statusUnavailable}',
-                        dotColor: stackState.redmineStatus == null
-                            ? AppColors.textMuted
-                            : AppColors.forRedmineStatus(
-                                stackState.redmineStatus!),
-                        muted: stackState.redmineStatus == null,
-                      ),
-                    ),
-                    RedmineIssueLink(
-                      issueId: stackState.issueId,
-                      baseUrl: redmineBaseUrl,
-                      tooltip: texts.openInRedmineTooltip,
-                      fontSize: 11.5,
-                    ),
-                  ],
+                width: AppDimens.stackStatusWidth,
+                child: _StackStatus(
+                  stack: stackState,
+                  snapshot: state.snapshot,
+                  withStackName: change.stacks.length > 1,
                 ),
               ),
               const SizedBox(width: AppDimens.gapM),
@@ -172,7 +141,6 @@ class _ChangeCard extends StatelessWidget {
   final ChangeUnit change;
   final List<ChangeUnit> allChanges;
   final ConsoleState state;
-  final String redmineBaseUrl;
   final List<IssueComment>? comments;
   final List<MergeRequestInfo>? mergeRequests;
 
@@ -180,7 +148,6 @@ class _ChangeCard extends StatelessWidget {
     required this.change,
     required this.allChanges,
     required this.state,
-    required this.redmineBaseUrl,
     required this.comments,
     required this.mergeRequests,
   });
@@ -266,30 +233,29 @@ class _ChangeCard extends StatelessWidget {
               style: AppTextStyles.caption.copyWith(color: AppColors.warning)),
         ],
         const SizedBox(height: 6),
-        Row(
+        // Шапка: стадия каждого стека из файлов; статус трекера рядом,
+        // если трекер активен. Стеков нет — стадия самого change'а.
+        Wrap(
+          spacing: AppDimens.gapL,
+          runSpacing: AppDimens.gapS,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             SelectableText(change.id,
                 style:
                     AppTextStyles.monospace(11.5, color: AppColors.textMuted)),
-            const SizedBox(width: AppDimens.gapM),
-            for (final stackState in change.stacks) ...[
+            if (change.stacks.isEmpty)
               StatusBadge(
-                text:
-                    '${texts.stackLabel(stackState.stack)} · ${stackState.redmineStatus ?? texts.statusUnavailable}',
-                dotColor: stackState.redmineStatus == null
-                    ? AppColors.textMuted
-                    : AppColors.forRedmineStatus(stackState.redmineStatus!),
-                muted: stackState.redmineStatus == null,
-              ),
-              const SizedBox(width: 6),
-              RedmineIssueLink(
-                issueId: stackState.issueId,
-                baseUrl: redmineBaseUrl,
-                tooltip: texts.openInRedmineTooltip,
-                fontSize: 12,
-              ),
-              const SizedBox(width: AppDimens.gapL),
-            ],
+                text: texts.stageLabel(change.stage),
+                dotColor: AppColors.forStage(change.stage),
+              )
+            else
+              for (final stackState in change.stacks)
+                _StackStatus(
+                  stack: stackState,
+                  snapshot: state.snapshot,
+                  withStackName: change.stacks.length > 1,
+                  inline: true,
+                ),
           ],
         ),
         const SizedBox(height: AppDimens.gapL),
@@ -356,13 +322,96 @@ class _ChangeCard extends StatelessWidget {
                     mergeRequests: mergeRequests,
                     changeId: change.id,
                   ),
-                  const SizedBox(height: AppDimens.gapM),
-                  _CommentsCard(comments: comments),
+                  // Лента комментариев есть только у спеки с трекером.
+                  if (state.snapshot?.trackerActive ?? false) ...[
+                    const SizedBox(height: AppDimens.gapM),
+                    _CommentsCard(
+                        comments: comments,
+                        trackerName: state.snapshot?.trackerName ?? ''),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Стадия стека и, если трекер активен, его статус ярлыком рядом.
+/// Цвет точки — по стадии: она описывает файлы и есть у любой спеки;
+/// ярлык трекера красит палитра адаптера, статус из файла — полой точкой.
+class _StackStatus extends StatelessWidget {
+  final StackState stack;
+  final ConsoleSnapshot? snapshot;
+
+  /// Стеков несколько — стадия подписана именем стека.
+  final bool withStackName;
+
+  /// В шапке карточки бейджи идут в строку, в списке — колонкой.
+  final bool inline;
+
+  const _StackStatus({
+    required this.stack,
+    required this.snapshot,
+    this.withStackName = false,
+    this.inline = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final texts = AppLocalizations.of(context);
+    final stage = stack.stage;
+    final status = stack.trackerStatus;
+    final current = snapshot;
+    final stageText = withStackName
+        ? '${texts.stackLabel(stack.stack)} · ${texts.stageLabel(stage)}'
+        : texts.stageLabel(stage);
+    final badges = <Widget>[
+      Tooltip(
+        message: texts.stageTooltip,
+        child: StatusBadge(
+            text: stageText, dotColor: AppColors.forStage(stage)),
+      ),
+      if (status != null)
+        Tooltip(
+          message: stack.statusFromCache ? texts.statusFromCacheHint : '',
+          child: StatusBadge(
+            text: stack.statusFromCache
+                ? '$status · ${texts.statusFromCache}'
+                : status,
+            dotColor: redmineStatusColor(status),
+            muted: stack.statusFromCache,
+            hollow: stack.statusFromCache,
+          ),
+        )
+      else if ((current?.trackerActive ?? false) && stack.issueId != null)
+        Text(texts.statusUnavailable, style: AppTextStyles.hint),
+      if (stack.issueId case final issueId?)
+        IssueLink(
+          issueId: issueId,
+          url: current?.issueUrl(issueId),
+          tooltip: texts.openInTrackerTooltip(current?.trackerName ?? ''),
+          fontSize:
+              inline ? AppTextStyles.fontSizeM : AppTextStyles.fontSizeS,
+        ),
+    ];
+    if (inline) {
+      return Wrap(
+        spacing: AppDimens.gapS,
+        runSpacing: AppDimens.gapXs,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: badges,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (index, badge) in badges.indexed) ...[
+          if (index > 0) const SizedBox(height: AppDimens.badgeGap),
+          badge,
+        ],
       ],
     );
   }
@@ -656,12 +705,13 @@ class _MergeRequestRow extends StatelessWidget {
   }
 }
 
-/// Лента комментариев Redmine — то, чем обмениваются разработчик
+/// Лента комментариев трекера — то, чем обмениваются разработчик
 /// и тестировщик по задаче.
 class _CommentsCard extends StatefulWidget {
   final List<IssueComment>? comments;
+  final String trackerName;
 
-  const _CommentsCard({required this.comments});
+  const _CommentsCard({required this.comments, required this.trackerName});
 
   @override
   State<_CommentsCard> createState() => _CommentsCardState();
@@ -682,7 +732,8 @@ class _CommentsCardState extends State<_CommentsCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(texts.commentsTitle, style: AppTextStyles.sectionTitle),
+          Text(texts.commentsTitle(widget.trackerName),
+              style: AppTextStyles.sectionTitle),
           const SizedBox(height: AppDimens.gapS),
           if (loaded == null)
             const SizedBox(

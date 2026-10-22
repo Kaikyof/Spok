@@ -43,7 +43,8 @@ abstract class PlatformRepository {
   /// Открывает файл в установленном редакторе; false — открыть нечем.
   Future<bool> openInEditor(String absolutePath);
 
-  /// Лента комментариев задач change'а; пустая, если Redmine недоступен.
+  /// Лента комментариев задач change'а; пустая, если трекер не объявлен
+  /// или недоступен.
   Future<List<IssueComment>> issueComments(List<int> issueIds);
 
   /// Путь к конфиг-файлу приложения (для подсказки на экране настройки).

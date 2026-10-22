@@ -26,5 +26,11 @@ Russian version: [CHANGELOG.ru.md](CHANGELOG.ru.md).
 - Support for projects on the original OpenSpec: the `spec-driven` schema and tasks without stacks or a tracker.
 - Linux build; settings and spec clones live in the system's standard directories.
 - Release notes on GitHub are built from this changelog, in English and Russian.
+- Work stage of a change derived from the spec files — planning, ready to apply, in progress, done, archived — in the group table and the change card header; for a spec without stacks the next step follows the stage.
+
+### Changed
+
+- The tracker status is a label next to the stage rather than the only status; the app names the system as the spec declares it instead of "Redmine". A spec without a tracker no longer hears "no access" or "no key".
+- Environment screen: the keys section exists only with `.env.example`, external systems only for the addresses it declares.
 
 [Unreleased]: https://github.com/Kaikyof/Spok/commits/develop

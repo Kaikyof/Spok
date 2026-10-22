@@ -75,8 +75,7 @@ class _HandoffScreenState extends State<HandoffScreen> {
                     child: Column(
                       children: [
                         _ReadinessStep(
-                            readiness: readiness,
-                            problem: snapshot.redmineProblem),
+                            readiness: readiness, snapshot: snapshot),
                         const SizedBox(height: AppDimens.gapL),
                         _BuildStep(group: group, stacks: state.stacks),
                         const SizedBox(height: AppDimens.gapL),
@@ -171,14 +170,17 @@ class _ReadinessStep extends StatelessWidget {
   final HandoffReadiness readiness;
 
   /// Почему трекер молчит: без этого «статус не опрошен» — полуправда,
-  /// а человеку нужно знать, заполнять ему ключ или ждать Redmine.
-  final RedmineProblem problem;
+  /// а человеку нужно знать, заполнять ему ключ или ждать трекер. Имя
+  /// системы и её ключей — от контракта трекера в слепке.
+  final ConsoleSnapshot snapshot;
 
-  const _ReadinessStep({required this.readiness, required this.problem});
+  const _ReadinessStep({required this.readiness, required this.snapshot});
 
   @override
   Widget build(BuildContext context) {
     final texts = AppLocalizations.of(context);
+    final problem = snapshot.trackerProblem;
+    final tracker = snapshot.trackerName;
     // Четвёртое состояние шага: не «готов» и не «есть блокеры», а
     // «неизвестно» — приложение не смогло спросить трекер.
     final unknown = readiness.statusUnknown;
@@ -207,9 +209,10 @@ class _ReadinessStep extends StatelessWidget {
               if (unknown) ...[
                 Text(
                     switch (problem) {
-                      RedmineProblem.noApiKey => texts.handoffStatusNoKey,
-                      RedmineProblem.unreachable =>
-                        texts.handoffStatusUnreachable,
+                      TrackerProblem.noApiKey =>
+                        texts.handoffStatusNoKey(tracker),
+                      TrackerProblem.unreachable =>
+                        texts.handoffStatusUnreachable(tracker),
                       _ => texts.handoffStatusNotAsked,
                     },
                     style: AppTextStyles.hint.copyWith(height: 1.4)),
@@ -217,9 +220,11 @@ class _ReadinessStep extends StatelessWidget {
                 // Ключ личный — поле прямо здесь, без похода в форму ключей
                 // за одним значением. Молчащий трекер поля не требует:
                 // ему нужен повтор.
-                if (problem == RedmineProblem.noApiKey)
-                  const MissingKeyBlock(
-                      keys: ['REDMINE_API_KEY'], lookedIn: 'REDMINE_API_KEY · .env')
+                if (problem == TrackerProblem.noApiKey &&
+                    snapshot.trackerKeys.isNotEmpty)
+                  MissingKeyBlock(
+                      keys: snapshot.trackerKeys,
+                      lookedIn: '${snapshot.trackerKeys.join(', ')} · .env')
                 else
                   OutlinedButton(
                     onPressed: () =>
@@ -438,7 +443,9 @@ class _RecipientsStep extends StatelessWidget {
                                 CircularProgressIndicator(strokeWidth: 1.5)),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(texts.handoffRecipientsResolving,
+                          child: Text(
+                              texts.handoffRecipientsResolving(
+                                  state.snapshot?.trackerName ?? ''),
                               style: AppTextStyles.captionMuted),
                         ),
                       ],
@@ -480,7 +487,9 @@ class _RecipientsStep extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: AppDimens.gapS),
-                  Text(texts.handoffRecipientsSource,
+                  Text(
+                      texts.handoffRecipientsSource(
+                          state.snapshot?.trackerName ?? ''),
                       style: AppTextStyles.hint.copyWith(height: 1.4)),
                 ],
               ),
@@ -737,7 +746,7 @@ class _PreviewStep extends StatelessWidget {
         texts.handoverMsgTaskLine(
           '${issueOf[change.id]?.issueId ?? '—'}',
           change.title,
-          issueOf[change.id]?.redmineStatus ?? '—',
+          issueOf[change.id]?.trackerStatus ?? '—',
           '${issueOf[change.id]?.doneCount}/${issueOf[change.id]?.tasks.length}',
         ),
       '',

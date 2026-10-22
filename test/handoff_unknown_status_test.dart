@@ -85,7 +85,7 @@ final _features = {
 };
 
 class _FakeRepository implements PlatformRepository {
-  final RedmineProblem problem;
+  final TrackerProblem problem;
 
   /// Спека без команды передачи — случай avelacom: передавать нечем.
   final bool withoutHandover;
@@ -106,7 +106,11 @@ class _FakeRepository implements PlatformRepository {
           features: withoutHandover ? _featuresWithoutHandover : _features,
           handoverCommand: withoutHandover ? null : _handover,
         ),
-        redmineProblem: problem,
+        trackerProblem: problem,
+        // Спека с трекером: имя и ключ приходят от контракта, и именно
+        // по ним шаг знает, какое поле предложить.
+        trackerName: 'Redmine',
+        trackerKeys: const ['REDMINE_API_KEY'],
         refreshedAt: DateTime.now(),
       );
 
@@ -194,7 +198,7 @@ final _featuresWithoutHandover = {
 
 void main() {
   group('Передача без статусов трекера', () {
-    Future<ConsoleBloc> open(WidgetTester tester, RedmineProblem problem,
+    Future<ConsoleBloc> open(WidgetTester tester, TrackerProblem problem,
         {bool withoutHandover = false}) async {
       final repository =
           _FakeRepository(problem, withoutHandover: withoutHandover);
@@ -230,7 +234,7 @@ void main() {
 
     testWidgets('экран остаётся, но готовность объявлена неизвестной',
         (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+      await open(tester, TrackerProblem.noApiKey);
 
       // Экран не спрятан: получателей и сборку человек собирает без трекера.
       expect(find.text('Готовность'), findsOneWidget);
@@ -243,14 +247,14 @@ void main() {
 
     testWidgets('ключа нет у меня — поле для него прямо в шаге',
         (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+      await open(tester, TrackerProblem.noApiKey);
 
       expect(find.byType(MissingKeyBlock), findsOneWidget);
       expect(find.text('Повторить'), findsNothing);
     });
 
     testWidgets('трекер молчит — не поле, а повтор запроса', (tester) async {
-      await open(tester, RedmineProblem.unreachable);
+      await open(tester, TrackerProblem.unreachable);
 
       expect(find.byType(MissingKeyBlock), findsNothing);
       expect(find.text('Повторить'), findsOneWidget);
@@ -258,7 +262,7 @@ void main() {
 
     testWidgets('спека без команды передачи — фича выключена с чеклистом',
         (tester) async {
-      await open(tester, RedmineProblem.none, withoutHandover: true);
+      await open(tester, TrackerProblem.none, withoutHandover: true);
 
       // Шагов нет вовсе: передавать нечем, и экран говорит это, а не
       // показывает предпросмотр команды, которой у спеки не существует.
@@ -270,7 +274,7 @@ void main() {
 
     testWidgets('отправка недоступна и причина названа честно',
         (tester) async {
-      await open(tester, RedmineProblem.noApiKey);
+      await open(tester, TrackerProblem.noApiKey);
 
       final button = tester.widget<FilledButton>(
           find.ancestor(

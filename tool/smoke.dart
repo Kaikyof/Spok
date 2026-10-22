@@ -5,6 +5,7 @@ import 'package:spok/data/repositories/platform_repository_impl.dart';
 import 'package:spok/data/sources/platform_files_source.dart';
 import 'package:spok/domain/entities/doc_node.dart';
 import 'package:spok/domain/entities/project_profile.dart';
+import 'package:spok/domain/entities/work_stage.dart';
 
 Future<void> main() async {
   final source = PlatformFilesSource.locate();
@@ -54,21 +55,23 @@ Future<void> main() async {
   }
   print('role: ${repository.role} (${repository.roleKey})');
   print(
-    'redmineProblem: ${snapshot.redmineProblem.name} '
-    '${snapshot.redmineProblemDetail}',
+    'trackerProblem: ${snapshot.trackerProblem.name} '
+    '${snapshot.trackerProblemDetail}'
+    '${snapshot.trackerName.isEmpty ? '' : ' · ${snapshot.trackerName}'}',
   );
   for (final change in snapshot.changes) {
     final stacks = change.stacks
         .map(
           (stack) =>
               '${stack.stack}=${stack.doneCount}/${stack.tasks.length}'
-              '(#${stack.issueId},${stack.redmineStatus}'
-              '${stack.statusFromCache ? ',из файла' : ''})',
+              '(#${stack.issueId},${stack.trackerStatus}'
+              '${stack.statusFromCache ? ',из файла' : ''})'
+              '[${_stageText(stack.stage)}]',
         )
         .join(' ');
     print(
       '  ${change.id}: «${change.title}» $stacks deps=${change.dependsOn} '
-      'стадия=не реализовано',
+      'стадия=${_stageText(change.stage)}',
     );
   }
   print(
@@ -102,3 +105,12 @@ Future<void> main() async {
     );
   }
 }
+
+/// Стадия в одну строку для эталона: имя и то, что её уточняет.
+String _stageText(WorkStage stage) => switch (stage) {
+      PlanningStage(:final next) => 'planning:$next',
+      ReadyToApplyStage() => 'readyToApply',
+      InProgressStage(:final done, :final total) => 'inProgress:$done/$total',
+      DoneStage() => 'done',
+      ArchivedStage() => 'archived',
+    };

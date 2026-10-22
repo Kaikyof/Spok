@@ -123,7 +123,7 @@ class _FakeRepository implements PlatformRepository {
 ConsoleSnapshot _snapshot({
   List<ChangeUnit> changes = const [],
   List<Group> groups = const [],
-  RedmineProblem problem = RedmineProblem.none,
+  TrackerProblem problem = TrackerProblem.none,
   String problemDetail = '',
   SpecRecognition recognition = _fullRecognition,
 }) =>
@@ -138,8 +138,8 @@ ConsoleSnapshot _snapshot({
         statuses: StatusSemantics.empty,
         recognition: recognition,
       ),
-      redmineProblem: problem,
-      redmineProblemDetail: problemDetail,
+      trackerProblem: problem,
+      trackerProblemDetail: problemDetail,
       refreshedAt: DateTime.now(),
     );
 

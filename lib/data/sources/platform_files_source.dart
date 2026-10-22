@@ -17,6 +17,8 @@ import '../../domain/repositories/command_log.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
+import '../../domain/entities/work_stage.dart';
+import '../../domain/usecases/assess_work_stage.dart';
 import 'builtin_schemas.dart';
 import 'executable_locator.dart';
 import 'env_file.dart';
@@ -180,6 +182,13 @@ class PlatformFilesSource {
       File(p.join(root.path, 'openspec', 'redmine.yaml')),
       ['defaults', 'project_id']);
 
+  /// Улика трекера: спека им пользуется, если объявила семантику статусов
+  /// (`openspec/redmine.yaml`) или адрес системы в `.env.example`. Без
+  /// улики трекер не опрашивается, и его отсутствие — не нехватка.
+  bool get trackerDeclared =>
+      trackerFile.isNotEmpty ||
+      loadEnvExampleKeys().any((example) => example.key == 'REDMINE_URL');
+
   // ─── Группы ────────────────────────────────────────────────────────────────
 
   /// Группы change'ей: спринты (каталог со `sprint.yaml`), иначе мастер-спеки
@@ -338,6 +347,11 @@ class PlatformFilesSource {
           final changeId = match?.group(2) ?? name;
           final archivedAt = DateTime.tryParse(match?.group(1) ?? '');
           final change = _loadChange(changeId, entry);
+          // Архив решает стадию целиком: открытые отметки в сданном
+          // change'е — история, а не работа.
+          for (final stack in change.stacks) {
+            stack.stage = WorkStage.archived;
+          }
           return ChangeUnit(
             id: change.id,
             title: change.title,
@@ -347,6 +361,9 @@ class PlatformFilesSource {
             dependsOn: change.dependsOn,
             formatWarning: change.formatWarning,
             archivedAt: archivedAt,
+            schema: change.schema,
+            meta: change.meta,
+            stage: WorkStage.archived,
           );
         }(),
     ];
@@ -497,7 +514,7 @@ class PlatformFilesSource {
       );
     }
 
-    return ChangeUnit(
+    final change = ChangeUnit(
       id: changeId,
       title: titleFromTasks ?? _proposalTitle(changeDir) ?? changeId,
       dir: changeDir.path,
@@ -508,6 +525,25 @@ class PlatformFilesSource {
       formatWarning: links.formatWarning,
       schema: schema,
       meta: meta,
+    );
+    // Стадия — из тех же файлов, что и всё остальное: артефакты схемы и
+    // отметки. У стека своя: артефакты change'а плюс его отметки.
+    const assess = AssessWorkStage();
+    for (final stack in change.stacks) {
+      stack.stage =
+          assess(change, schema, stack: stack.stack, tasks: stack.tasks);
+    }
+    return ChangeUnit(
+      id: change.id,
+      title: change.title,
+      dir: change.dir,
+      groupId: change.groupId,
+      stackStates: change.stackStates,
+      dependsOn: change.dependsOn,
+      formatWarning: change.formatWarning,
+      schema: schema,
+      meta: meta,
+      stage: assess(change, schema),
     );
   }
 
@@ -656,6 +692,11 @@ class PlatformFilesSource {
     if (!file.existsSync()) return {};
     return EnvFile.parse(file.readAsStringSync());
   }
+
+  /// Спека объявляет ключи окружения — у неё есть `.env.example`. Без
+  /// файла требований «ключ не заполнен у меня» не бывает.
+  bool get hasEnvExample =>
+      File(p.join(root.path, '.env.example')).existsSync();
 
   /// Ключи из `.env.example` целиком, с подсказкой из комментария над строкой:
   /// белого списка нет — иначе ключи чужой спеки просто исчезнут с экрана.

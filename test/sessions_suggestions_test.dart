@@ -53,7 +53,7 @@ class _FakePlatformRepository implements PlatformRepository {
         changes: const [],
         divergences: const [],
         env: const EnvReport(keys: [], repos: [], systems: []),
-        redmineProblem: RedmineProblem.none,
+        trackerProblem: TrackerProblem.none,
         refreshedAt: DateTime.now(),
       );
 

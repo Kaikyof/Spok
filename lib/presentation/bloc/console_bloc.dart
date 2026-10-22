@@ -186,7 +186,7 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     }));
   }
 
-  /// Получателей подбирает скрипт платформы — он ходит в Redmine
+  /// Получателей подбирает скрипт платформы — он ходит в трекер
   /// и Mattermost, поэтому запускаем по запросу экрана, а не при refresh.
   Future<void> _onRecipientsRequested(
       RecipientsRequested event, Emitter<ConsoleState> emit) async {
@@ -211,7 +211,7 @@ class ConsoleBloc extends Bloc<ConsoleEvent, ConsoleState> {
     emit(state.copyWith(envSaving: true));
     await repository.saveEnv(event.values);
     emit(state.copyWith(envSaving: false, envForm: () => null));
-    // Проверки окружения и статусы Redmine зависят от ключей — пересобираем.
+    // Проверки окружения и статусы трекера зависят от ключей — пересобираем.
     add(ConsoleRefreshed());
   }
 

@@ -9,6 +9,7 @@ import '../../domain/entities/project_profile.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/stack_state.dart';
+import '../../domain/entities/work_stage.dart';
 import '../../l10n/gen/app_localizations.dart';
 
 /// Форматирование структурных сущностей домена в локализованный текст.
@@ -95,12 +96,12 @@ extension DomainTextFormatters on AppLocalizations {
 
   String divergenceText(Divergence divergence) => switch (divergence.kind) {
         DivergenceKind.tasksNotClosed => divergenceTasksNotClosed(
-            divergence.redmineStatus ?? '',
+            divergence.trackerStatus ?? '',
             divergence.openTaskNumbers.join(', ')),
         DivergenceKind.marksAheadOfStatus => divergenceMarksAhead(
             divergence.doneCount,
             divergence.totalCount,
-            divergence.redmineStatus ?? ''),
+            divergence.trackerStatus ?? ''),
         DivergenceKind.buildMissing =>
           divergenceBuildMissing(stackLabel(divergence.stack)),
       };
@@ -149,7 +150,11 @@ extension DomainTextFormatters on AppLocalizations {
     if (!item.recognized) return unrecognizedNotFound;
     final count = int.tryParse(item.value) ?? 0;
     return switch (item.part) {
-      RecognizedPart.schema => item.value,
+      // Имя схемы и откуда она: у проекта после `openspec init` схема
+      // встроенная, и это должно быть видно, а не угадываться по пути.
+      RecognizedPart.schema => item.qualifier.isEmpty
+          ? item.value
+          : '${item.value} · ${schemaSourceLabel(item.qualifier)}',
       RecognizedPart.grouping => switch (item.value) {
           'sprintDir' => groupingSprintDir,
           'masterDoc' => groupingMasterDoc,
@@ -175,8 +180,8 @@ extension DomainTextFormatters on AppLocalizations {
   /// Пояснение к ключу .env; для репозиториев и систем detail — данные
   /// (ветка, хост), они приходят из check.subtitle.
   String envKeyHint(String keyName) => switch (keyName) {
-        'REDMINE_URL' => envHintRedmineUrl,
-        'REDMINE_API_KEY' => envHintRedmineKey,
+        'REDMINE_URL' => envHintTrackerUrl,
+        'REDMINE_API_KEY' => envHintTrackerKey,
         'GITLAB_URL' => envHintGitlabUrl,
         'GITLAB_TOKEN' => envHintGitlabToken,
         'MATTERMOST_URL' => envHintMattermostUrl,
@@ -193,5 +198,36 @@ extension DomainTextFormatters on AppLocalizations {
         'qa' => roleQa,
         'dev' => roleDev,
         _ => role,
+      };
+
+  /// Источник схемы словами: `project` · `user` · `builtin`.
+  String schemaSourceLabel(String source) => switch (source) {
+        'project' => schemaSourceProject,
+        'user' => schemaSourceUser,
+        'builtin' => schemaSourceBuiltin,
+        _ => source,
+      };
+
+  /// Подпись артефакта по его id в схеме: известные — человеческим
+  /// названием, остальные — как их назвала схема.
+  String artifactIdLabel(String id) => switch (id) {
+        'proposal' => artifactSpec,
+        'design' => artifactDesign,
+        'specs' => artifactSpecs,
+        'tasks' => artifactTasks,
+        final id when id.startsWith('tasks-') =>
+          artifactTasksOfStack(stackLabel(id.substring(6))),
+        _ => id,
+      };
+
+  /// Стадия работы словами, с тем, что её уточняет: следующий артефакт
+  /// у планирования, прогресс у работы.
+  String stageLabel(WorkStage stage) => switch (stage) {
+        PlanningStage(:final next) => stagePlanning(artifactIdLabel(next)),
+        ReadyToApplyStage() => stageReadyToApply,
+        InProgressStage(:final done, :final total) =>
+          stageInProgress(done, total),
+        DoneStage() => stageDone,
+        ArchivedStage() => stageArchived,
       };
 }

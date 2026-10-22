@@ -30,31 +30,40 @@ class _FakeRepository implements PlatformRepository {
   /// Что прочитано из принесённого человеком файла.
   final Map<String, String> fileValues;
 
-  _FakeRepository({this.envCommands = const {}, this.fileValues = const {}});
+  /// Спека без `.env.example`: ключей она не объявляет.
+  final bool keysDeclared;
+
+  _FakeRepository(
+      {this.envCommands = const {},
+      this.fileValues = const {},
+      this.keysDeclared = true});
 
   @override
   Future<ConsoleSnapshot> load() async => ConsoleSnapshot(
         groups: const [],
         changes: const [],
         divergences: const [],
-        env: const EnvReport(
-          keys: [
-            EnvCheck(
-                level: CheckLevel.error,
-                name: 'REDMINE_API_KEY',
-                outcome: CheckOutcome.keyMissing),
-          ],
-          repos: [
+        env: EnvReport(
+          keysDeclared: keysDeclared,
+          keys: keysDeclared
+              ? const [
+                  EnvCheck(
+                      level: CheckLevel.error,
+                      name: 'REDMINE_API_KEY',
+                      outcome: CheckOutcome.keyMissing),
+                ]
+              : const [],
+          repos: const [
             EnvCheck(
                 level: CheckLevel.error,
                 name: 'avelacom-odoo',
                 subtitle: 'develop',
                 outcome: CheckOutcome.repoNotCloned),
           ],
-          systems: [],
+          systems: const [],
         ),
         profile: ProjectProfile(envCommands: envCommands),
-        redmineProblem: RedmineProblem.none,
+        trackerProblem: TrackerProblem.none,
         refreshedAt: DateTime.now(),
       );
 
@@ -218,6 +227,45 @@ void main() {
       await open(tester, const EnvScreen());
 
       expect(find.byIcon(Icons.play_arrow), findsNothing);
+    });
+
+    testWidgets('проект без ключей: ни раздела ключей, ни «Заполнить ключи»',
+        (tester) async {
+      final repository = _FakeRepository(keysDeclared: false);
+      console = ConsoleBloc(repository);
+      sessions = SessionsBloc(repository);
+      addTearDown(console.close);
+      addTearDown(sessions.close);
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('ru'),
+        home: Scaffold(
+          body: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: console),
+              BlocProvider.value(value: sessions),
+            ],
+            child: const EnvScreen(),
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Заполнить ключи'), findsNothing);
+      expect(find.textContaining('Ключи в .env'), findsNothing);
+      expect(find.text('Внешние системы'), findsNothing);
+      // Репозитории остаются: спека есть у любого проекта.
+      expect(find.text('Репозитории'), findsOneWidget);
+      expect(find.textContaining('Спека не объявляет ключей'), findsOneWidget);
     });
 
     testWidgets('в форме ключей описание видно целиком, а не до многоточия',

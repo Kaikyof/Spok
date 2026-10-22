@@ -130,7 +130,7 @@ class _FakeRepository implements PlatformRepository {
 ConsoleSnapshot _snapshot({
   List<ChangeUnit> changes = const [],
   List<Group> groups = const [],
-  RedmineProblem problem = RedmineProblem.none,
+  TrackerProblem problem = TrackerProblem.none,
   String problemDetail = '',
   SpecRecognition recognition = _fullRecognition,
 }) =>
@@ -145,8 +145,8 @@ ConsoleSnapshot _snapshot({
         statuses: StatusSemantics.empty,
         recognition: recognition,
       ),
-      redmineProblem: problem,
-      redmineProblemDetail: problemDetail,
+      trackerProblem: problem,
+      trackerProblemDetail: problemDetail,
       refreshedAt: DateTime.now(),
     );
 
@@ -229,7 +229,7 @@ void main() {
                     tasks: const [TaskItem('1.1', 'Шаг', false)]),
               }),
             ],
-            problem: RedmineProblem.noApiKey,
+            problem: TrackerProblem.noApiKey,
           )));
       await tester.pumpAndSettle();
 
@@ -253,9 +253,46 @@ void main() {
           ])));
       await tester.pumpAndSettle();
 
-      final badge = tester.widget<StatusBadge>(find.byType(StatusBadge));
-      expect(badge.text, contains('из файла'));
-      expect(badge.hollow, isTrue);
+      // Рядом со стадией — ярлык трекера: он и помечен «из файла».
+      final badges = tester
+          .widgetList<StatusBadge>(find.byType(StatusBadge))
+          .toList();
+      final tracker = badges.singleWhere((b) => b.text.contains('из файла'));
+      expect(tracker.hollow, isTrue);
+      // Стадия при этом видна и точка у неё обычная: это факт из файлов.
+      expect(badges.any((b) => b.text.contains('готов к реализации')), isTrue);
+    });
+
+    testWidgets('все change\'и сделаны — плашка предлагает архивирование',
+        (tester) async {
+      // Стеков у спеки нет: единственный «стек работы», все задачи закрыты.
+      await open(
+          tester,
+          _FakeRepository(
+              snapshot: ConsoleSnapshot(
+            groups: const [],
+            changes: [
+              for (final id in ['a', 'b'])
+                ChangeUnit(id: id, title: 'Change $id', dir: '/tmp', stackStates: {
+                  StackState.singleWorkStack: StackState(
+                      stack: StackState.singleWorkStack,
+                      tasks: const [TaskItem('1.1', 'Шаг', true)]),
+                }),
+            ],
+            divergences: const [],
+            env: const EnvReport(keys: [], repos: [], systems: []),
+            profile: const ProjectProfile(
+                schema: _schema,
+                stacks: [StackState.singleWorkStack],
+                recognition: _fullRecognition),
+            trackerProblem: TrackerProblem.notDeclared,
+            refreshedAt: DateTime.now(),
+          )));
+      await tester.pumpAndSettle();
+
+      expect(find.text('сделано'), findsNWidgets(2));
+      expect(find.textContaining('Следующий шаг: сдать change’и в архив'),
+          findsOneWidget);
     });
 
     testWidgets('пусто — объяснение, первый шаг и превью команды',

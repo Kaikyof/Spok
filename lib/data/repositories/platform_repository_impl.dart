@@ -22,6 +22,7 @@ import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/spec_schema.dart';
 import '../../domain/repositories/command_log.dart';
+import '../../domain/repositories/tracker.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/usecases/find_env_commands.dart';
 import '../../domain/repositories/platform_repository.dart';
@@ -34,8 +35,9 @@ import '../sources/gitlab_api.dart';
 import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
 import '../sources/platform_files_source.dart';
-import '../sources/redmine_api.dart';
+import '../sources/redmine_tracker_resolver.dart';
 import '../sources/schema_resolver.dart';
+import '../sources/tracker_resolver.dart';
 import '../sources/secret_store.dart';
 import '../sources/env_file.dart';
 
@@ -47,6 +49,10 @@ class PlatformRepositoryImpl implements PlatformRepository {
   final SecretStore secrets;
   final GitCloneSource cloneSource;
 
+  /// Откуда берётся трекер. Репозиторий знает только контракт; какой
+  /// адаптер подходит спеке, решает резолвер, и он приходит снаружи.
+  final TrackerResolver trackers;
+
   /// Спеки, `.env` которых уже собран в этом запуске: пересобирать файл
   /// на каждом обновлении слепка незачем — он меняется только когда
   /// человек правит ключи.
@@ -57,11 +63,19 @@ class PlatformRepositoryImpl implements PlatformRepository {
       this.commandLog,
       FindDivergences? findDivergences,
       SecretStore? secrets,
-      GitCloneSource? cloneSource})
+      GitCloneSource? cloneSource,
+      TrackerResolver? trackers})
       : config = config ?? AppConfigSource(),
         findDivergences = findDivergences ?? FindDivergences(),
         secrets = secrets ?? SecretStore(),
-        cloneSource = cloneSource ?? GitCloneSource();
+        cloneSource = cloneSource ?? GitCloneSource(),
+        trackers = trackers ?? const RedmineTrackerResolver();
+
+  /// Трекер текущей спеки по её ключам; null — не объявлен или спеки нет.
+  Tracker? get _tracker {
+    final source = files;
+    return source == null ? null : trackers.resolve(source, source.loadEnv());
+  }
 
   /// Сборщик `.env` текущей спеки; null — спека не подключена.
   EnvMaterializer? get _materializer {
@@ -85,7 +99,8 @@ class PlatformRepositoryImpl implements PlatformRepository {
   }
 
   /// Ищет платформу с учётом пути, сохранённого в конфиге приложения.
-  static Future<PlatformRepositoryImpl> create({CommandLog? commandLog}) async {
+  static Future<PlatformRepositoryImpl> create(
+      {CommandLog? commandLog, TrackerResolver? trackers}) async {
     final config = AppConfigSource();
     final configuredPath = await config.readPlatformDir();
     final source = PlatformFilesSource.locate(
@@ -97,6 +112,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
       source,
       config: config,
       commandLog: commandLog,
+      trackers: trackers,
     );
   }
 
@@ -205,16 +221,12 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   @override
   Future<List<IssueComment>> issueComments(List<int> issueIds) async {
-    final source = files;
-    if (source == null || issueIds.isEmpty) return const [];
-    final env = source.loadEnv();
-    final baseUrl = env['REDMINE_URL'] ?? '';
-    final apiKey = env['REDMINE_API_KEY'] ?? '';
-    if (baseUrl.isEmpty || apiKey.isEmpty) return const [];
-    final api = RedmineApi(baseUrl, apiKey);
+    if (issueIds.isEmpty) return const [];
+    final tracker = _tracker;
+    if (tracker == null || !tracker.configured) return const [];
     try {
       final perIssue = await Future.wait(issueIds.map((issueId) async {
-        final comments = await api.issueComments(issueId);
+        final comments = await tracker.comments(issueId);
         return [
           for (final comment in comments)
             IssueComment(
@@ -321,8 +333,9 @@ class PlatformRepositoryImpl implements PlatformRepository {
         groups: const [],
         changes: const [],
         divergences: const [],
-        env: const EnvReport(keys: [], repos: [], systems: []),
-        redmineProblem: RedmineProblem.platformNotFound,
+        env: const EnvReport(
+            keys: [], repos: [], systems: [], keysDeclared: false),
+        trackerProblem: TrackerProblem.platformNotFound,
         refreshedAt: DateTime.now(),
       );
     }
@@ -335,10 +348,11 @@ class PlatformRepositoryImpl implements PlatformRepository {
     final groups = source.loadGroups(changes);
     final archived = source.loadArchivedChanges();
     final semantics = source.loadStatusSemantics();
-    final (redmineProblem, redmineDetail) =
-        await _fetchStatuses(source, changes);
+    final tracker = trackers.resolve(source, source.loadEnv());
+    final (trackerProblem, trackerDetail) =
+        await _fetchStatuses(tracker, changes);
 
-    final env = await _buildEnvReport(source);
+    final env = await _buildEnvReport(source, tracker);
     return ConsoleSnapshot(
       groups: groups,
       changes: changes,
@@ -346,9 +360,11 @@ class PlatformRepositoryImpl implements PlatformRepository {
       env: env,
       docs: source.loadDocTree(groups, changes, archived: archived),
       profile: _buildProfile(source, groups, changes, semantics, env),
-      redmineProblem: redmineProblem,
-      redmineProblemDetail: redmineDetail,
-      redmineBaseUrl: source.loadEnv()['REDMINE_URL'] ?? '',
+      trackerProblem: trackerProblem,
+      trackerProblemDetail: trackerDetail,
+      trackerName: tracker?.name ?? '',
+      trackerKeys: tracker?.credentialKeys ?? const [],
+      issueUrl: tracker?.issueUrl ?? ConsoleSnapshot.noIssueUrl,
       refreshedAt: DateTime.now(),
     );
   }
@@ -445,10 +461,13 @@ class PlatformRepositoryImpl implements PlatformRepository {
       // Схема есть у любого проекта на OpenSpec — хотя бы встроенная
       // копия upstream; «не распознано» только когда конфиг назвал схему,
       // которой нет ни в проекте, ни у пользователя, ни во встроенных.
+      // Источник — рядом с именем: у проекта после `openspec init` схема
+      // встроенная, и человек должен видеть, что в спеке её нет.
       RecognizedItem(
         part: RecognizedPart.schema,
         recognized: resolution != null,
         value: schemaName,
+        qualifier: resolution?.source.name ?? '',
         lookedIn: switch (resolution?.source) {
           SchemaSource.project =>
             p.relative(resolution!.path, from: source.path),
@@ -476,13 +495,16 @@ class PlatformRepositoryImpl implements PlatformRepository {
         lookedIn: 'schema.yaml → tasks-<stack>',
         sourcePath: schemaFile,
       ),
-      RecognizedItem(
-        part: RecognizedPart.statuses,
-        recognized: !semantics.isEmpty,
-        value: '${semantics.statuses.length}',
-        lookedIn: 'openspec/redmine.yaml',
-        sourcePath: source.trackerFile,
-      ),
+      // Статусы трекера разбираются только там, где трекер объявлен:
+      // у спеки без него строка «не распознано» была бы ложной нехваткой.
+      if (source.trackerDeclared)
+        RecognizedItem(
+          part: RecognizedPart.statuses,
+          recognized: !semantics.isEmpty,
+          value: '${semantics.statuses.length}',
+          lookedIn: 'openspec/redmine.yaml',
+          sourcePath: source.trackerFile,
+        ),
       RecognizedItem(
         part: RecognizedPart.commands,
         recognized: commands.isNotEmpty,
@@ -649,39 +671,38 @@ class PlatformRepositoryImpl implements PlatformRepository {
 
   /// Живые статусы трекера: при отказе показываются закэшированные
   /// в redmine.yaml change'а, поэтому отказ — не пустой экран.
-  Future<(RedmineProblem, String)> _fetchStatuses(
-      PlatformFilesSource source, List<ChangeUnit> changes) async {
-    final env = source.loadEnv();
-    final baseUrl = env['REDMINE_URL'] ?? '';
-    final apiKey = env['REDMINE_API_KEY'] ?? '';
-    if (baseUrl.isEmpty || apiKey.isEmpty) {
-      return (RedmineProblem.noApiKey, '');
-    }
+  /// Трекер не объявлен — запроса нет вовсе, и это не отказ.
+  Future<(TrackerProblem, String)> _fetchStatuses(
+      Tracker? tracker, List<ChangeUnit> changes) async {
+    if (tracker == null) return (TrackerProblem.notDeclared, '');
+    if (!tracker.configured) return (TrackerProblem.noApiKey, '');
     final issueIds = changes
         .expand((change) => change.stacks)
         .map((stack) => stack.issueId)
         .nonNulls
         .toList();
     try {
-      final statuses = await RedmineApi(baseUrl, apiKey).issueStatuses(issueIds);
+      final statuses = await tracker.statuses(issueIds);
       for (final stack in changes.expand((change) => change.stacks)) {
         stack.liveStatus = statuses[stack.issueId];
       }
-      return (RedmineProblem.none, '');
+      return (TrackerProblem.none, '');
     } on DioException catch (error) {
-      return (RedmineProblem.unreachable, error.message ?? error.type.name);
+      return (TrackerProblem.unreachable, error.message ?? error.type.name);
     } catch (error) {
-      return (RedmineProblem.unreachable, '$error');
+      return (TrackerProblem.unreachable, '$error');
     }
   }
 
-  Future<EnvReport> _buildEnvReport(PlatformFilesSource source) async {
+  Future<EnvReport> _buildEnvReport(
+      PlatformFilesSource source, Tracker? tracker) async {
     final env = source.loadEnv();
     return EnvReport(
       keys: _checkEnvKeys(source, env),
       repos: await _checkRepos(source),
-      systems: await _checkSystems(env),
+      systems: await _checkSystems(source, env, tracker),
       backend: await secrets.backend(),
+      keysDeclared: source.hasEnvExample,
     );
   }
 
@@ -749,17 +770,29 @@ class PlatformRepositoryImpl implements PlatformRepository {
         count: info.behind,
       );
 
-  Future<List<EnvCheck>> _checkSystems(Map<String, String> env) =>
-      Future.wait([
-        _pingSystem('Redmine', env['REDMINE_URL'],
-            (url) => RedmineApi(url, env['REDMINE_API_KEY'] ?? '').ping()),
+  /// Внешние системы — по ключам `<SYSTEM>_URL` из `.env.example`, а не
+  /// по зашитому списку: спека без GitLab не должна слышать «GitLab не
+  /// настроен». Проверку каждой системы пока знает этот класс; с реестром
+  /// расширений каждую строку заберёт своё расширение.
+  Future<List<EnvCheck>> _checkSystems(PlatformFilesSource source,
+      Map<String, String> env, Tracker? tracker) {
+    final declared = {
+      for (final example in source.loadEnvExampleKeys()) example.key
+    };
+    final checks = <Future<EnvCheck>>[
+      if (declared.contains('REDMINE_URL') && tracker != null)
+        _pingSystem(tracker.name, env['REDMINE_URL'], (_) => tracker.ping()),
+      if (declared.contains('GITLAB_URL'))
         _pingSystem('GitLab', env['GITLAB_URL'],
             (url) => _timedGet('$url/api/v4/projects?per_page=1', headers: {
                   'PRIVATE-TOKEN': env['GITLAB_TOKEN'] ?? '',
                 })),
+      if (declared.contains('MATTERMOST_URL'))
         _pingSystem('Mattermost', env['MATTERMOST_URL'],
             (url) => _timedGet('$url/api/v4/system/ping')),
-      ]);
+    ];
+    return Future.wait(checks);
+  }
 
   Future<int> _timedGet(String url, {Map<String, String>? headers}) async {
     final stopwatch = Stopwatch()..start();

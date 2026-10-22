@@ -34,7 +34,7 @@ class FindDivergences {
     Set<String> closedStatuses,
   ) {
     final stack = entry.stack;
-    final status = stack.redmineStatus;
+    final status = stack.trackerStatus;
     if (status == null || stack.tasks.isEmpty) return null;
 
     if (stack.allDone && workingStatuses.contains(status)) {
@@ -43,7 +43,7 @@ class FindDivergences {
         changeId: entry.change.id,
         changeTitle: entry.change.title,
         stack: stack.stack,
-        redmineStatus: status,
+        trackerStatus: status,
         doneCount: stack.doneCount,
         totalCount: stack.tasks.length,
       );
@@ -54,7 +54,7 @@ class FindDivergences {
         changeId: entry.change.id,
         changeTitle: entry.change.title,
         stack: stack.stack,
-        redmineStatus: status,
+        trackerStatus: status,
         openTaskNumbers: stack.openTasks.map((task) => task.number).toList(),
       );
     }
@@ -70,7 +70,7 @@ class FindDivergences {
     final waitingStacks = {
       for (final change in changes)
         for (final stack in change.stacks)
-          if (stack.redmineStatus == handoffStatus) stack.stack,
+          if (stack.trackerStatus == handoffStatus) stack.stack,
     };
     return [
       for (final stack in waitingStacks)

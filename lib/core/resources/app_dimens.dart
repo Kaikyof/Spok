@@ -19,4 +19,14 @@ abstract class AppDimens {
   static const gapM = 16.0;
   static const gapL = 20.0;
   static const gapXl = 24.0;
+
+  /// Зазор между бейджами одной ячейки: стадия, ярлык трекера, ссылка.
+  static const badgeGap = 3.0;
+
+  /// Колонка стадии и статуса в строке списка change'ей.
+  static const stackStatusWidth = 260.0;
+
+  /// Плашка следующего шага: внутренний отступ и зазоры вокруг стрелки.
+  static const bannerPadding = EdgeInsets.symmetric(horizontal: 18, vertical: 12);
+  static const bannerArrowGap = 14.0;
 }

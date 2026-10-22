@@ -1,6 +1,7 @@
 import 'change_metadata.dart';
 import 'spec_schema.dart';
 import 'stack_state.dart';
+import 'work_stage.dart';
 
 /// Change — единица работы: спека, задачи, код, тест-кейсы.
 class ChangeUnit {
@@ -27,6 +28,10 @@ class ChangeUnit {
   /// Метаданные `.openspec.yaml`; у спек команды файла нет — `none`.
   final ChangeMetadata meta;
 
+  /// Стадия, которую слой данных вывел из артефактов и отметок; null —
+  /// change собран без чтения файлов, и стадия считается по отметкам.
+  final WorkStage? assessedStage;
+
   const ChangeUnit({
     required this.id,
     required this.title,
@@ -38,9 +43,17 @@ class ChangeUnit {
     this.archivedAt,
     this.schema = SpecSchema.empty,
     this.meta = ChangeMetadata.none,
-  });
+    WorkStage? stage,
+  }) : assessedStage = stage;
 
   bool get archived => archivedAt != null;
+
+  /// Стадия работы change'а целиком: есть у любой спеки, с трекером и без.
+  WorkStage get stage =>
+      assessedStage ??
+      (archived
+          ? WorkStage.archived
+          : WorkStage.fromTasks(stacks.expand((stack) => stack.tasks)));
 
   List<StackState> get stacks => stackStates.values.toList();
 

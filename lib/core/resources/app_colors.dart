@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/work_stage.dart';
+
 /// Палитра из Penpot-макета «Platform Console» (тёмная тема).
 abstract class AppColors {
   static const background = Color(0xFF111318);
@@ -27,7 +29,8 @@ abstract class AppColors {
   /// строка «ожила», и не хватает, чтобы перебить её содержимое.
   static const hoverOverlay = Color(0x14FFFFFF);
 
-  // Статусная шкала Redmine — по стадии, не по «хорошо/плохо».
+  // Статусная шкала — по стадии, не по «хорошо/плохо». Имена статусов
+  // Redmine на неё кладёт адаптер (`redmine_status_colors.dart`).
   static const statusNew = Color(0xFF8B93A3);
   static const statusInProgress = Color(0xFF5B9BFF);
   static const statusInReview = Color(0xFF9B7BFF);
@@ -37,15 +40,13 @@ abstract class AppColors {
   static const statusReadyToRelease = Color(0xFF5FBF8A);
   static const statusReturned = Color(0xFFE8B33F);
 
-  static Color forRedmineStatus(String status) => switch (status) {
-        'Новая' => statusNew,
-        'В работе' => statusInProgress,
-        'На ревью' => statusInReview,
-        'Ревью завершено' => statusReviewDone,
-        'Ожидает тестирования' => statusWaitingTest,
-        'На тестировании' => statusTesting,
-        'Готово к релизу' => statusReadyToRelease,
-        'Возвращена с ревью' || 'Возвращена' => statusReturned,
-        _ => statusNew,
+  /// Цвет точки стадии работы: та же шкала, что у статусов, — стадия
+  /// описывает ход работы по файлам и есть у любой спеки.
+  static Color forStage(WorkStage stage) => switch (stage) {
+        PlanningStage() => statusNew,
+        ReadyToApplyStage() => statusReviewDone,
+        InProgressStage() => statusInProgress,
+        DoneStage() => statusReadyToRelease,
+        ArchivedStage() => textMuted,
       };
 }

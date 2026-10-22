@@ -39,7 +39,7 @@ void main() {
     expect(stack.doneCount, 2);
     expect(stack.tasks.length, 3);
     expect(stack.issueId, isNull);
-    expect(stack.redmineStatus, isNull);
+    expect(stack.trackerStatus, isNull);
   });
 
   test('список через звёздочку, вложенность, чужая отметка, ссылка', () {

@@ -7,6 +7,13 @@ import 'app_colors.dart';
 abstract class AppTextStyles {
   static const monospaceFamily = 'Menlo';
 
+  /// Шкала кеглей: подписи и ссылки берут размер отсюда, а не числом.
+  static const fontSizeXs = 10.5;
+  static const fontSizeS = 11.5;
+  static const fontSizeM = 12.0;
+  static const fontSizeL = 13.0;
+  static const fontSizeXl = 14.0;
+
   static TextStyle monospace(
     double size, {
     Color color = AppColors.monospaceText,
@@ -41,4 +48,10 @@ abstract class AppTextStyles {
   static const captionMuted = TextStyle(fontSize: 12, color: AppColors.textMuted);
 
   static const hint = TextStyle(fontSize: 11.5, color: AppColors.textMuted);
+
+  /// Стрелка плашки следующего шага.
+  static const bannerArrow = TextStyle(
+      fontSize: fontSizeXl,
+      fontWeight: FontWeight.w600,
+      color: AppColors.accent);
 }

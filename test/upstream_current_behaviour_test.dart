@@ -48,7 +48,7 @@ void main() {
     expect(darkMode.tasks.length, 4);
     expect(darkMode.doneCount, 1);
     expect(darkMode.issueId, isNull);
-    expect(darkMode.redmineStatus, isNull);
+    expect(darkMode.trackerStatus, isNull);
 
     expect(byId['refactor-config']!.meta.skipSpecs, isTrue);
     expect(byId['refactor-config']!.stacks.single.tasks.length, 1);

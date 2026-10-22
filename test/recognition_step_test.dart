@@ -30,6 +30,7 @@ const _recognition = SpecRecognition([
       part: RecognizedPart.schema,
       recognized: true,
       value: 'avelacom',
+      qualifier: 'project',
       lookedIn: 'openspec/schemas/*/schema.yaml',
       sourcePath: '/tmp/spec/openspec/schemas/avelacom/schema.yaml'),
   RecognizedItem(
@@ -103,7 +104,7 @@ class _FakeRepository implements PlatformRepository {
           features: _features,
           recognition: _recognition,
         ),
-        redmineProblem: RedmineProblem.none,
+        trackerProblem: TrackerProblem.none,
         refreshedAt: DateTime.now(),
       );
 
@@ -255,6 +256,8 @@ void main() {
       await open(tester);
 
       expect(find.text('Разобрано 5 требований из 6'), findsOneWidget);
+      // Схема названа вместе с источником: своя в проекте, а не встроенная.
+      expect(find.text('avelacom · схема проекта'), findsOneWidget);
       expect(find.text('Статусы трекера'), findsOneWidget);
       expect(find.text('не найдено'), findsOneWidget);
       expect(find.text('openspec/redmine.yaml'), findsOneWidget);

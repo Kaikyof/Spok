@@ -130,7 +130,7 @@ void main() {
     final backend = change.stack('backend')!;
     expect(change.stacks.map((stack) => stack.stack), ['backend']);
     expect(backend.issueId, 63637);
-    expect(backend.redmineStatus, 'На ревью');
+    expect(backend.trackerStatus, 'На ревью');
     expect(backend.statusFromCache, isTrue);
     expect(backend.doneCount, 1);
     expect(backend.tasks.length, 2);

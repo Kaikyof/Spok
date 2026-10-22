@@ -109,13 +109,13 @@ class ConsoleState {
 
   /// Нужен экран настройки: спека не найдена либо человек меняет её сам.
   bool get needsSetup =>
-      snapshot?.redmineProblem == RedmineProblem.platformNotFound ||
+      snapshot?.trackerProblem == TrackerProblem.platformNotFound ||
       switchingSpec ||
       recognitionReview;
 
   /// Спека не найдена вовсе — отменить настройку некуда.
   bool get specMissing =>
-      snapshot?.redmineProblem == RedmineProblem.platformNotFound;
+      snapshot?.trackerProblem == TrackerProblem.platformNotFound;
 
   /// Первая загрузка ещё идёт — показываем полноэкранный лоадер.
   bool get isFirstLoad => snapshot == null;

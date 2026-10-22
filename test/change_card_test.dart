@@ -123,7 +123,7 @@ class _FakeRepository implements PlatformRepository {
         divergences: const [],
         env: const EnvReport(keys: [], repos: [], systems: []),
         profile: const ProjectProfile(schema: _schema, stacks: ['backend']),
-        redmineProblem: RedmineProblem.none,
+        trackerProblem: TrackerProblem.none,
         refreshedAt: DateTime.now(),
       );
 
@@ -306,6 +306,15 @@ void main() {
       await openCard(tester);
 
       expect(find.text('Развернуть здесь'), findsNothing);
+    });
+
+    testWidgets('в шапке — стадия из файлов, статус трекера рядом ярлыком',
+        (tester) async {
+      await openCard(tester);
+
+      // Задачи 1/2 — в работе; статус из redmine.yaml — ярлык с пометкой.
+      expect(find.text('в работе · 1/2'), findsOneWidget);
+      expect(find.text('В работе · из файла'), findsOneWidget);
     });
 
     testWidgets('артефакт ждёт предшественника по requires', (tester) async {
