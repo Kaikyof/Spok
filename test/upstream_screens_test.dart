@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spok/data/repositories/platform_repository_impl.dart';
 import 'package:spok/data/sources/platform_files_source.dart';
+import 'package:spok/data/sources/secret_store.dart';
 import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
@@ -109,7 +110,10 @@ void main() {
   setUpAll(() async {
     root = buildUpstreamSpec();
     final source = PlatformFilesSource(root);
-    snapshot = await PlatformRepositoryImpl(source).load();
+    // Хранилище секретов файловое: в связку ключей машины тесты не пишут.
+    final secretsDir = Directory.systemTemp.createTempSync('upstream-secrets');
+    addTearDown(() => secretsDir.deleteSync(recursive: true));
+    snapshot = await PlatformRepositoryImpl(source, secrets: SecretStore.inFile(secretsDir)).load();
     commands = source.loadSlashCommands();
   });
 

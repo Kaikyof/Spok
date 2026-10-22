@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:spok/data/repositories/platform_repository_impl.dart';
 import 'package:spok/data/sources/platform_files_source.dart';
 import 'package:spok/data/sources/redmine_tracker_resolver.dart';
+import 'package:spok/data/sources/secret_store.dart';
 import 'package:spok/data/sources/tracker_resolver.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/env_check.dart';
@@ -106,6 +107,16 @@ group:
 void main() {
   final roots = <Directory>[];
 
+  /// Хранилище секретов — файловое во временном каталоге: `load()`
+  /// собирает `.env` через него, а в настоящую связку ключей машины тест
+  /// писать не имеет права — на macOS `security` остановился бы на вводе
+  /// пароля, и тест повис бы.
+  late Directory secretsDir;
+  PlatformRepositoryImpl buildRepository(PlatformFilesSource source, {TrackerResolver? trackers}) =>
+      PlatformRepositoryImpl(source, trackers: trackers, secrets: SecretStore.inFile(secretsDir));
+
+  setUp(() => secretsDir = Directory.systemTemp.createTempSync('tracker-secrets')..also(roots.add));
+
   tearDown(() {
     for (final root in roots) {
       root.deleteSync(recursive: true);
@@ -117,7 +128,7 @@ void main() {
     test('статусы, адрес задачи и имя приходят от контракта', () async {
       final root = _buildTrackedSpec(fillKey: true)..also(roots.add);
       final tracker = _FakeTracker(byIssue: {100: 'На ревью'});
-      final repository = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
+      final repository = buildRepository(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
 
       final snapshot = await repository.load();
 
@@ -141,14 +152,14 @@ void main() {
     test('комментарии — через контракт, без ключа не спрашиваются', () async {
       final root = _buildTrackedSpec(fillKey: true)..also(roots.add);
       final tracker = _FakeTracker();
-      final repository = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
+      final repository = buildRepository(PlatformFilesSource(root), trackers: _FixedResolver(tracker));
 
       final comments = await repository.issueComments([100]);
       expect(comments.single.text, 'ок');
       expect(tracker.askedComments, [100]);
 
       final silent = _FakeTracker(configuredValue: false);
-      final unconfigured = PlatformRepositoryImpl(PlatformFilesSource(root), trackers: _FixedResolver(silent));
+      final unconfigured = buildRepository(PlatformFilesSource(root), trackers: _FixedResolver(silent));
       expect(await unconfigured.issueComments([100]), isEmpty);
       expect(silent.askedComments, isEmpty);
     });
@@ -164,7 +175,7 @@ void main() {
 
       // Настоящий резолвер: улики нет — адаптера нет, и ни один запрос
       // к трекеру не делается.
-      final repository = PlatformRepositoryImpl(source, trackers: resolver);
+      final repository = buildRepository(source, trackers: resolver);
       final snapshot = await repository.load();
 
       expect(snapshot.trackerProblem, TrackerProblem.notDeclared);
@@ -190,7 +201,7 @@ void main() {
       final source = PlatformFilesSource(root);
       expect(const RedmineTrackerResolver().declaredIn(source), isTrue);
 
-      final snapshot = await PlatformRepositoryImpl(source).load();
+      final snapshot = await buildRepository(source).load();
 
       expect(snapshot.trackerProblem, TrackerProblem.noApiKey);
       expect(snapshot.trackerName, 'Redmine');
@@ -217,7 +228,7 @@ void main() {
   group('внешние системы из ключей примера', () {
     test('только Redmine: одна строка, без «GitLab не настроен»', () async {
       final root = _buildTrackedSpec()..also(roots.add);
-      final snapshot = await PlatformRepositoryImpl(
+      final snapshot = await buildRepository(
         PlatformFilesSource(root),
         trackers: _FixedResolver(_FakeTracker()),
       ).load();
@@ -228,7 +239,7 @@ void main() {
     test('ключ объявлен, адрес не заполнен — «адрес не задан», а не тишина', () async {
       final root = _buildTrackedSpec()..also(roots.add);
       File(p.join(root.path, '.env.example')).writeAsStringSync('REDMINE_URL=\nGITLAB_URL=\n');
-      final snapshot = await PlatformRepositoryImpl(
+      final snapshot = await buildRepository(
         PlatformFilesSource(root),
         trackers: _FixedResolver(_FakeTracker()),
       ).load();
@@ -239,7 +250,7 @@ void main() {
 
     test('примера нет — систем и ключей нет', () async {
       final root = buildUpstreamSpec()..also(roots.add);
-      final snapshot = await PlatformRepositoryImpl(PlatformFilesSource(root)).load();
+      final snapshot = await buildRepository(PlatformFilesSource(root)).load();
 
       expect(snapshot.env.systems, isEmpty);
       expect(snapshot.env.keys, isEmpty);
