@@ -9,7 +9,7 @@
 | 2 | `add-work-stage-and-tracker-port` ✓ в архиве | 1 | M |
 | 3 | `support-upstream-commands` ✓ в архиве | 1 (стадия — 2) | M |
 | 4 | `add-extension-registry` | 2, 3 | L |
-| 5 | `show-specs-in-docs` | 1 | S |
+| 5 | `show-specs-in-docs` ✓ в архиве | 1 | S |
 | 6 | `split-core-and-extensions` | 4 | M (+M локаль) |
 | 7 | `add-openspec-cli-source` | 1, 4 | M, по желанию |
 | 8 | `document-boundaries` | 4, 6 | S |
