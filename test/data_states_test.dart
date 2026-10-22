@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/change_unit.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
@@ -18,7 +18,6 @@ import 'package:spok/domain/entities/slash_command.dart';
 import 'package:spok/domain/entities/spec_recognition.dart';
 import 'package:spok/domain/entities/spec_schema.dart';
 import 'package:spok/domain/entities/stack_state.dart';
-import 'package:spok/domain/entities/status_semantics.dart';
 import 'package:spok/domain/entities/task_item.dart';
 import 'package:spok/domain/repositories/platform_repository.dart';
 import 'package:spok/l10n/gen/app_localizations.dart';
@@ -135,7 +134,6 @@ ConsoleSnapshot _snapshot({
   profile: ProjectProfile(
     schema: _schema,
     stacks: const ['backend'],
-    statuses: StatusSemantics.empty,
     recognition: recognition,
   ),
   trackerProblem: problem,

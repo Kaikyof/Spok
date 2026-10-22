@@ -6,40 +6,40 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/clone_progress.dart';
-import '../../domain/entities/group.dart';
-import '../../domain/entities/project_profile.dart';
-import '../../domain/entities/status_semantics.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/env_check.dart';
 import '../../domain/entities/env_field.dart';
-import '../../domain/entities/feature_gate.dart';
 import '../../domain/entities/env_report.dart';
+import '../../domain/entities/feature_gate.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
+import '../../domain/entities/project_profile.dart';
+import '../../domain/entities/secret_backend.dart';
 import '../../domain/entities/slash_command.dart';
 import '../../domain/entities/spec_recognition.dart';
 import '../../domain/entities/spec_schema.dart';
+import '../../domain/entities/status_semantics.dart';
 import '../../domain/repositories/command_log.dart';
+import '../../domain/repositories/platform_repository.dart';
 import '../../domain/repositories/tracker.dart';
 import '../../domain/usecases/find_divergences.dart';
 import '../../domain/usecases/find_env_commands.dart';
-import '../../domain/repositories/platform_repository.dart';
-import '../../domain/entities/secret_backend.dart';
 import '../sources/app_config_source.dart';
 import '../sources/builtin_schemas.dart';
+import '../sources/env_file.dart';
 import '../sources/env_materializer.dart';
 import '../sources/git_clone_source.dart';
 import '../sources/gitlab_api.dart';
-import '../sources/ide_launcher.dart';
 import '../sources/handover_recipients_source.dart';
+import '../sources/ide_launcher.dart';
 import '../sources/platform_files_source.dart';
 import '../sources/redmine_tracker_resolver.dart';
 import '../sources/schema_resolver.dart';
-import '../sources/tracker_resolver.dart';
 import '../sources/secret_store.dart';
-import '../sources/env_file.dart';
+import '../sources/tracker_resolver.dart';
 
 class PlatformRepositoryImpl implements PlatformRepository {
   PlatformFilesSource? files;
@@ -729,7 +729,7 @@ class PlatformRepositoryImpl implements PlatformRepository {
         receiveTimeout: const Duration(seconds: 8),
         headers: headers,
       ),
-    ).get(url);
+    ).get<Object?>(url);
     return stopwatch.elapsedMilliseconds;
   }
 

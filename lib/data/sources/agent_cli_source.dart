@@ -106,12 +106,13 @@ class AgentCliSource {
     void Function(String sessionId) onSessionId,
   ) {
     if (line.trim().isEmpty) return;
-    dynamic json;
+    final Object? json;
     try {
       json = jsonDecode(line);
-    } catch (_) {
+    } on FormatException {
       return; // служебный вывод, не событие
     }
+    if (json is! Map<String, Object?>) return;
     switch (json['type']) {
       case 'system':
         final sessionId = json['session_id']?.toString();
@@ -129,28 +130,29 @@ class AgentCliSource {
   }
 
   void _parseAssistantMessage(
-      dynamic message, void Function(AgentEvent event) onEvent) {
-    final content = message?['content'];
-    if (content is! List) return;
-    for (final block in content) {
-      switch (block['type']) {
-        case 'text':
-          final text = block['text']?.toString().trim() ?? '';
-          if (text.isNotEmpty) {
-            onEvent(AgentEvent(AgentEventKind.assistantText, text));
-          }
-        case 'tool_use':
-          onEvent(AgentEvent(
-            AgentEventKind.toolAction,
-            _toolSummary(block['name']?.toString() ?? '', block['input']),
-            toolName: block['name']?.toString() ?? '',
-          ));
+      Object? message, void Function(AgentEvent event) onEvent) {
+    if (message case {'content': final List<Object?> content}) {
+      for (final block in content) {
+        if (block is! Map<String, Object?>) continue;
+        switch (block['type']) {
+          case 'text':
+            final text = block['text']?.toString().trim() ?? '';
+            if (text.isNotEmpty) {
+              onEvent(AgentEvent(AgentEventKind.assistantText, text));
+            }
+          case 'tool_use':
+            onEvent(AgentEvent(
+              AgentEventKind.toolAction,
+              _toolSummary(block['name']?.toString() ?? '', block['input']),
+              toolName: block['name']?.toString() ?? '',
+            ));
+        }
       }
     }
   }
 
   /// Короткая строка о вызове инструмента — как в панели «выполнено по ходу».
-  String _toolSummary(String toolName, dynamic input) {
+  String _toolSummary(String toolName, Object? input) {
     if (input is! Map) return toolName;
     final detail = input['command'] ??
         input['file_path'] ??

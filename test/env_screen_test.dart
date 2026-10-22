@@ -189,7 +189,7 @@ void main() {
           EnvTask.repos: SlashCommand(
             id: 'workspace:init',
             description: 'Склонировать репозитории workspace.yaml',
-            source: CommandSource.packageScript,
+            sources: [CommandSource.packageScript],
             runLine: 'pnpm workspace:init',
           ),
         },
@@ -208,7 +208,7 @@ void main() {
           EnvTask.repos: SlashCommand(
             id: 'workspace:init',
             description: '',
-            source: CommandSource.packageScript,
+            sources: [CommandSource.packageScript],
             runLine: 'pnpm workspace:init',
           ),
         },

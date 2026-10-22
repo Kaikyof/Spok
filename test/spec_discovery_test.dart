@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:spok/data/sources/platform_files_source.dart';
 import 'package:spok/data/repositories/platform_repository_impl.dart';
+import 'package:spok/data/sources/platform_files_source.dart';
 import 'package:spok/domain/entities/feature_gate.dart';
 import 'package:spok/domain/entities/group.dart';
 import 'package:spok/domain/entities/project_profile.dart';

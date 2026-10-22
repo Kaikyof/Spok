@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spok/data/sources/platform_files_source.dart';
 import 'package:spok/data/sources/schema_resolver.dart';
+import 'package:spok/domain/entities/slash_command.dart';
 import 'package:spok/domain/entities/stack_state.dart';
 
 import 'upstream_fixture.dart';
@@ -11,8 +12,9 @@ import 'upstream_fixture.dart';
 ///
 /// После этапа 1 (`resolve-schema-like-upstream`) схема берётся из
 /// встроенной копии, задачи — из `tasks.md`, единица работы есть без
-/// трекера. Что ещё не сделано (команды — этап 3), здесь зафиксировано как
-/// есть, чтобы следующий этап ломал этот тест осознанно.
+/// трекера; после этапа 3 (`support-upstream-commands`) команды вызываются
+/// по пути файла и не двоятся со скиллами. Что ещё не сделано, здесь
+/// зафиксировано как есть, чтобы следующий этап ломал этот тест осознанно.
 void main() {
   late Directory root;
   late PlatformFilesSource source;
@@ -64,15 +66,17 @@ void main() {
   test('архив с датой в имени читается, id очищен', () {
     final archived = source.loadArchivedChanges();
     expect(archived.single.id, 'add-login');
-    expect(archived.single.archivedAt, DateTime(2026, 9, 1));
+    expect(archived.single.archivedAt, DateTime(2026, 9));
     expect(archived.single.stacks.single.doneCount, 1);
   });
 
-  test('команды: имя из frontmatter принимается за вызов, скилл — дубль', () {
-    final ids = source.loadSlashCommands().map((command) => command.id);
-    // Это ошибка, которую чинит `support-upstream-commands`: Claude Code
-    // регистрирует `/opsx:propose` по пути файла, а не по `name`.
-    expect(ids, containsAll(['OPSX: Propose', 'OPSX: Apply', 'openspec-propose']));
+  test('команды: вызов из пути, скилл склеен с командой', () {
+    final commands = source.loadSlashCommands();
+    expect(commands.map((command) => command.invocation), ['/opsx:apply', '/opsx:propose']);
+    final propose = commands.last;
+    expect(propose.sources, [CommandSource.claude, CommandSource.skill]);
+    expect(propose.scope, CommandScope.general);
+    expect(commands.first.scope, CommandScope.change);
   });
 
   test('окружение: ключей и сервисов нет', () {

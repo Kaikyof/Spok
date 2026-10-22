@@ -53,7 +53,7 @@ C=plain # это примечание
     SlashCommand script(String id, String runLine) => SlashCommand(
         id: id,
         description: '',
-        source: CommandSource.packageScript,
+        sources: [CommandSource.packageScript],
         runLine: runLine);
 
     test('репозитории лечит команда инициализации workspace', () {
@@ -99,7 +99,7 @@ C=plain # это примечание
         SlashCommand(
             id: 'workspace-init',
             description: '',
-            source: CommandSource.makeTarget,
+            sources: [CommandSource.makeTarget],
             runLine: 'make workspace-init'),
       ]);
 

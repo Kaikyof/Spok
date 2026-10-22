@@ -26,6 +26,13 @@ class SuggestCommandArguments {
     String currentPrefix,
   ) {
     final slots = _parseSlots(command.argumentHint);
+    // Команды upstream сигнатуру не пишут: apply и archive ждут id
+    // change'а — это известно по роли. propose ждёт свободный текст.
+    if (slots.isEmpty &&
+        (command.role == CommandRole.apply ||
+            command.role == CommandRole.archive)) {
+      slots.add('change');
+    }
     if (typedArguments.length >= slots.length) return const [];
     final slot = slots[typedArguments.length];
     final candidates = _valuesFor(slot);

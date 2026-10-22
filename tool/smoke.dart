@@ -94,7 +94,17 @@ Future<void> main() async {
   for (final node in snapshot.docs) {
     printDocs(node, '  ');
   }
-  print('commands: ${repository.slashCommands().length}');
+  final commands = repository.slashCommands();
+  print('commands: ${commands.length}');
+  // Состав палитры построчно: правка разбора команд должна ломать эталон
+  // осознанно, а не только по числу.
+  for (final command in commands) {
+    final sources = command.sources.map((source) => source.name).join(' + ');
+    print(
+      '  ${command.invocation} [${command.scope.name}] '
+      '${command.argumentHint} · $sources',
+    );
+  }
   print('env problems: ${snapshot.env.problemCount}');
   for (final check in snapshot.env.all) {
     print(

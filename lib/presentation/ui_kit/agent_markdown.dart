@@ -44,7 +44,7 @@ class AgentMarkdown extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary),
-          strong: TextStyle(
+          strong: const TextStyle(
               fontWeight: FontWeight.w600, color: AppColors.textPrimary),
           code: AppTextStyles.monospace(11.5),
           codeblockPadding: const EdgeInsets.all(10),

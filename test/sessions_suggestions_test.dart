@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/core/resources/app_dimens.dart';
-import 'package:spok/domain/entities/secret_backend.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
@@ -12,6 +11,7 @@ import 'package:spok/domain/entities/env_report.dart';
 import 'package:spok/domain/entities/handoff_recipient.dart';
 import 'package:spok/domain/entities/issue_comment.dart';
 import 'package:spok/domain/entities/merge_request_info.dart';
+import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/slash_command.dart';
 import 'package:spok/domain/repositories/platform_repository.dart';
 import 'package:spok/domain/usecases/suggest_command_arguments.dart';
@@ -146,6 +146,15 @@ void main() {
       const command = SlashCommand(id: 'opsx-apply', description: '', argumentHint: '[change]');
       final suggestions = suggester(command, const ['biometric-opt-in'], '');
       expect(suggestions, isEmpty);
+    });
+
+    test('opsx:apply без сигнатуры — change\'и по роли, propose — текст', () {
+      const apply = SlashCommand(id: 'opsx:apply', description: '');
+      expect(suggester(apply, const [], '').map((s) => s.value),
+          ['biometric-opt-in', 'pin-setup-flow']);
+      expect(suggester(apply, const ['biometric-opt-in'], ''), isEmpty);
+      const propose = SlashCommand(id: 'opsx:propose', description: '');
+      expect(suggester(propose, const [], ''), isEmpty);
     });
   });
 

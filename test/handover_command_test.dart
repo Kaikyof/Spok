@@ -43,7 +43,7 @@ void main() {
       id: 'handover',
       description: '',
       argumentHint: '[group]',
-      source: CommandSource.packageScript,
+      sources: [CommandSource.packageScript],
       runLine: 'pnpm run handover',
     );
 

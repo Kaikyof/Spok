@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/resources/app_colors.dart';
 import '../../core/resources/app_dimens.dart';
 import '../../core/resources/app_text_styles.dart';
+import '../../data/sources/redmine_status_colors.dart';
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
@@ -20,20 +21,19 @@ import '../../domain/entities/spec_schema.dart';
 import '../../domain/entities/stack_state.dart';
 import '../../domain/entities/task_item.dart';
 import '../../domain/usecases/list_change_artifacts.dart';
-import '../../data/sources/redmine_status_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
 import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/doc_markdown.dart';
-import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/issue_link.dart';
+import '../ui_kit/marks_indicator.dart';
 import '../ui_kit/section_card.dart';
 import '../ui_kit/status_badge.dart';
+import '../ui_kit/tappable.dart';
 import '../widgets/env_editor_dialog.dart';
 import '../widgets/missing_key_block.dart';
 import '../widgets/stack_filter_bar.dart';
-import '../ui_kit/tappable.dart';
 
 /// Список change'ей → карточка change'а → просмотр документации.
 class ChangeScreen extends StatelessWidget {
@@ -521,7 +521,7 @@ class _CodeRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: AppTextStyles.hint),
-        SelectableText(value, style: AppTextStyles.monospace(12, color: AppColors.monospaceText)),
+        SelectableText(value, style: AppTextStyles.monospace(12)),
       ],
     ),
   );
@@ -570,7 +570,7 @@ class _MergeRequestRow extends StatelessWidget {
             Expanded(
               child: Text(
                 stateText,
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
               ),
             ),
             if (mr.webUrl.isNotEmpty)
@@ -1009,7 +1009,7 @@ class _MoreActionsMenu extends StatelessWidget {
             value: command,
             child: Row(
               children: [
-                Text(command.invocation, style: AppTextStyles.monospace(11.5, color: AppColors.monospaceText)),
+                Text(command.invocation, style: AppTextStyles.monospace(11.5)),
                 const SizedBox(width: AppDimens.gapM),
                 Flexible(
                   child: Text(
@@ -1211,7 +1211,7 @@ class _SpecBodyState extends State<_SpecBody> {
         h1: AppTextStyles.sectionTitle,
         h2: AppTextStyles.sectionTitle,
         h3: AppTextStyles.rowTitle,
-        code: AppTextStyles.monospace(11.5, color: AppColors.monospaceText),
+        code: AppTextStyles.monospace(11.5),
         listBullet: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
       ),
     );

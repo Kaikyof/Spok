@@ -5,16 +5,16 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/entities/change_unit.dart';
 import '../../domain/entities/clone_progress.dart';
-import '../../domain/entities/operation_progress.dart';
 import '../../domain/entities/console_snapshot.dart';
 import '../../domain/entities/doc_artifact.dart';
 import '../../domain/entities/doc_node.dart';
 import '../../domain/entities/doc_state.dart';
 import '../../domain/entities/env_field.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/entities/handoff_recipient.dart';
 import '../../domain/entities/issue_comment.dart';
 import '../../domain/entities/merge_request_info.dart';
-import '../../domain/entities/group.dart';
+import '../../domain/entities/operation_progress.dart';
 import '../../domain/entities/project_profile.dart';
 import '../../domain/repositories/platform_repository.dart';
 

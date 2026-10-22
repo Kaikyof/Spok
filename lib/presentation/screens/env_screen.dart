@@ -9,12 +9,12 @@ import '../../domain/entities/env_task.dart';
 import '../../domain/entities/secret_backend.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../bloc/console_bloc.dart';
+import '../bloc/sessions_bloc.dart';
 import '../localization/text_formatters.dart';
 import '../ui_kit/check_row.dart';
-import '../bloc/sessions_bloc.dart';
 import '../ui_kit/section_card.dart';
-import '../ui_kit/tappable.dart';
 import '../ui_kit/skeleton.dart';
+import '../ui_kit/tappable.dart';
 import '../widgets/env_editor_dialog.dart';
 
 /// Экран «Окружение»: поймать проблему до запуска, а не в середине.

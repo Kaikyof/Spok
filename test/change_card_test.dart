@@ -2,22 +2,22 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/change_unit.dart';
-import 'package:spok/domain/entities/secret_backend.dart';
+import 'package:spok/domain/entities/clone_progress.dart';
 import 'package:spok/domain/entities/console_snapshot.dart';
 import 'package:spok/domain/entities/doc_state.dart';
 import 'package:spok/domain/entities/env_field.dart';
-import 'package:spok/domain/entities/group.dart';
 import 'package:spok/domain/entities/env_report.dart';
+import 'package:spok/domain/entities/group.dart';
 import 'package:spok/domain/entities/handoff_recipient.dart';
 import 'package:spok/domain/entities/issue_comment.dart';
 import 'package:spok/domain/entities/merge_request_info.dart';
 import 'package:spok/domain/entities/project_profile.dart';
+import 'package:spok/domain/entities/secret_backend.dart';
 import 'package:spok/domain/entities/slash_command.dart';
 import 'package:spok/domain/entities/spec_schema.dart';
 import 'package:spok/domain/entities/stack_state.dart';
@@ -61,7 +61,7 @@ class _FakeRepository implements PlatformRepository {
   List<SlashCommand> slashCommands() => const [
     SlashCommand(id: 'opsx-apply', description: 'Реализация задач change\'а', argumentHint: '[change] [stack]'),
     SlashCommand(id: 'opsx-submit', description: 'Отдать на ревью', argumentHint: '[change] [stack]'),
-    SlashCommand(id: 'opsx-explore', description: 'Разобраться в спеке', argumentHint: ''),
+    SlashCommand(id: 'opsx-explore', description: 'Разобраться в спеке'),
   ];
 
   @override

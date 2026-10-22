@@ -1,6 +1,10 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+    strict-inference: true
   exclude:
     - build/**
     - android/**
@@ -9,7 +13,60 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    - lib/l10n/gen/**
+  errors:
+    invalid_assignment: warning
+    missing_return: error
+    dead_code: info
 
-# Ширина строки для dart format; линты здесь не настраиваются.
+# Правила — только map: смесь имён и «правило: true» в одном списке
+# анализатор не применяет.
+linter:
+  rules:
+    # async: потерянные Future и незакрытые потоки
+    unawaited_futures: true
+    cancel_subscriptions: true
+    close_sinks: true
+    await_only_futures: true
+    use_build_context_synchronously: true
+
+    # Типы: dynamic в проекте не используется — JSON и YAML разбираются
+    # через Object? и проверки типов
+    avoid_dynamic_calls: true
+    avoid_annotating_with_dynamic: true
+    always_declare_return_types: true
+    annotate_overrides: true
+    only_throw_errors: true
+    throw_in_finally: true
+    test_types_in_equals: true
+    no_adjacent_strings_in_list: true
+    avoid_empty_else: true
+    avoid_returning_null_for_void: true
+    avoid_shadowing_type_parameters: false
+
+    # Неизменяемость
+    prefer_final_locals: true
+    prefer_final_fields: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_const_constructors_in_immutables: true
+
+    # Стиль
+    prefer_single_quotes: true
+    use_super_parameters: true
+    directives_ordering: true
+    sort_child_properties_last: true
+    unnecessary_lambdas: true
+    avoid_redundant_argument_values: true
+
+    # Flutter
+    use_colored_box: true
+    use_decorated_box: true
+    sized_box_for_whitespace: true
+    avoid_unnecessary_containers: true
+    no_logic_in_create_state: true
+    avoid_print: true
+
 formatter:
   page_width: 120
+  trailing_commas: preserve

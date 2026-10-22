@@ -71,7 +71,7 @@ class GitCloneSource {
     root.createSync(recursive: true);
     _created = target;
     yield const CloneProgress(
-        stage: OperationStage.running, phase: ClonePhase.starting);
+        stage: OperationStage.running);
     yield* _run(
       git,
       [
@@ -147,8 +147,7 @@ class GitCloneSource {
             // Пароль спрашивать некому: приложение не терминал, и
             // интерактивный запрос git просто повесил бы клонирование.
             'GIT_TERMINAL_PROMPT': '0',
-          },
-          includeParentEnvironment: true);
+          });
     } on ProcessException catch (error) {
       _cleanUp();
       yield CloneProgress(

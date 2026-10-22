@@ -27,10 +27,18 @@ Russian version: [CHANGELOG.ru.md](CHANGELOG.ru.md).
 - Linux build; settings and spec clones live in the system's standard directories.
 - Release notes on GitHub are built from this changelog, in English and Russian.
 - Work stage of a change derived from the spec files — planning, ready to apply, in progress, done, archived — in the group table and the change card header; for a spec without stacks the next step follows the stage.
+- After a session on a change, the next step follows its stage: archive a done change, continue planning, or apply a ready one. The next-step banner of a done change now carries the archive command.
+- Commands and skills are also read from other tools' directories — `.agents/skills`, `.opencode`, `.github/prompts`; copies of the same command appear once.
 
 ### Changed
 
 - The tracker status is a label next to the stage rather than the only status; the app names the system as the spec declares it instead of "Redmine". A spec without a tracker no longer hears "no access" or "no key".
 - Environment screen: the keys section exists only with `.env.example`, external systems only for the addresses it declares.
+- Arguments of a command without `argument-hint` come only from the invocation line in its `**Input**` section. A command described there in prose stays in the palette instead of the change card menu.
+
+### Fixed
+
+- Original OpenSpec commands are invoked the way Claude Code registers them (`/opsx:propose`), not by the title in the file (`/OPSX: Propose`); a command and a skill for the same thing are one palette row.
+- The create-change command no longer appears in the change card's action menu; Apply and Archive appear by the command's purpose, even without an argument description.
 
 [Unreleased]: https://github.com/Kaikyof/Spok/commits/develop

@@ -11,20 +11,20 @@ import '../domain/entities/project_profile.dart';
 import '../domain/repositories/command_log.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../main.dart';
-import 'widgets/launch_panel.dart';
 import 'bloc/console_bloc.dart';
 import 'bloc/sessions_bloc.dart';
 import 'localization/text_formatters.dart';
 import 'screens/change_screen.dart';
 import 'screens/docs_screen.dart';
 import 'screens/env_screen.dart';
-import 'screens/handoff_screen.dart';
 import 'screens/group_screen.dart';
+import 'screens/handoff_screen.dart';
 import 'screens/recognition_screen.dart';
 import 'screens/sessions_screen.dart';
 import 'screens/setup_screen.dart';
 import 'ui_kit/app_loader.dart';
 import 'ui_kit/tappable.dart';
+import 'widgets/launch_panel.dart';
 
 class Shell extends StatelessWidget {
   const Shell({super.key});
@@ -414,7 +414,7 @@ class _Header extends StatelessWidget {
         children: [
           const Expanded(child: _HeaderTitle()),
           _FreshnessIndicator(state: state),
-          _RefreshButton(),
+          const _RefreshButton(),
         ],
       ),
     ),
